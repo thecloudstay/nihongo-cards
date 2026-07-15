@@ -351,6 +351,14 @@ const $=id=>document.getElementById(id);
 let curTab="kana", curCat=null;
 let CONF={count:20,time:5,mode:"meaning"};
 let deck=[],qi=0,correct=0,misses=[],answered=false,paused=false,timerId=null,reviewRound=0;
+// 퀴즈 중 예약된 콜백(발음·다음문제)을 추적해 화면 이탈 시 전부 취소 (뒤로가기 버그 방지)
+let _pend=[];
+function sched(fn,ms){ const id=setTimeout(fn,ms); _pend.push(id); return id; }
+function stopQuiz(){
+  clearInterval(timerId); _pend.forEach(clearTimeout); _pend=[];
+  try{ speechSynthesis.cancel(); }catch(e){}
+  Object.values(_audioCache||{}).forEach(a=>{ try{ a.pause(); }catch(e){} });
+}
 const isKanjiCat=()=> curCat && !["hiragana","katakana"].includes(curCat.code);
 const optText=c=> !isKanjiCat() ? c.label : (CONF.mode==="reading" ? c.romaji : c.ko);
 
@@ -461,7 +469,7 @@ function loadQ(){
   const opts=shuffle([q,...wrongs]);
   const box=$("opts");box.className="opts";box.innerHTML="";
   opts.forEach(o=>{const b=document.createElement("button");b.className="opt";b.textContent=optText(o);b.dataset.front=o.front;b.onclick=()=>choose(b,o,q);box.appendChild(b);});
-  if(!(isKanjiCat() && CONF.mode==="reading")){ setTimeout(()=>speak(q.speak), 250); }
+  if(!(isKanjiCat() && CONF.mode==="reading")){ sched(()=>speak(q.speak), 250); }
   startTimer();
 }
 function startTimer(){
@@ -486,8 +494,8 @@ function choose(btn,o,q){
   sfx(ok?"ok":"fail");
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
-  setTimeout(()=>speak(showEx ? q.exy : q.speak), ok ? 550 : 500); // 효과음 후 발음 (예문 우선)
-  setTimeout(nextQ, showEx ? 3200 : 1300);                         // 예문 재생이 잘리지 않게 여유
+  sched(()=>speak(showEx ? q.exy : q.speak), ok ? 550 : 500); // 효과음 후 발음 (예문 우선)
+  sched(nextQ, showEx ? 3200 : 1300);                         // 예문 재생이 잘리지 않게 여유
 }
 function timeUp(){
   if(answered)return; answered=true; misses.push(deck[qi]);
@@ -496,8 +504,8 @@ function timeUp(){
   sfx("fail");
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
-  setTimeout(()=>speak(showEx ? q.exy : q.speak), 450);
-  setTimeout(nextQ, showEx ? 3200 : 1400);
+  sched(()=>speak(showEx ? q.exy : q.speak), 450);
+  sched(nextQ, showEx ? 3200 : 1400);
 }
 function showExample(q){
   const e=$("example");
@@ -606,6 +614,7 @@ function reviewMiss(){
 }
 
 function show(id){
+  if(id!=="quizScreen") stopQuiz();   // 퀴즈 이탈 시 타이머·발음·예약 콜백 전부 정지
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
   $("done").classList.remove("on");
   if(id==="done"){$("done").classList.add("on");}
