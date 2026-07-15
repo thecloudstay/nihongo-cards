@@ -30,7 +30,8 @@
   .jp{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
 
   /* ─── 홈 / 네비게이터 ─── */
-  .home-hd{padding:34px 24px 20px}
+  .home-hd{padding:34px 24px 20px;position:relative}
+  .hd-actions{position:absolute;top:14px;right:18px;display:flex;gap:7px;z-index:5}
   .home-hd .app{font-size:32px;font-weight:900;letter-spacing:-.8px}
   .home-hd .app .en{font-size:14px;color:var(--sub);font-weight:600;margin-top:6px;letter-spacing:.5px}
   .tabs{display:flex;gap:8px;padding:0 24px 14px;border-bottom:1px solid var(--line)}
@@ -167,9 +168,11 @@
 <!-- ═══ 홈 / 네비게이터 ═══ -->
 <div class="screen on" id="home">
   <div class="home-hd">
+    <div class="hd-actions">
+      <button class="restore-link" onclick="openAccount()">내 구매 · 로그인</button>
+      <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켬</button>
+    </div>
     <div class="app">일본어 카드모음<div class="en">にほんご カード · 読みテスト</div></div>
-    <button class="restore-link" onclick="openAccount()">내 구매 · 로그인</button>
-    <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켬</button>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">かな 기초<span class="s">仮名</span></button>
@@ -481,7 +484,7 @@ const optText=c=> !isKanjiCat() ? c.label : (CONF.mode==="reading" ? c.romaji : 
 // ══ 구매·소유(entitlement) ══ 스테이지·카테고리별 1회 구매 = 영구 소유
 // 가격(표시용). 카테고리 코드별로 다르게 줄 수 있고, 없으면 _default 사용.
 // 가격 정책(확정): 자당 30원 × 유료 80자(100자 중 20자 무료 미리보기) = 팩당 ₩2,400 균일
-const PACK_PRICE = { _default:"₩2,400" };
+const PACK_PRICE = { _default:"₩2,500", N4:"₩4,400", N3:"₩5,200", N2:"₩5,400", N1:"₩16,200" };  // 자당 크기비례 차등
 // 배포 후 Paddle 체크아웃 링크를 카테고리 코드별로 채우면 '구매' 시 그 링크가 열림.
 const CHECKOUT_URL = {};   // (구방식 폴백용 — 현재 미사용)
 // ── Paddle 결제 (라이브) ──
@@ -562,7 +565,7 @@ function renderNav(){
       const have = (DATA[it.code]||[]).length;
       let badge;
       if(owned) badge = '<span class="badge free">보유</span>';
-      else if(paid) badge = have ? `<span class="badge lock">🔒 ${priceOf(it)} · 20장 무료</span>` : '<span class="badge soon">준비중</span>';
+      else if(paid) badge = have ? `<span class="badge lock">🔒 ${priceOf(it)} · 10장 무료</span>` : '<span class="badge soon">준비중</span>';
       else if(it.ready) badge = '<span class="badge free">무료</span>';
       else badge = '<span class="badge soon">준비중</span>';
       el.innerHTML=`<div class="txt"><div class="k">${it.ko}</div><div class="j jp">${it.jp}</div></div>
@@ -597,7 +600,7 @@ async function pickCat(it){
   const pv=$("previewNote");
   if(pv){
     pv.style.display = previewMode ? "block" : "none";
-    if(previewMode) pv.innerHTML=`🎁 미리보기 <b>20장 무료 체험</b> 중 · 전체 ${it.n}장 잠금해제 <b>${priceOf(it)}</b> <button class="buy-mini" onclick="openBuy(curCat)">구매</button>`;
+    if(previewMode) pv.innerHTML=`🎁 미리보기 <b>10장 무료 체험</b> 중 · 전체 ${it.n}장 잠금해제 <b>${priceOf(it)}</b> <button class="buy-mini" onclick="openBuy(curCat)">구매</button>`;
   }
   show("setup");
 }
@@ -821,6 +824,11 @@ function ingestRows(rows, markReady){
 }
 // 무료 데이터: 정적 JSON(GitHub Pages 동봉) 우선 → GAS 무료 API 폴백 → 내장 데이터
 async function loadData(){
+  if(isMaster()){                                  // 관리자 마스터 계정 → 전체 데이터
+    OWNED = new Set(["ALL"]); saveOwned();
+    const all = await tryFetchRows("cards_all.json");
+    if(all && all.length){ ingestRows(all, true); return true; }
+  }
   let rows = await tryFetchRows("cards_free.json");
   if((!rows||!rows.length) && API_URL) rows = await tryFetchRows(API_URL + (API_URL.includes("?")?"&":"?") + "action=cards");
   if(!rows || !rows.length) return false;
@@ -830,6 +838,9 @@ async function loadData(){
 
 // ── 라이선스(email+token) 기반 유료 로딩 ──
 let LIC = (()=>{ try{ return JSON.parse(localStorage.getItem('license')||'null'); }catch(e){ return null; } })();
+// ── 관리자 마스터 계정 (GAS 없이 전체 열람) ──
+const MASTER_EMAIL="thecloudstay@gmail.com", MASTER_KEY="1234";
+function isMaster(){ return !!(LIC && String(LIC.email||"").trim().toLowerCase()===MASTER_EMAIL && String(LIC.token).trim()===MASTER_KEY); }
 // 구매 복원: 이메일+키로 보유팩 조회 → OWNED 갱신
 async function restorePurchase(email, token){
   if(!API_URL) throw new Error("서버 URL 미설정");
@@ -905,6 +916,12 @@ async function accFill(){
 async function accLogin(){
   const email=$("accEmail").value.trim(), token=$("accToken").value.trim();
   if(!email||!token){ toast("이메일과 라이선스 키를 모두 입력하세요"); return; }
+  if(email.toLowerCase()===MASTER_EMAIL && token===MASTER_KEY){   // 관리자 마스터 계정
+    LIC={email,token}; localStorage.setItem('license', JSON.stringify(LIC));
+    OWNED=new Set(["ALL"]); saveOwned();
+    toast("관리자 모드 — 전체 로딩 중…"); await loadData(); renderNav(); renderAccount();
+    toast("관리자 전체 열람 활성화 ✅"); return;
+  }
   toast("확인 중…");
   try{ await restorePurchase(email, token); toast("로그인 완료!"); renderAccount(); }
   catch(e){ toast("실패: "+(e.message||e)); }
