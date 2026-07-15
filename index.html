@@ -166,7 +166,7 @@
   <div class="home-hd">
     <div class="app">일본어 카드모음<div class="en">にほんご カード · 読みテスト</div></div>
     <button class="restore-link" onclick="openAccount()">내 구매 · 로그인</button>
-    <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켜김</button>
+    <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켬</button>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">かな 기초<span class="s">仮名</span></button>
@@ -355,7 +355,8 @@ const isKanjiCat=()=> curCat && !["hiragana","katakana"].includes(curCat.code);
 const optText=c=> !isKanjiCat() ? c.label : (CONF.mode==="reading" ? c.romaji : c.ko);
 
 // ══ 구매·소유(entitlement) ══ 스테이지·카테고리별 1회 구매 = 영구 소유
-const PACK_PRICE = { _default:"₩4,900", N4:"₩5,900", N3:"₩5,900", N2:"₩5,900", N1:"₩5,900" };
+// 가격 정책(확정): 자당 30원 × 유료 80자(100자 중 20자 무료 미리보기) = 팩당 ₩2,400 균일
+const PACK_PRICE = { _default:"₩2,400" };
 const CHECKOUT_URL = {};   // 예: { N4:"https://…", B4:"https://…" }
 let OWNED = new Set((()=>{ try{ return JSON.parse(localStorage.getItem('owned_packs')||'[]'); }catch(e){ return []; } })());
 function saveOwned(){ try{ localStorage.setItem('owned_packs', JSON.stringify([...OWNED])); }catch(e){} }
@@ -529,7 +530,7 @@ function speak(t){
   speakWS(t);
 }
 function speakWS(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).split("/")[0]);u.lang="ja-JP";u.rate=0.85;speechSynthesis.speak(u);}catch(e){}}
-// ── 효과음: 정답=임팩트 있는 띄링↑, 오답=강한 부저 ──
+// ── 효과음: 정답=임팩트 있는 띠링↑, 오답=강한 부저 ──
 let _actx;
 function _ac(){ _actx=_actx||new (window.AudioContext||window.webkitAudioContext)(); if(_actx.state==="suspended")_actx.resume(); return _actx; }
 function tone(freq,delay,dur,wave,vol){
@@ -546,14 +547,14 @@ function tone(freq,delay,dur,wave,vol){
 let MUTED = (()=>{ try{ return localStorage.getItem('muted')==='1'; }catch(e){ return false; } })();
 function toggleMute(){
   MUTED=!MUTED; try{ localStorage.setItem('muted', MUTED?'1':'0'); }catch(e){}
-  const b=$("muteBtn"); if(b) b.textContent = MUTED ? "🔇 소리 꿈" : "🔊 소리 켜김";
+  const b=$("muteBtn"); if(b) b.textContent = MUTED ? "🔇 소리 끔" : "🔊 소리 켬";
   if(MUTED){ try{ speechSynthesis.cancel(); }catch(e){} }
-  toast(MUTED ? "소리를 껌어요" : "소리를 켰어요");
+  toast(MUTED ? "소리를 껐어요" : "소리를 켰어요");
 }
 function sfx(type){
   if(MUTED) return;
   try{
-    if(type==="ok"){   // 임팩트 있는 "띄링↑" (게임 코인 스타일, 짧고 경쾌)
+    if(type==="ok"){   // 임팩트 있는 "띠링↑" (게임 코인 스타일, 짧고 경쾌)
       tone(1318.5,0,0.06,"triangle",0.38); tone(1760,0.06,0.08,"triangle",0.36); tone(2637,0.13,0.20,"sine",0.30);
     } else {           // 묵직한 이중 부저 (오답 임팩트)
       tone(110,0,0.28,"sawtooth",0.42); tone(104,0.01,0.28,"square",0.30);
@@ -736,7 +737,7 @@ function accLogout(){
 }
 
 async function initApp(){
-  const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 꿈";
+  const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 끔";
   await loadData();
   renderNav();
 }
