@@ -11,6 +11,7 @@
 <meta property="og:locale" content="ko_KR">
 <!-- 배포 후 도메인 확정 시: <meta property="og:url" content="https://도메인"> <meta property="og:image" content="https://도메인/og.png"> -->
 <meta name="theme-color" content="#ff7a59">
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 <style>
   :root{
     --ink:#1a1a1a; --sub:#9a9a9a; --line:#eee; --bg:#fff; --soft:#f7f7f8;
@@ -365,7 +366,40 @@ const optText=c=> !isKanjiCat() ? c.label : (CONF.mode==="reading" ? c.romaji : 
 // ══ 구매·소유(entitlement) ══ 스테이지·카테고리별 1회 구매 = 영구 소유
 // 가격 정책(확정): 자당 30원 × 유료 80자(100자 중 20자 무료 미리보기) = 팩당 ₩2,400 균일
 const PACK_PRICE = { _default:"₩2,400" };
-const CHECKOUT_URL = {};   // 예: { N4:"https://…", B4:"https://…" }
+const CHECKOUT_URL = {};   // (구방식 폴백용 — 현재 미사용)
+// ── Paddle 결제 (라이브) ──
+const PADDLE_CLIENT_TOKEN = "live_d8a7d39a54fd3b9827f27ef03e1"; // 공개용 클라이언트 토큰
+const PRICE_IDS = {
+  N4:"pri_01kxj6d22tv7rbzsmz2twejs51",
+  N3:"pri_01kxj7194vbqz2z9cjzmxcpqa3", N2:"pri_01kxj71a3hyeh5pp2gx9wazr4a", N1:"pri_01kxj71b3qwmke74krv2an0k79",
+  B1:"pri_01kxj71c1gazp64efqpxk4trv4", B2:"pri_01kxj71h75kg9mp4mdsqjez6e9", B3:"pri_01kxj71j4w6nv8p0kwh4660b45",
+  B4:"pri_01kxj71k1380hc0rbk2kpq4bne", B5:"pri_01kxj71kwjeqjmsgqzy1c1a8qj", B6:"pri_01kxj71mvy8ty9mw8qc4rwk0h7",
+  B7:"pri_01kxj71nqt3jx24z090zbdsbpc", B8:"pri_01kxj71pkq5c1wkv4pwcfajx6d", B9:"pri_01kxj71qn55syb751hz8wjnrpa",
+  B10:"pri_01kxj71rhdwyy4qx93rph7vzfa", B11:"pri_01kxj71sf02m4whatzfty4ky1c", B12:"pri_01kxj71tdmcxqvjgxjy93gv28z",
+  B13:"pri_01kxj71vaxbtb92292mt3y00y7", B14:"pri_01kxj71w7hkgk2ynnbspwh6syt",
+  A1:"pri_01kxj71xjezpf118e3x59yze7n", A2:"pri_01kxj71ydsh2tk27kwdkmmewxr", A3:"pri_01kxj71z95w285c5agmmjvbwsd",
+  A4:"pri_01kxj7204bff3nvdd03jdprx4y", A5:"pri_01kxj7210006z41f6kmwqdwbq0", A6:"pri_01kxj721ttm33w5h7s2t6583h0",
+  A7:"pri_01kxj722p3k5kxvx66ngyjpcge",
+  C2:"pri_01kxj723h6rv1y65bs55n8znaz", C3:"pri_01kxj7251ca4q8z10xy3bze7ys", C4:"pri_01kxj725z7pngstp3vd06cmam7",
+  BUNDLE_B:"pri_01kxj726v7chaaav320ryzjej5",  // 상황별 올팩 ₩16,900
+  BUNDLE_A:"pri_01kxj727r70jhc27b3dm6ysrax",  // 분야별 올팩 ₩8,900
+  BUNDLE_N:"pri_01kxj728n4f61nhjrav4eatttr",  // JLPT 올팩 ₩5,900
+  BUNDLE_C:"pri_01kxj729e9qy4qnzmes9nn49hn",  // 독서 올팩 ₩4,900
+  ALL:"pri_01kxj72aaah1gvg89ry7p793gv"        // 라이프타임 ₩19,900
+};
+let _paddleReady=false;
+function initPaddle(){
+  try{
+    if(window.Paddle && !_paddleReady){
+      Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN, eventCallback: function(ev){
+        if(ev && ev.name==="checkout.completed"){
+          toast("결제 완료! 입력하신 이메일로 라이선스 키가 발송됩니다 📧 [내 구매]에서 로그인하세요");
+        }
+      }});
+      _paddleReady=true;
+    }
+  }catch(e){}
+}
 let OWNED = new Set((()=>{ try{ return JSON.parse(localStorage.getItem('owned_packs')||'[]'); }catch(e){ return []; } })());
 function saveOwned(){ try{ localStorage.setItem('owned_packs', JSON.stringify([...OWNED])); }catch(e){} }
 function isOwned(code){ return OWNED.has(code) || OWNED.has("ALL"); }
@@ -373,6 +407,13 @@ function grantPack(code){ OWNED.add(code); saveOwned(); renderNav(); }
 function isUnlocked(it){ return it.tier!=="paid" || OWNED.has(it.code); }
 function priceOf(it){ return PACK_PRICE[it.code] || PACK_PRICE._default; }
 function openBuy(it){
+  initPaddle();
+  const priceId = PRICE_IDS[it.code];
+  if(priceId && window.Paddle && _paddleReady){
+    const opts = { items:[{ priceId: priceId, quantity:1 }], settings:{ locale:"ko" } };
+    if(LIC && LIC.email) opts.customer = { email: LIC.email };
+    try{ Paddle.Checkout.open(opts); return; }catch(e){}
+  }
   const url = CHECKOUT_URL[it.code];
   if(url){ window.open(url, "_blank"); toast(`${it.ko} 결제창을 열었어요`); }
   else { toast(`${it.ko} — ${priceOf(it)} · 결제 준비 중`); }
@@ -747,6 +788,7 @@ function accLogout(){
 
 async function initApp(){
   const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 끔";
+  initPaddle();
   await loadData();
   renderNav();
 }
