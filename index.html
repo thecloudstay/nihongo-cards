@@ -137,6 +137,24 @@
   .legal-links a{color:#aaa;text-decoration:none}
   .preview-note{margin:10px 0;padding:10px 14px;background:#fff7ec;border:1px solid #ffd9a8;border-radius:12px;font-size:13px;color:#7a5320;line-height:1.5}
   .preview-note .buy-mini{margin-left:6px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer}
+  /* ─── 50음도표 ─── */
+  .chart-entry{background:var(--soft)}
+  .chart-seg{padding:12px 20px 0}
+  .chart-hint{text-align:center;font-size:13px;color:var(--sub);padding:12px 0 2px}
+  .chart-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:12px 20px 40px;overflow-y:auto}
+  .chart-cell{border:1.5px solid var(--line);border-radius:14px;padding:12px 4px 9px;text-align:center;cursor:pointer;background:#fff;transition:.12s;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .chart-cell .kn{font-size:30px;line-height:1.2}
+  .chart-cell .rm{font-size:11px;color:var(--sub);margin-top:3px}
+  .chart-cell.hit{border-color:var(--accent);background:#fff6f3;transform:scale(.94)}
+  .chart-cell.empty{border:none;background:none;box-shadow:none;cursor:default}
+  /* ─── 내 구매 ─── */
+  .acc-desc{font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:18px}
+  .acc-input{width:100%;padding:16px;border:1.5px solid var(--line);border-radius:14px;font-size:16px;margin-bottom:10px;outline:none}
+  .acc-input:focus{border-color:var(--ink)}
+  .acc-row{display:flex;justify-content:space-between;align-items:center;padding:16px 4px;border-bottom:1px solid var(--line);font-size:15px}
+  .acc-row span{color:var(--sub);font-size:13px}
+  .acc-email{font-weight:800;font-size:16px;border-bottom:2px solid var(--ink)}
+  .acc-out{margin-top:22px;width:100%;padding:15px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:#c33;font-weight:700;cursor:pointer}
   .toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;font-size:13px;font-weight:600;padding:12px 20px;border-radius:30px;opacity:0;transition:.25s;pointer-events:none;z-index:100}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -147,7 +165,7 @@
 <div class="screen on" id="home">
   <div class="home-hd">
     <div class="app">일본어 카드모음<div class="en">にほんご カード · 読みテスト</div></div>
-    <button class="restore-link" onclick="promptRestore()">구매 복원</button>
+    <button class="restore-link" onclick="openAccount()">내 구매 · 로그인</button>
     <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켜김</button>
   </div>
   <div class="tabs">
@@ -221,6 +239,42 @@
   <div class="actions">
     <button class="primary" id="reviewBtn" onclick="reviewMiss()">틀린 문자 다시 풀기</button>
     <button onclick="show('home')">다른 카드 고르기</button>
+  </div>
+</div>
+
+<!-- ═══ 50음도표 (무료) ═══ -->
+<div class="screen" id="chartScreen">
+  <div class="top">
+    <button class="back" onclick="show('home')">‹</button>
+    <span class="title">50음도표 한 번에 끝내기<span class="s"> 五十音図</span></span>
+  </div>
+  <div class="chart-seg seg" id="chartSeg">
+    <button class="on" onclick="setChart('h',this)">ひらがな</button>
+    <button onclick="setChart('k',this)">カタカナ</button>
+  </div>
+  <div class="chart-hint">글자를 누르면 발음이 나와요 🔊</div>
+  <div class="chart-grid" id="chartGrid"></div>
+</div>
+
+<!-- ═══ 내 구매 · 로그인 ═══ -->
+<div class="screen" id="account">
+  <div class="top">
+    <button class="back" onclick="show('home')">‹</button>
+    <span class="title">내 구매<span class="s"> マイページ</span></span>
+  </div>
+  <div class="setup-body" style="justify-content:flex-start">
+    <div id="accLoggedOut">
+      <p class="acc-desc">구매 시 사용한 <b>이메일</b>과, 결제 후 메일로 받은 <b>라이선스 키</b>를 입력하면
+      구매 내역을 불러오고 이 기기에서 잠금이 해제됩니다.<br>키를 잃어버렸다면 문의: thecloudstay@gmail.com</p>
+      <input id="accEmail" class="acc-input" type="email" placeholder="이메일" autocomplete="email">
+      <input id="accToken" class="acc-input" type="text" placeholder="라이선스 키">
+      <button class="start" style="width:100%" onclick="accLogin()">로그인 · 구매 복원</button>
+    </div>
+    <div id="accLoggedIn" style="display:none">
+      <div class="acc-row acc-email" id="accWho"></div>
+      <div id="accPacks"></div>
+      <button class="acc-out" onclick="accLogout()">이 기기에서 로그아웃</button>
+    </div>
   </div>
 </div>
 
@@ -320,6 +374,13 @@ function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("sho
 // ── 네비게이터 렌더 ──
 function renderNav(){
   const groups=NAV[curTab]; const box=$("catList"); box.innerHTML="";
+  if(curTab==="kana"){   // 50음도표 바로가기 (무료)
+    const cd=document.createElement("div"); cd.className="cat chart-entry";
+    cd.innerHTML=`<div class="txt"><div class="k">🗾 50음도표 · 한 번에 끝내기</div><div class="j jp">五十音図 · 누르면 발음이 나와요</div></div>
+      <div class="meta"><span class="badge free">무료</span></div><span class="arrow">›</span>`;
+    cd.onclick=()=>openChart();
+    box.appendChild(cd);
+  }
   groups.forEach(g=>{
     const gd=document.createElement("div"); gd.className="grp";
     if(g.ko){ gd.innerHTML=`<div class="grp-h"><span class="k">${g.ko}</span><span class="j jp">${g.jp}</span></div>`; }
@@ -424,13 +485,8 @@ function choose(btn,o,q){
   sfx(ok?"ok":"fail");
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
-  if(ok){
-    setTimeout(praise, 200);                                   // 정답: 칭찬 보이스
-    if(showEx) setTimeout(()=>speak(q.exy), 1200);             // 그 후 예문 발음
-  } else {
-    setTimeout(()=>speak(showEx ? q.exy : q.speak), 450);      // 오답: 부저 후 정답 발음
-  }
-  setTimeout(nextQ, showEx ? 3200 : (ok ? 1500 : 1400));       // 예문 재생이 잘리지 않게 여유
+  setTimeout(()=>speak(showEx ? q.exy : q.speak), ok ? 550 : 500); // 효과음 후 발음 (예문 우선)
+  setTimeout(nextQ, showEx ? 3200 : 1300);                         // 예문 재생이 잘리지 않게 여유
 }
 function timeUp(){
   if(answered)return; answered=true; misses.push(deck[qi]);
@@ -473,7 +529,7 @@ function speak(t){
   speakWS(t);
 }
 function speakWS(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).split("/")[0]);u.lang="ja-JP";u.rate=0.85;speechSynthesis.speak(u);}catch(e){}}
-// ── 효과음: 정답=밝은 아르페지오+일본어 칭찬, 오답=강한 부저 ──
+// ── 효과음: 정답=임팩트 있는 띄링↑, 오답=강한 부저 ──
 let _actx;
 function _ac(){ _actx=_actx||new (window.AudioContext||window.webkitAudioContext)(); if(_actx.state==="suspended")_actx.resume(); return _actx; }
 function tone(freq,delay,dur,wave,vol){
@@ -486,9 +542,6 @@ function tone(freq,delay,dur,wave,vol){
   g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
   o.start(t); o.stop(t+dur+0.02);
 }
-// 일본어 칭찬 보이스 (사전생성 mp3 있으면 그걸로, 없으면 TTS 폴백)
-const PRAISE=["すごい!","かっこいい!","完璧!","いいね!","天才!","やったね!","正解!"];
-function praise(){ speak(PRAISE[Math.random()*PRAISE.length|0]); }
 // ── 소리 끄기 토글 ──
 let MUTED = (()=>{ try{ return localStorage.getItem('muted')==='1'; }catch(e){ return false; } })();
 function toggleMute(){
@@ -500,8 +553,8 @@ function toggleMute(){
 function sfx(type){
   if(MUTED) return;
   try{
-    if(type==="ok"){   // 밝은 3단 상승 아르페지오 (A5→D6→G6)
-      tone(880,0,0.09,"sine",0.26); tone(1174.7,0.08,0.12,"sine",0.26); tone(1568,0.16,0.22,"sine",0.22);
+    if(type==="ok"){   // 임팩트 있는 "띄링↑" (게임 코인 스타일, 짧고 경쾌)
+      tone(1318.5,0,0.06,"triangle",0.38); tone(1760,0.06,0.08,"triangle",0.36); tone(2637,0.13,0.20,"sine",0.30);
     } else {           // 묵직한 이중 부저 (오답 임팩트)
       tone(110,0,0.28,"sawtooth",0.42); tone(104,0.01,0.28,"square",0.30);
       tone(98,0.32,0.36,"sawtooth",0.45); tone(92,0.33,0.36,"square",0.32);
@@ -618,16 +671,68 @@ async function loadPaidCategory(it){
   return true;
 }
 
-// ── 구매 복원 UI (이메일+라이선스 키) ──
-async function promptRestore(){
-  if(!API_URL){ toast("서버 연결 후 사용 가능합니다 (API_URL 미설정)"); return; }
-  const email=prompt("구매 시 사용한 이메일:"); if(!email) return;
-  const token=prompt("이메일로 받은 라이선스 키:"); if(!token) return;
-  toast("확인 중…");
+// ── 50음도표 (무료, 터치 발음) ──
+const GOJUON_H=[["あ","い","う","え","お"],["か","き","く","け","こ"],["さ","し","す","せ","そ"],["た","ち","つ","て","と"],["な","に","ぬ","ね","の"],["は","ひ","ふ","へ","ほ"],["ま","み","む","め","も"],["や","","ゆ","","よ"],["ら","り","る","れ","ろ"],["わ","","を","","ん"]];
+const GOJUON_K=[["ア","イ","ウ","エ","オ"],["カ","キ","ク","ケ","コ"],["サ","シ","ス","セ","ソ"],["タ","チ","ツ","テ","ト"],["ナ","ニ","ヌ","ネ","ノ"],["ハ","ヒ","フ","ヘ","ホ"],["マ","ミ","ム","メ","モ"],["ヤ","","ユ","","ヨ"],["ラ","リ","ル","レ","ロ"],["ワ","","ヲ","","ン"]];
+const ROMAJI=[["a","i","u","e","o"],["ka","ki","ku","ke","ko"],["sa","shi","su","se","so"],["ta","chi","tsu","te","to"],["na","ni","nu","ne","no"],["ha","hi","fu","he","ho"],["ma","mi","mu","me","mo"],["ya","","yu","","yo"],["ra","ri","ru","re","ro"],["wa","","o","","n"]];
+let chartKind="h";
+function openChart(){ renderChart(chartKind); show("chartScreen"); }
+function setChart(kind,btn){ chartKind=kind; [...$("chartSeg").children].forEach(b=>b.classList.remove("on")); btn.classList.add("on"); renderChart(kind); }
+function renderChart(kind){
+  const rows = kind==="h" ? GOJUON_H : GOJUON_K;
+  const grid=$("chartGrid"); grid.innerHTML="";
+  rows.forEach((row,ri)=>row.forEach((ch,ci)=>{
+    const cell=document.createElement("div");
+    if(!ch){ cell.className="chart-cell empty"; grid.appendChild(cell); return; }
+    cell.className="chart-cell";
+    cell.innerHTML=`<div class="kn jp">${ch}</div><div class="rm">${ROMAJI[ri][ci]}</div>`;
+    cell.onclick=()=>{ speak(ch); cell.classList.add("hit"); setTimeout(()=>cell.classList.remove("hit"),350); };
+    grid.appendChild(cell);
+  }));
+}
+
+// ── 내 구매 · 로그인 (이메일+라이선스 키) ──
+function openAccount(){ renderAccount(); show("account"); }
+function renderAccount(){
+  const out=$("accLoggedOut"), inn=$("accLoggedIn");
+  if(LIC){ out.style.display="none"; inn.style.display="block"; $("accWho").textContent=LIC.email; accFill(); }
+  else { out.style.display="block"; inn.style.display="none"; }
+}
+function packName(code){
+  if(code==="ALL") return "라이프타임 · 전체 팩";
+  let f=null; ["kana","kanji"].forEach(t=>NAV[t].forEach(g=>g.items.forEach(it=>{ if(it.code===code) f=it; })));
+  return f ? f.ko : code;
+}
+async function accFill(){
+  const box=$("accPacks"); box.innerHTML='<div class="acc-row">불러오는 중…</div>';
+  let details=null;
   try{
-    const packs=await restorePurchase(email.trim(), token.trim());
-    toast(`복원 완료! 보유팩: ${packs.join(", ")}`);
-  }catch(e){ toast("복원 실패: "+(e.message||e)); }
+    const r=await fetch(`${API_URL}?action=entitlement&email=${encodeURIComponent(LIC.email)}&token=${encodeURIComponent(LIC.token)}`,{cache:"no-store"});
+    const j=await r.json();
+    if(j.ok){ OWNED=new Set(j.packs); saveOwned(); details=j.details||null; }
+  }catch(e){}
+  box.innerHTML="";
+  const packs=[...OWNED];
+  if(!packs.length){ box.innerHTML='<div class="acc-row">구매 내역이 없습니다</div>'; return; }
+  packs.forEach(p=>{
+    const d=details && details.find(x=>x.pack===p);
+    const when=d && d.date ? new Date(d.date).toLocaleDateString("ko-KR") : "";
+    const row=document.createElement("div"); row.className="acc-row";
+    row.innerHTML=`<b>${packName(p)}</b><span>${when ? when+" 구매" : "보유 중"}</span>`;
+    box.appendChild(row);
+  });
+  renderNav();
+}
+async function accLogin(){
+  const email=$("accEmail").value.trim(), token=$("accToken").value.trim();
+  if(!email||!token){ toast("이메일과 라이선스 키를 모두 입력하세요"); return; }
+  toast("확인 중…");
+  try{ await restorePurchase(email, token); toast("로그인 완료!"); renderAccount(); }
+  catch(e){ toast("실패: "+(e.message||e)); }
+}
+function accLogout(){
+  try{ localStorage.removeItem('license'); localStorage.removeItem('owned_packs'); }catch(e){}
+  LIC=null; OWNED=new Set(); renderNav(); renderAccount(); toast("로그아웃했어요");
 }
 
 async function initApp(){
