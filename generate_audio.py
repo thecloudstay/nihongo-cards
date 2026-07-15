@@ -9,7 +9,7 @@ generate_audio.py — 카드 かな 오디오 1회 사전 생성 (Google Cloud T
 사용법 (GitHub Actions): .github/workflows/generate_audio.yml (시크릿 GOOGLE_TTS_KEY)
 
 동작:
-  1. CSV_GLOB에 걸리는 모든 CSV에서 reading / example_reading 고유값 추출
+  1. CSV_GLOB에 걸리는 모든 CSV에서 reading / example_reading 고유값 추출 (+칭찬 보이스)
   2. 훈/음 슬래시 표기("あら/せん")는 첫 번째 읽기만 합성 (앱 speak 규칙과 동일)
   3. 파일명 = md5(합성텍스트 + 보이스) → 같은 읽기는 자동 중복제거
   4. audio/ 에 이미 있는 해시는 스킵 (증분 생성)
@@ -32,6 +32,9 @@ API_KEY    = os.environ.get("GOOGLE_TTS_KEY", "")
 
 KANA_RE = re.compile(r'[ぁ-ゖァ-ヺー]')
 
+# 정답 칭찬 보이스 (앱 PRAISE 목록과 동일하게 유지할 것)
+EXTRA_TEXTS = ["すごい!", "かっこいい!", "完璧!", "いいね!", "天才!", "やったね!", "正解!"]
+
 def speak_text(text: str) -> str:
     """훈/음 슬래시 표기는 첫 읽기만 발음 (예: 'あら/せん' → 'あら')"""
     return text.split("/")[0].strip()
@@ -52,7 +55,7 @@ def synthesize(text: str) -> bytes:
         return base64.b64decode(json.load(res)["audioContent"])
 
 def collect_texts() -> list:
-    texts = set()
+    texts = set(EXTRA_TEXTS)
     files = sorted(glob.glob(CSV_GLOB))
     if not files:
         sys.exit("CSV 파일이 없습니다: " + CSV_GLOB)
@@ -118,3 +121,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+""

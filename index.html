@@ -22,36 +22,39 @@
   html,body{height:100%}
   body{background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
-    display:flex;flex-direction:column;min-height:100dvh}
+    display:flex;flex-direction:column;min-height:100dvh;
+    max-width:520px;margin:0 auto;width:100%;box-shadow:0 0 0 1px var(--line)}
   .screen{display:none;flex-direction:column;flex:1;min-height:100dvh}
   .screen.on{display:flex}
   .jp{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
 
   /* ─── 홈 / 네비게이터 ─── */
-  .home-hd{padding:26px 22px 16px}
-  .home-hd .app{font-size:26px;font-weight:900;letter-spacing:-.5px}
-  .home-hd .app .en{font-size:13px;color:var(--sub);font-weight:600;margin-top:4px;letter-spacing:.5px}
-  .tabs{display:flex;gap:8px;padding:0 22px 14px;border-bottom:1px solid var(--line)}
-  .tabs button{flex:1;padding:12px;border:none;background:none;font-size:15px;font-weight:800;color:var(--sub);
-    border-bottom:2.5px solid transparent;cursor:pointer;margin-bottom:-15px}
-  .tabs button .s{display:block;font-size:11px;font-weight:600;margin-top:3px;opacity:.7}
+  .home-hd{padding:34px 24px 20px}
+  .home-hd .app{font-size:32px;font-weight:900;letter-spacing:-.8px}
+  .home-hd .app .en{font-size:14px;color:var(--sub);font-weight:600;margin-top:6px;letter-spacing:.5px}
+  .tabs{display:flex;gap:8px;padding:0 24px 14px;border-bottom:1px solid var(--line)}
+  .tabs button{flex:1;padding:14px;border:none;background:none;font-size:17px;font-weight:800;color:var(--sub);
+    border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-15px;transition:.15s}
+  .tabs button .s{display:block;font-size:12px;font-weight:600;margin-top:3px;opacity:.7}
   .tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
   .list{flex:1;overflow-y:auto;padding:8px 18px 40px}
   .grp{margin-top:20px}
   .grp-h{display:flex;align-items:baseline;gap:8px;padding:0 4px 10px}
   .grp-h .k{font-size:16px;font-weight:800}
   .grp-h .j{font-size:12px;color:var(--sub)}
-  .cat{display:flex;align-items:center;gap:12px;padding:15px 16px;border:1px solid var(--line);
-    border-radius:14px;margin-bottom:9px;cursor:pointer;background:#fff;transition:.12s}
-  .cat:active{background:var(--soft)}
+  .cat{display:flex;align-items:center;gap:14px;padding:19px 18px;border:1px solid var(--line);
+    border-radius:18px;margin-bottom:11px;cursor:pointer;background:#fff;transition:.15s;
+    box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .cat:hover{border-color:#d8d8d8;box-shadow:0 4px 14px rgba(0,0,0,.06);transform:translateY(-1px)}
+  .cat:active{background:var(--soft);transform:translateY(0)}
   .cat.locked,.cat.soon{cursor:default}
   .cat .txt{flex:1;min-width:0}
-  .cat .txt .k{font-size:16px;font-weight:700}
-  .cat .txt .j{font-size:12px;color:var(--sub);margin-top:2px}
+  .cat .txt .k{font-size:18px;font-weight:800;letter-spacing:-.3px}
+  .cat .txt .j{font-size:13px;color:var(--sub);margin-top:3px}
   .cat.locked .txt .k,.cat.soon .txt .k{color:#bbb}
-  .cat .meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
-  .cat .num{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
-  .badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.3px}
+  .cat .meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+  .cat .num{font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
+  .badge{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:.3px}
   .badge.free{color:var(--free);background:#eaf7ef}
   .badge.lock{color:#fff;background:var(--lock)}
   .badge.soon{color:#c98a00;background:#fff6e0}
@@ -66,22 +69,24 @@
   .top .count{margin-left:auto;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
   .setup-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 24px;gap:22px}
   .setup-cat{text-align:center;margin-bottom:6px}
-  .setup-cat .k{font-size:24px;font-weight:800}
-  .setup-cat .j{font-size:14px;color:var(--sub);margin-top:4px}
-  .row .lab{font-size:13px;color:var(--sub);font-weight:700;margin-bottom:8px}
-  .seg{display:flex;gap:8px;flex-wrap:wrap}
-  .seg button{flex:1;min-width:56px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:700;cursor:pointer;color:var(--sub)}
-  .seg button.on{border-color:var(--accent);color:var(--accent);background:#fff6f3}
-  .start{padding:17px;border-radius:16px;background:var(--ink);color:#fff;border:none;font-size:16px;font-weight:800;cursor:pointer}
+  .setup-cat .k{font-size:30px;font-weight:900;letter-spacing:-.5px}
+  .setup-cat .j{font-size:15px;color:var(--sub);margin-top:5px}
+  .row .lab{font-size:14px;color:var(--sub);font-weight:700;margin-bottom:10px}
+  .seg{display:flex;gap:9px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:60px;padding:15px;border:1.5px solid var(--line);border-radius:14px;background:#fff;font-weight:800;font-size:15px;cursor:pointer;color:var(--sub);transition:.15s}
+  .seg button.on{border-color:var(--ink);color:var(--ink);background:var(--soft)}
+  .start{padding:19px;border-radius:18px;background:var(--ink);color:#fff;border:none;font-size:17px;font-weight:800;cursor:pointer;letter-spacing:-.3px;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:.15s}
+  .start:active{transform:scale(.98)}
 
   /* ─── 퀴즈 ─── */
-  .timer{height:6px;background:var(--line);margin:0 20px;border-radius:6px;overflow:hidden}
-  .timer>i{display:block;height:100%;background:var(--accent);width:100%;border-radius:6px}
-  .timer-label{text-align:right;font-size:12px;color:var(--sub);margin:6px 20px 0;font-variant-numeric:tabular-nums}
+  .timer{height:8px;background:var(--line);margin:0 20px;border-radius:8px;overflow:hidden}
+  .timer>i{display:block;height:100%;background:var(--accent);width:100%;border-radius:8px;transition:width .05s linear}
+  .timer-label{text-align:right;font-size:13px;color:var(--sub);margin:6px 20px 0;font-variant-numeric:tabular-nums}
   .quiz{flex:1;display:flex;flex-direction:column;padding:8px 20px 20px}
-  .glyphwrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:170px}
-  .glyph{font-size:128px;line-height:1;font-weight:500}
-  .glyph.small{font-size:92px}
+  .glyphwrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:180px}
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+  .glyph{font-size:150px;line-height:1;font-weight:500;animation:pop .18s ease}
+  .glyph.small{font-size:104px}
   .example{min-height:44px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s;margin:-6px 0 10px}
   .example.show{opacity:1}
   .example .card2{background:var(--soft);border-radius:12px;padding:10px 22px;text-align:center}
@@ -92,7 +97,8 @@
   .example .exspeak:active{transform:scale(.9)}
   .example .m{font-size:12px;color:var(--sub);margin-top:2px}
   .opts{display:flex;flex-direction:column;gap:12px}
-  .opt{padding:18px;border:1px solid var(--line);border-radius:16px;background:#fff;font-size:19px;font-weight:600;cursor:pointer;text-align:center;transition:.12s}
+  .opt{padding:21px;border:1.5px solid var(--line);border-radius:18px;background:#fff;font-size:21px;font-weight:700;cursor:pointer;text-align:center;transition:.12s;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .opt:hover{border-color:#d8d8d8}
   .opt:active{background:var(--soft)}
   .opt.correct{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
   .opt.wrong{background:var(--miss-bg);border-color:var(--miss-bd);color:var(--miss)}
@@ -110,8 +116,8 @@
   .done.on{display:flex}
   .scorebox{margin:14px 0 6px}
   .blob{width:180px;height:162px;background:linear-gradient(135deg,#8b7bff,#b57bff);border-radius:46% 54% 50% 50%/54% 46% 54% 46%;display:flex;align-items:center;justify-content:center}
-  .score{font-size:58px;font-weight:800;color:#fff;letter-spacing:-1px;text-align:center}
-  .score small{display:block;font-size:22px;font-weight:600;opacity:.85;margin-top:-4px}
+  .score{font-size:64px;font-weight:900;color:#fff;letter-spacing:-1px;text-align:center}
+  .score small{display:block;font-size:23px;font-weight:600;opacity:.85;margin-top:-4px}
   .done .label{font-size:15px;color:var(--sub);margin-bottom:22px;text-align:center}
   .miss-list{width:100%;max-width:360px}
   .miss-list h3{font-size:13px;color:var(--sub);margin-bottom:10px;font-weight:700}
@@ -120,7 +126,8 @@
   .mrow .ma{font-size:15px;color:var(--sub)}
   .mrow .ma b{color:var(--ink);font-weight:700}
   .actions{margin-top:auto;width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px;padding-top:26px}
-  .actions button{padding:17px;border-radius:16px;font-size:15px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff}
+  .actions button{padding:19px;border-radius:18px;font-size:16px;font-weight:800;cursor:pointer;border:1.5px solid var(--line);background:#fff;transition:.15s}
+  .actions button:active{transform:scale(.98)}
   .actions .primary{background:var(--accent);color:#fff;border:none}
   .actions button:disabled{opacity:.35;cursor:default}
 
@@ -269,7 +276,7 @@ const NAV = {
   ],
 };
 
-// ══ 실제 카드 데이터 (내장 폴백: 카나+N5 일부. 실데이터는 cards_free.json/GAS에서 로드) ══
+// ══ 실제 카드 데이터 (내장 폴백: 카나. 실데이터는 cards_free.json/GAS에서 로드) ══
 const DATA = {
  hiragana: [
   ["あ","a","아"],["い","i","이"],["う","u","우"],["え","e","에"],["お","o","오"],
@@ -416,8 +423,13 @@ function choose(btn,o,q){
   sfx(ok?"ok":"fail");
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
-  setTimeout(()=>speak(showEx ? q.exy : q.speak), 320);
-  setTimeout(nextQ, showEx ? 1900 : 950);
+  if(ok){
+    setTimeout(praise, 200);                                   // 정답: 칭찬 보이스
+    if(showEx) setTimeout(()=>speak(q.exy), 1200);             // 그 후 예문 발음
+  } else {
+    setTimeout(()=>speak(showEx ? q.exy : q.speak), 450);      // 오답: 부저 후 정답 발음
+  }
+  setTimeout(nextQ, showEx ? 3200 : (ok ? 1500 : 1400));       // 예문 재생이 잘리지 않게 여유
 }
 function timeUp(){
   if(answered)return; answered=true; misses.push(deck[qi]);
@@ -426,8 +438,8 @@ function timeUp(){
   sfx("fail");
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
-  setTimeout(()=>speak(showEx ? q.exy : q.speak), 320);
-  setTimeout(nextQ, showEx ? 1900 : 950);
+  setTimeout(()=>speak(showEx ? q.exy : q.speak), 450);
+  setTimeout(nextQ, showEx ? 3200 : 1400);
 }
 function showExample(q){
   const e=$("example");
@@ -460,26 +472,42 @@ function speak(t){
   speakWS(t);
 }
 function speakWS(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).split("/")[0]);u.lang="ja-JP";u.rate=0.85;speechSynthesis.speak(u);}catch(e){}}
-// ── 효과음 (파일 없이 Web Audio로 생성) ──
+// ── 효과음: 정답=밝은 아르페지오+일본어 칭찬, 오답=강한 부저 ──
 let _actx;
-function tone(freq,delay,dur,wave){
-  const t=_actx.currentTime+delay;
-  const o=_actx.createOscillator(), g=_actx.createGain();
+function _ac(){ _actx=_actx||new (window.AudioContext||window.webkitAudioContext)(); if(_actx.state==="suspended")_actx.resume(); return _actx; }
+function tone(freq,delay,dur,wave,vol){
+  const ctx=_ac(), t=ctx.currentTime+delay;
+  const o=ctx.createOscillator(), g=ctx.createGain();
   o.type=wave||"sine"; o.frequency.value=freq;
-  o.connect(g); g.connect(_actx.destination);
+  o.connect(g); g.connect(ctx.destination);
   g.gain.setValueAtTime(0.0001,t);
-  g.gain.exponentialRampToValueAtTime(0.28,t+0.015);
+  g.gain.exponentialRampToValueAtTime(vol||0.28,t+0.015);
   g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
   o.start(t); o.stop(t+dur+0.02);
 }
+// 일본어 칭찬 보이스 (사전생성 mp3 있으면 그걸로, 없으면 TTS 폴백)
+const PRAISE=["すごい!","かっこいい!","完璧!","いいね!","天才!","やったね!","正解!"];
+function praise(){ speak(PRAISE[Math.random()*PRAISE.length|0]); }
 function sfx(type){
   try{
-    _actx=_actx||new (window.AudioContext||window.webkitAudioContext)();
-    if(_actx.state==="suspended")_actx.resume();
-    if(type==="ok"){ tone(659,0,0.10); tone(880,0.10,0.16); }
-    else{ tone(196,0,0.14,"square"); tone(155,0.15,0.20,"square"); }
+    if(type==="ok"){   // 밝은 3단 상승 아르페지오 (A5→D6→G6)
+      tone(880,0,0.09,"sine",0.26); tone(1174.7,0.08,0.12,"sine",0.26); tone(1568,0.16,0.22,"sine",0.22);
+    } else {           // 묵직한 이중 부저 (오답 임팩트)
+      tone(110,0,0.28,"sawtooth",0.42); tone(104,0.01,0.28,"square",0.30);
+      tone(98,0.32,0.36,"sawtooth",0.45); tone(92,0.33,0.36,"square",0.32);
+    }
   }catch(e){}
 }
+// 모바일 오디오 언락: 최초 터치/클릭 1회에서 오디오 재생 권한 확보 (iOS/안드로이드 자동재생 정책 대응)
+let _unlocked=false;
+function _unlockAudio(){
+  if(_unlocked) return; _unlocked=true;
+  try{ _ac(); }catch(e){}
+  try{ const a=new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="); a.volume=0; const p=a.play(); if(p&&p.then)p.catch(()=>{}); }catch(e){}
+  try{ speechSynthesis.cancel(); }catch(e){}
+}
+document.addEventListener("pointerdown",_unlockAudio,{once:true});
+document.addEventListener("touchend",_unlockAudio,{once:true});
 
 function finish(){
   clearInterval(timerId);
