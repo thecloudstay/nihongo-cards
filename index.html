@@ -148,6 +148,7 @@
   <div class="home-hd">
     <div class="app">일본어 카드모음<div class="en">にほんご カード · 読みテスト</div></div>
     <button class="restore-link" onclick="promptRestore()">구매 복원</button>
+    <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켜김</button>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">かな 기초<span class="s">仮名</span></button>
@@ -458,7 +459,7 @@ function togglePause(){ paused=!paused;
 let AUDIO_MANIFEST=null; const _audioCache={};
 (async()=>{ try{ const r=await fetch("audio_manifest.json",{cache:"no-store"}); if(r.ok) AUDIO_MANIFEST=await r.json(); }catch(e){} })();
 function speak(t){
-  t=String(t||""); if(!t) return;
+  t=String(t||""); if(!t||MUTED) return;
   if(AUDIO_MANIFEST){
     const h=AUDIO_MANIFEST[t]||AUDIO_MANIFEST[t.split("/")[0]];
     if(h){
@@ -488,7 +489,16 @@ function tone(freq,delay,dur,wave,vol){
 // 일본어 칭찬 보이스 (사전생성 mp3 있으면 그걸로, 없으면 TTS 폴백)
 const PRAISE=["すごい!","かっこいい!","完璧!","いいね!","天才!","やったね!","正解!"];
 function praise(){ speak(PRAISE[Math.random()*PRAISE.length|0]); }
+// ── 소리 끄기 토글 ──
+let MUTED = (()=>{ try{ return localStorage.getItem('muted')==='1'; }catch(e){ return false; } })();
+function toggleMute(){
+  MUTED=!MUTED; try{ localStorage.setItem('muted', MUTED?'1':'0'); }catch(e){}
+  const b=$("muteBtn"); if(b) b.textContent = MUTED ? "🔇 소리 꿈" : "🔊 소리 켜김";
+  if(MUTED){ try{ speechSynthesis.cancel(); }catch(e){} }
+  toast(MUTED ? "소리를 껌어요" : "소리를 켰어요");
+}
 function sfx(type){
+  if(MUTED) return;
   try{
     if(type==="ok"){   // 밝은 3단 상승 아르페지오 (A5→D6→G6)
       tone(880,0,0.09,"sine",0.26); tone(1174.7,0.08,0.12,"sine",0.26); tone(1568,0.16,0.22,"sine",0.22);
@@ -621,6 +631,7 @@ async function promptRestore(){
 }
 
 async function initApp(){
+  const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 꿈";
   await loadData();
   renderNav();
 }
