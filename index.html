@@ -289,6 +289,18 @@ const NAV = {
       {code:"hiragana",ko:"히라가나",jp:"ひらがな",n:46,ready:true,tier:"free"},
       {code:"katakana",ko:"가타카나",jp:"カタカナ",n:111,ready:false,tier:"free"},
     ]},
+    {ko:"기초 필수",jp:"基礎",items:[
+      {code:"num",ko:"숫자",jp:"数字",n:18,ready:false,tier:"free"},
+      {code:"week",ko:"요일·날짜",jp:"曜日・日付",n:17,ready:false,tier:"free"},
+      {code:"time",ko:"시간",jp:"時間",n:18,ready:false,tier:"free"},
+      {code:"body",ko:"신체",jp:"体",n:25,ready:false,tier:"free"},
+      {code:"dir",ko:"방향·위치",jp:"方向・位置",n:20,ready:false,tier:"free"},
+      {code:"color",ko:"색깔",jp:"色",n:18,ready:false,tier:"free"},
+      {code:"family",ko:"가족",jp:"家族",n:20,ready:false,tier:"free"},
+      {code:"weather",ko:"계절·날씨",jp:"季節・天気",n:20,ready:false,tier:"free"},
+      {code:"greet",ko:"인사·표현",jp:"挨拶",n:20,ready:false,tier:"free"},
+      {code:"ask",ko:"지시·의문",jp:"指示・疑問",n:20,ready:false,tier:"free"},
+    ]},
   ],
   kanji:[
     {ko:"자격시험 JLPT",jp:"日本語能力試験",items:[
@@ -332,7 +344,7 @@ const NAV = {
   ],
 };
 
-// ══ 실제 카드 데이터 (내장 폴백: 카나. 실데이터는 cards_free.json/GAS에서 로드) ══
+// ══ 실제 카드 데이터 (지금은 hira_seion만) ══
 const DATA = {
  hiragana: [
   ["あ","a","아"],["い","i","이"],["う","u","우"],["え","e","에"],["お","o","오"],
@@ -346,6 +358,107 @@ const DATA = {
   ["ら","ra","라"],["り","ri","리"],["る","ru","루"],["れ","re","레"],["ろ","ro","로"],
   ["わ","wa","와"],["を","o","오"],["ん","n","응(ㄴ)"],
  ].map(x=>({front:x[0],romaji:x[1],ko:x[2],speak:x[0],label:`${x[2]} [${x[1]}]`})),
+ N5: [
+  {front:"日",romaji:"にち/ひ",ko:"날·해",speak:"にち",label:"날·해 [にち/ひ]",ex:"日曜日",exy:"にちようび",exk:"일요일"},
+  {front:"一",romaji:"いち",ko:"하나",speak:"いち",label:"하나 [いち]",ex:"一人",exy:"ひとり",exk:"한 사람"},
+  {front:"二",romaji:"に",ko:"둘",speak:"に",label:"둘 [に]",ex:"二つ",exy:"ふたつ",exk:"두 개"},
+  {front:"三",romaji:"さん",ko:"셋",speak:"さん",label:"셋 [さん]",ex:"三日",exy:"みっか",exk:"3일"},
+  {front:"四",romaji:"し/よん",ko:"넷",speak:"し",label:"넷 [し/よん]",ex:"四月",exy:"しがつ",exk:"4월"},
+  {front:"五",romaji:"ご",ko:"다섯",speak:"ご",label:"다섯 [ご]",ex:"五時",exy:"ごじ",exk:"5시"},
+  {front:"六",romaji:"ろく",ko:"여섯",speak:"ろく",label:"여섯 [ろく]",ex:"六日",exy:"むいか",exk:"6일"},
+  {front:"七",romaji:"しち/なな",ko:"일곱",speak:"しち",label:"일곱 [しち/なな]",ex:"七月",exy:"しちがつ",exk:"7월"},
+  {front:"八",romaji:"はち",ko:"여덟",speak:"はち",label:"여덟 [はち]",ex:"八日",exy:"ようか",exk:"8일"},
+  {front:"九",romaji:"きゅう/く",ko:"아홉",speak:"きゅう",label:"아홉 [きゅう/く]",ex:"九月",exy:"くがつ",exk:"9월"},
+  {front:"十",romaji:"じゅう",ko:"열",speak:"じゅう",label:"열 [じゅう]",ex:"十分",exy:"じゅっぷん",exk:"10분"},
+  {front:"百",romaji:"ひゃく",ko:"백",speak:"ひゃく",label:"백 [ひゃく]",ex:"百円",exy:"ひゃくえん",exk:"100엔"},
+  {front:"千",romaji:"せん",ko:"천",speak:"せん",label:"천 [せん]",ex:"千円",exy:"せんえん",exk:"1000엔"},
+  {front:"万",romaji:"まん",ko:"만",speak:"まん",label:"만 [まん]",ex:"一万",exy:"いちまん",exk:"1만"},
+  {front:"円",romaji:"えん",ko:"엔·둥글다",speak:"えん",label:"엔·둥글다 [えん]",ex:"百円",exy:"ひゃくえん",exk:"100엔"},
+  {front:"時",romaji:"じ",ko:"때·시간",speak:"じ",label:"때·시간 [じ]",ex:"時間",exy:"じかん",exk:"시간"},
+  {front:"人",romaji:"ひと",ko:"사람",speak:"ひと",label:"사람 [ひと]",ex:"日本人",exy:"にほんじん",exk:"일본인"},
+  {front:"本",romaji:"ほん",ko:"책·근본",speak:"ほん",label:"책·근본 [ほん]",ex:"日本",exy:"にほん",exk:"일본"},
+  {front:"中",romaji:"なか",ko:"가운데·안",speak:"なか",label:"가운데·안 [なか]",ex:"中国",exy:"ちゅうごく",exk:"중국"},
+  {front:"大",romaji:"おお",ko:"크다",speak:"おお",label:"크다 [おお]",ex:"大学",exy:"だいがく",exk:"대학"},
+  {front:"小",romaji:"ちい",ko:"작다",speak:"ちい",label:"작다 [ちい]",ex:"小学校",exy:"しょうがっこう",exk:"초등학교"},
+  {front:"上",romaji:"うえ",ko:"위",speak:"うえ",label:"위 [うえ]",ex:"上手",exy:"じょうず",exk:"능숙함"},
+  {front:"下",romaji:"した",ko:"아래",speak:"した",label:"아래 [した]",ex:"下手",exy:"へた",exk:"서투름"},
+  {front:"左",romaji:"ひだり",ko:"왼쪽",speak:"ひだり",label:"왼쪽 [ひだり]",ex:"左右",exy:"さゆう",exk:"좌우"},
+  {front:"右",romaji:"みぎ",ko:"오른쪽",speak:"みぎ",label:"오른쪽 [みぎ]",ex:"右手",exy:"みぎて",exk:"오른손"},
+  {front:"前",romaji:"まえ",ko:"앞",speak:"まえ",label:"앞 [まえ]",ex:"前日",exy:"ぜんじつ",exk:"전날"},
+  {front:"後",romaji:"うし/あと",ko:"뒤·후",speak:"うし",label:"뒤·후 [うし/あと]",ex:"午後",exy:"ごご",exk:"오후"},
+  {front:"東",romaji:"ひがし",ko:"동쪽",speak:"ひがし",label:"동쪽 [ひがし]",ex:"東京",exy:"とうきょう",exk:"도쿄"},
+  {front:"西",romaji:"にし",ko:"서쪽",speak:"にし",label:"서쪽 [にし]",ex:"西口",exy:"にしぐち",exk:"서쪽 출구"},
+  {front:"南",romaji:"みなみ",ko:"남쪽",speak:"みなみ",label:"남쪽 [みなみ]",ex:"南口",exy:"みなみぐち",exk:"남쪽 출구"},
+  {front:"北",romaji:"きた",ko:"북쪽",speak:"きた",label:"북쪽 [きた]",ex:"北口",exy:"きたぐち",exk:"북쪽 출구"},
+  {front:"外",romaji:"そと",ko:"밖",speak:"そと",label:"밖 [そと]",ex:"外国",exy:"がいこく",exk:"외국"},
+  {front:"名",romaji:"な",ko:"이름",speak:"な",label:"이름 [な]",ex:"名前",exy:"なまえ",exk:"이름"},
+  {front:"女",romaji:"おんな",ko:"여자",speak:"おんな",label:"여자 [おんな]",ex:"女性",exy:"じょせい",exk:"여성"},
+  {front:"男",romaji:"おとこ",ko:"남자",speak:"おとこ",label:"남자 [おとこ]",ex:"男性",exy:"だんせい",exk:"남성"},
+  {front:"子",romaji:"こ",ko:"아이",speak:"こ",label:"아이 [こ]",ex:"子供",exy:"こども",exk:"아이"},
+  {front:"学",romaji:"がく",ko:"배우다",speak:"がく",label:"배우다 [がく]",ex:"学生",exy:"がくせい",exk:"학생"},
+  {front:"校",romaji:"こう",ko:"학교",speak:"こう",label:"학교 [こう]",ex:"学校",exy:"がっこう",exk:"학교"},
+  {front:"先",romaji:"さき",ko:"먼저",speak:"さき",label:"먼저 [さき]",ex:"先生",exy:"せんせい",exk:"선생님"},
+  {front:"生",romaji:"せい/なま",ko:"살다·나다",speak:"せい",label:"살다·나다 [せい/なま]",ex:"学生",exy:"がくせい",exk:"학생"},
+  {front:"年",romaji:"とし",ko:"해·나이",speak:"とし",label:"해·나이 [とし]",ex:"来年",exy:"らいねん",exk:"내년"},
+  {front:"月",romaji:"つき",ko:"달",speak:"つき",label:"달 [つき]",ex:"月曜日",exy:"げつようび",exk:"월요일"},
+  {front:"火",romaji:"ひ",ko:"불",speak:"ひ",label:"불 [ひ]",ex:"火曜日",exy:"かようび",exk:"화요일"},
+  {front:"水",romaji:"みず",ko:"물",speak:"みず",label:"물 [みず]",ex:"水曜日",exy:"すいようび",exk:"수요일"},
+  {front:"木",romaji:"き",ko:"나무",speak:"き",label:"나무 [き]",ex:"木曜日",exy:"もくようび",exk:"목요일"},
+  {front:"金",romaji:"かね",ko:"쇠·돈",speak:"かね",label:"쇠·돈 [かね]",ex:"金曜日",exy:"きんようび",exk:"금요일"},
+  {front:"土",romaji:"つち",ko:"흙",speak:"つち",label:"흙 [つち]",ex:"土曜日",exy:"どようび",exk:"토요일"},
+  {front:"曜",romaji:"よう",ko:"요일",speak:"よう",label:"요일 [よう]",ex:"何曜日",exy:"なんようび",exk:"무슨 요일"},
+  {front:"何",romaji:"なに/なん",ko:"무엇",speak:"なに",label:"무엇 [なに/なん]",ex:"何時",exy:"なんじ",exk:"몇 시"},
+  {front:"今",romaji:"いま",ko:"지금",speak:"いま",label:"지금 [いま]",ex:"今日",exy:"きょう",exk:"오늘"},
+  {front:"行",romaji:"い/おこな",ko:"가다·행하다",speak:"い",label:"가다·행하다 [い/おこな]",ex:"旅行",exy:"りょこう",exk:"여행"},
+  {front:"来",romaji:"く/らい",ko:"오다",speak:"く",label:"오다 [く/らい]",ex:"来週",exy:"らいしゅう",exk:"다음 주"},
+  {front:"帰",romaji:"かえ",ko:"돌아가다",speak:"かえ",label:"돌아가다 [かえ]",ex:"帰国",exy:"きこく",exk:"귀국"},
+  {front:"食",romaji:"た/しょく",ko:"먹다",speak:"た",label:"먹다 [た/しょく]",ex:"食堂",exy:"しょくどう",exk:"식당"},
+  {front:"飲",romaji:"の",ko:"마시다",speak:"の",label:"마시다 [の]",ex:"飲食",exy:"いんしょく",exk:"음식"},
+  {front:"見",romaji:"み",ko:"보다",speak:"み",label:"보다 [み]",ex:"見学",exy:"けんがく",exk:"견학"},
+  {front:"聞",romaji:"き",ko:"듣다·묻다",speak:"き",label:"듣다·묻다 [き]",ex:"新聞",exy:"しんぶん",exk:"신문"},
+  {front:"読",romaji:"よ",ko:"읽다",speak:"よ",label:"읽다 [よ]",ex:"読書",exy:"どくしょ",exk:"독서"},
+  {front:"書",romaji:"か",ko:"쓰다",speak:"か",label:"쓰다 [か]",ex:"書店",exy:"しょてん",exk:"서점"},
+  {front:"話",romaji:"はな/はなし",ko:"말하다",speak:"はな",label:"말하다 [はな/はなし]",ex:"電話",exy:"でんわ",exk:"전화"},
+  {front:"買",romaji:"か",ko:"사다",speak:"か",label:"사다 [か]",ex:"買い物",exy:"かいもの",exk:"쇼핑"},
+  {front:"出",romaji:"で/だ",ko:"나가다·내다",speak:"で",label:"나가다·내다 [で/だ]",ex:"出口",exy:"でぐち",exk:"출구"},
+  {front:"入",romaji:"はい/い",ko:"들어가다",speak:"はい",label:"들어가다 [はい/い]",ex:"入口",exy:"いりぐち",exk:"입구"},
+  {front:"休",romaji:"やす",ko:"쉬다",speak:"やす",label:"쉬다 [やす]",ex:"休日",exy:"きゅうじつ",exk:"휴일"},
+  {front:"立",romaji:"た",ko:"서다",speak:"た",label:"서다 [た]",ex:"国立",exy:"こくりつ",exk:"국립"},
+  {front:"会",romaji:"あ/かい",ko:"만나다·모임",speak:"あ",label:"만나다·모임 [あ/かい]",ex:"会社",exy:"かいしゃ",exk:"회사"},
+  {front:"社",romaji:"しゃ",ko:"회사·모임",speak:"しゃ",label:"회사·모임 [しゃ]",ex:"会社",exy:"かいしゃ",exk:"회사"},
+  {front:"国",romaji:"くに",ko:"나라",speak:"くに",label:"나라 [くに]",ex:"外国",exy:"がいこく",exk:"외국"},
+  {front:"語",romaji:"ご",ko:"말·언어",speak:"ご",label:"말·언어 [ご]",ex:"日本語",exy:"にほんご",exk:"일본어"},
+  {front:"電",romaji:"でん",ko:"전기",speak:"でん",label:"전기 [でん]",ex:"電車",exy:"でんしゃ",exk:"전철"},
+  {front:"車",romaji:"くるま",ko:"차·수레",speak:"くるま",label:"차·수레 [くるま]",ex:"電車",exy:"でんしゃ",exk:"전철"},
+  {front:"駅",romaji:"えき",ko:"역",speak:"えき",label:"역 [えき]",ex:"駅前",exy:"えきまえ",exk:"역 앞"},
+  {front:"道",romaji:"みち",ko:"길",speak:"みち",label:"길 [みち]",ex:"道路",exy:"どうろ",exk:"도로"},
+  {front:"店",romaji:"みせ",ko:"가게",speak:"みせ",label:"가게 [みせ]",ex:"書店",exy:"しょてん",exk:"서점"},
+  {front:"週",romaji:"しゅう",ko:"주(週)",speak:"しゅう",label:"주(週) [しゅう]",ex:"毎週",exy:"まいしゅう",exk:"매주"},
+  {front:"毎",romaji:"まい",ko:"매·마다",speak:"まい",label:"매·마다 [まい]",ex:"毎日",exy:"まいにち",exk:"매일"},
+  {front:"午",romaji:"ご",ko:"낮",speak:"ご",label:"낮 [ご]",ex:"午前",exy:"ごぜん",exk:"오전"},
+  {front:"半",romaji:"はん",ko:"절반",speak:"はん",label:"절반 [はん]",ex:"半分",exy:"はんぶん",exk:"절반"},
+  {front:"分",romaji:"ふん/ぶん",ko:"나누다·분",speak:"ふん",label:"나누다·분 [ふん/ぶん]",ex:"半分",exy:"はんぶん",exk:"절반"},
+  {front:"間",romaji:"あいだ",ko:"사이",speak:"あいだ",label:"사이 [あいだ]",ex:"時間",exy:"じかん",exk:"시간"},
+  {front:"方",romaji:"かた",ko:"방향·분",speak:"かた",label:"방향·분 [かた]",ex:"方法",exy:"ほうほう",exk:"방법"},
+  {front:"新",romaji:"あたら",ko:"새롭다",speak:"あたら",label:"새롭다 [あたら]",ex:"新聞",exy:"しんぶん",exk:"신문"},
+  {front:"古",romaji:"ふる",ko:"오래되다",speak:"ふる",label:"오래되다 [ふる]",ex:"中古",exy:"ちゅうこ",exk:"중고"},
+  {front:"高",romaji:"たか",ko:"높다·비싸다",speak:"たか",label:"높다·비싸다 [たか]",ex:"高校",exy:"こうこう",exk:"고등학교"},
+  {front:"安",romaji:"やす",ko:"싸다·편안",speak:"やす",label:"싸다·편안 [やす]",ex:"安心",exy:"あんしん",exk:"안심"},
+  {front:"長",romaji:"なが",ko:"길다",speak:"なが",label:"길다 [なが]",ex:"社長",exy:"しゃちょう",exk:"사장"},
+  {front:"白",romaji:"しろ",ko:"희다",speak:"しろ",label:"희다 [しろ]",ex:"白紙",exy:"はくし",exk:"백지"},
+  {front:"天",romaji:"てん",ko:"하늘",speak:"てん",label:"하늘 [てん]",ex:"天気",exy:"てんき",exk:"날씨"},
+  {front:"気",romaji:"き",ko:"기운·마음",speak:"き",label:"기운·마음 [き]",ex:"元気",exy:"げんき",exk:"건강함"},
+  {front:"雨",romaji:"あめ",ko:"비",speak:"あめ",label:"비 [あめ]",ex:"大雨",exy:"おおあめ",exk:"큰비"},
+  {front:"花",romaji:"はな",ko:"꽃",speak:"はな",label:"꽃 [はな]",ex:"花見",exy:"はなみ",exk:"꽃구경"},
+  {front:"空",romaji:"そら",ko:"하늘·비다",speak:"そら",label:"하늘·비다 [そら]",ex:"空港",exy:"くうこう",exk:"공항"},
+  {front:"川",romaji:"かわ",ko:"강",speak:"かわ",label:"강 [かわ]",ex:"川口",exy:"かわぐち",exk:"강 어귀"},
+  {front:"山",romaji:"やま",ko:"산",speak:"やま",label:"산 [やま]",ex:"富士山",exy:"ふじさん",exk:"후지산"},
+  {front:"魚",romaji:"さかな",ko:"물고기",speak:"さかな",label:"물고기 [さかな]",ex:"金魚",exy:"きんぎょ",exk:"금붕어"},
+  {front:"犬",romaji:"いぬ",ko:"개",speak:"いぬ",label:"개 [いぬ]",ex:"子犬",exy:"こいぬ",exk:"강아지"},
+  {front:"友",romaji:"とも",ko:"친구",speak:"とも",label:"친구 [とも]",ex:"友人",exy:"ゆうじん",exk:"친구"},
+  {front:"父",romaji:"ちち",ko:"아버지",speak:"ちち",label:"아버지 [ちち]",ex:"父親",exy:"ちちおや",exk:"아버지"},
+  {front:"母",romaji:"はは",ko:"어머니",speak:"はは",label:"어머니 [はは]",ex:"母親",exy:"ははおや",exk:"어머니"}
+ ],
 };
 
 const $=id=>document.getElementById(id);
@@ -364,8 +477,10 @@ const isKanjiCat=()=> curCat && !["hiragana","katakana"].includes(curCat.code);
 const optText=c=> !isKanjiCat() ? c.label : (CONF.mode==="reading" ? c.romaji : c.ko);
 
 // ══ 구매·소유(entitlement) ══ 스테이지·카테고리별 1회 구매 = 영구 소유
+// 가격(표시용). 카테고리 코드별로 다르게 줄 수 있고, 없으면 _default 사용.
 // 가격 정책(확정): 자당 30원 × 유료 80자(100자 중 20자 무료 미리보기) = 팩당 ₩2,400 균일
 const PACK_PRICE = { _default:"₩2,400" };
+// 배포 후 Paddle 체크아웃 링크를 카테고리 코드별로 채우면 '구매' 시 그 링크가 열림.
 const CHECKOUT_URL = {};   // (구방식 폴백용 — 현재 미사용)
 // ── Paddle 결제 (라이브) ──
 const PADDLE_CLIENT_TOKEN = "live_d8a7d39a54fd3b9827f27ef03e1"; // 공개용 클라이언트 토큰
@@ -400,10 +515,11 @@ function initPaddle(){
     }
   }catch(e){}
 }
+// 보유팩: 결제 완료(서버 entitlement) 또는 로컬 저장. 지금은 기기 localStorage.
 let OWNED = new Set((()=>{ try{ return JSON.parse(localStorage.getItem('owned_packs')||'[]'); }catch(e){ return []; } })());
 function saveOwned(){ try{ localStorage.setItem('owned_packs', JSON.stringify([...OWNED])); }catch(e){} }
-function isOwned(code){ return OWNED.has(code) || OWNED.has("ALL"); }
-function grantPack(code){ OWNED.add(code); saveOwned(); renderNav(); }
+function isOwned(code){ return OWNED.has(code) || OWNED.has("ALL"); }   // 라이프타임(ALL) 포함
+function grantPack(code){ OWNED.add(code); saveOwned(); renderNav(); }   // 구매 완료 후 호출(추후 서버 연동)
 function isUnlocked(it){ return it.tier!=="paid" || OWNED.has(it.code); }
 function priceOf(it){ return PACK_PRICE[it.code] || PACK_PRICE._default; }
 function openBuy(it){
@@ -419,6 +535,7 @@ function openBuy(it){
   else { toast(`${it.ko} — ${priceOf(it)} · 결제 준비 중`); }
 }
 
+function show(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $(id).classList.add(id==="done"?"on":"on"); if(id==="done"){$("done").classList.add("on");} }
 function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1800); }
 
 // ── 네비게이터 렌더 ──
@@ -438,6 +555,7 @@ function renderNav(){
       const el=document.createElement("div");
       const paid = it.tier==="paid";
       const owned = paid && isOwned(it.code);
+      // 무료인데 데이터 없는 것만 비활성(준비중). 유료는 항상 클릭 가능(구매/열기).
       el.className="cat"+((!paid && !it.ready)?" soon":"");
       const have = (DATA[it.code]||[]).length;
       let badge;
@@ -461,12 +579,12 @@ async function pickCat(it){
   const paid = it.tier==="paid";
   const owned = paid && isOwned(it.code);
   const have = (DATA[it.code]||[]).length;
-  if(!paid && !it.ready){ toast("곧 준비됩니다"); return; }
-  if(paid && !owned){
+  if(!paid && !it.ready){ toast("곧 준비됩니다"); return; }            // 무료 준비중
+  if(paid && !owned){                                                 // 유료 미보유 → 미리보기 20장
     if(!have){ toast("곧 준비됩니다"); return; }
     previewMode=true;
   } else previewMode=false;
-  if(paid && owned && have<=20){
+  if(paid && owned && have<=20){                                      // 보유 유료 → 전체 100장 지연 로딩
     const ok = await loadPaidCategory(it);
     if(!ok){ toast("구매 복원(이메일+키)이 필요하거나 서버 응답에 실패했어요"); return; }
   }
@@ -510,6 +628,7 @@ function loadQ(){
   const opts=shuffle([q,...wrongs]);
   const box=$("opts");box.className="opts";box.innerHTML="";
   opts.forEach(o=>{const b=document.createElement("button");b.className="opt";b.textContent=optText(o);b.dataset.front=o.front;b.onclick=()=>choose(b,o,q);box.appendChild(b);});
+  // 문제가 뜰 때 발음: 읽기 맞히기 모드는 답이 노출되므로 제외, 그 외(뜻모드·카나)는 바로 발음
   if(!(isKanjiCat() && CONF.mode==="reading")){ sched(()=>speak(q.speak), 250); }
   startTimer();
 }
@@ -559,240 +678,4 @@ function showExample(q){
 function skip(){ if(!answered)timeUp(); else nextQ(); }
 function nextQ(){ if(qi<deck.length-1){qi++;loadQ();}else finish(); }
 function togglePause(){ paused=!paused;
-  $("pauseBtn").innerHTML=paused?'<svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z" fill="#1a1a1a" stroke="none"/></svg>':'<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
-}
-// ── 발음: 사전생성 MP3(audio_manifest.json) 우선 → Web Speech 폴백 ──
-let AUDIO_MANIFEST=null; const _audioCache={};
-(async()=>{ try{ const r=await fetch("audio_manifest.json",{cache:"no-store"}); if(r.ok) AUDIO_MANIFEST=await r.json(); }catch(e){} })();
-function speak(t){
-  t=String(t||""); if(!t||MUTED) return;
-  if(AUDIO_MANIFEST){
-    const h=AUDIO_MANIFEST[t]||AUDIO_MANIFEST[t.split("/")[0]];
-    if(h){
-      try{
-        const a=_audioCache[h]||(_audioCache[h]=new Audio("audio/"+h+".mp3"));
-        a.currentTime=0; a.play().catch(()=>speakWS(t));
-        return;
-      }catch(e){}
-    }
-  }
-  speakWS(t);
-}
-function speakWS(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).split("/")[0]);u.lang="ja-JP";u.rate=0.85;speechSynthesis.speak(u);}catch(e){}}
-// ── 효과음: 정답=임팩트 있는 띠링↑, 오답=강한 부저 ──
-let _actx;
-function _ac(){ _actx=_actx||new (window.AudioContext||window.webkitAudioContext)(); if(_actx.state==="suspended")_actx.resume(); return _actx; }
-function tone(freq,delay,dur,wave,vol){
-  const ctx=_ac(), t=ctx.currentTime+delay;
-  const o=ctx.createOscillator(), g=ctx.createGain();
-  o.type=wave||"sine"; o.frequency.value=freq;
-  o.connect(g); g.connect(ctx.destination);
-  g.gain.setValueAtTime(0.0001,t);
-  g.gain.exponentialRampToValueAtTime(vol||0.28,t+0.015);
-  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
-  o.start(t); o.stop(t+dur+0.02);
-}
-// ── 소리 끄기 토글 ──
-let MUTED = (()=>{ try{ return localStorage.getItem('muted')==='1'; }catch(e){ return false; } })();
-function toggleMute(){
-  MUTED=!MUTED; try{ localStorage.setItem('muted', MUTED?'1':'0'); }catch(e){}
-  const b=$("muteBtn"); if(b) b.textContent = MUTED ? "🔇 소리 끔" : "🔊 소리 켬";
-  if(MUTED){ try{ speechSynthesis.cancel(); }catch(e){} }
-  toast(MUTED ? "소리를 껐어요" : "소리를 켰어요");
-}
-function sfx(type){
-  if(MUTED) return;
-  try{
-    if(type==="ok"){   // 임팩트 있는 "띠링↑" (게임 코인 스타일, 짧고 경쾌)
-      tone(1318.5,0,0.06,"triangle",0.38); tone(1760,0.06,0.08,"triangle",0.36); tone(2637,0.13,0.20,"sine",0.30);
-    } else {           // 묵직한 이중 부저 (오답 임팩트)
-      tone(110,0,0.28,"sawtooth",0.42); tone(104,0.01,0.28,"square",0.30);
-      tone(98,0.32,0.36,"sawtooth",0.45); tone(92,0.33,0.36,"square",0.32);
-    }
-  }catch(e){}
-}
-// 모바일 오디오 언락: 최초 터치/클릭 1회에서 오디오 재생 권한 확보 (iOS/안드로이드 자동재생 정책 대응)
-let _unlocked=false;
-function _unlockAudio(){
-  if(_unlocked) return; _unlocked=true;
-  try{ _ac(); }catch(e){}
-  try{ const a=new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="); a.volume=0; const p=a.play(); if(p&&p.then)p.catch(()=>{}); }catch(e){}
-  try{ speechSynthesis.cancel(); }catch(e){}
-}
-document.addEventListener("pointerdown",_unlockAudio,{once:true});
-document.addEventListener("touchend",_unlockAudio,{once:true});
-
-function finish(){
-  clearInterval(timerId);
-  $("scoreNum").textContent=correct; $("scoreTot").textContent=deck.length;
-  const seen=new Set(); const uniq=misses.filter(m=>{if(seen.has(m.front))return false;seen.add(m.front);return true;});
-  const rows=$("missRows");rows.innerHTML="";
-  uniq.forEach(m=>{const d=document.createElement("div");d.className="mrow";d.innerHTML=`<div class="mg jp">${m.front}</div><div class="ma"><b>${m.ko}</b> · ${m.romaji}</div>`;rows.appendChild(d);});
-  if(uniq.length===0){
-    $("doneLabel").textContent=reviewRound>0?"복습 완료! 모두 맞혔어요 🎉":"만점! 모두 맞혔어요 🎉";
-    $("blob").style.background="linear-gradient(135deg,#33c07a,#6ad39a)";
-    $("missWrap").style.display="none"; $("reviewBtn").disabled=true; $("reviewBtn").textContent="다시 풀 문자 없음";
-  }else{
-    $("doneLabel").textContent=reviewRound>0?`복습 ${reviewRound}회차 결과`:"내 점수";
-    $("blob").style.background="linear-gradient(135deg,#8b7bff,#b57bff)";
-    $("missTitle").textContent=`틀린 문자 ${uniq.length}개`; $("missWrap").style.display="block";
-    $("reviewBtn").disabled=false; $("reviewBtn").textContent=`틀린 문자 ${uniq.length}개 다시 풀기`;
-  }
-  const oldCta=$("buyCta"); if(oldCta) oldCta.remove();
-  if(previewMode && curCat){
-    const b=document.createElement("button"); b.id="buyCta"; b.className="primary";
-    b.textContent=`전체 ${curCat.n}장 잠금해제 — ${priceOf(curCat)}`;
-    b.onclick=()=>openBuy(curCat);
-    document.querySelector("#done .actions").prepend(b);
-  }
-  window._miss=uniq.slice();
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $("done").classList.add("on");
-}
-function reviewMiss(){
-  reviewRound++; deck=shuffle(window._miss);qi=0;correct=0;misses=[];
-  $("qtitle").textContent=`복습 ${reviewRound}회차 · ${deck.length}개`; $("scoreTot").textContent=deck.length;
-  $("done").classList.remove("on"); show("quizScreen"); loadQ();
-}
-
-function show(id){
-  if(id!=="quizScreen") stopQuiz();   // 퀴즈 이탈 시 타이머·발음·예약 콜백 전부 정지
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
-  $("done").classList.remove("on");
-  if(id==="done"){$("done").classList.add("on");}
-  else{$(id).classList.add("on");}
-}
-
-// ══ GAS 데이터 연동 ══
-const API_URL = "https://script.google.com/macros/s/AKfycbxnmDF3XA7ubkM6BhAmAihhRy6lFp1KIppsnn8Us_pOHdHeuKPI03pR_-8QuFrVxLWI/exec";
-
-function rowToCard(r){
-  const isKana = String(r.type||"").trim()==="kana";
-  const reading = String(r.reading||"").trim();
-  const ko = String(r.meaning_ko||"").trim();
-  const romaji = isKana ? String(r.meaning_en||"").trim() : reading;
-  const speak = isKana ? String(r.front||reading) : (reading.split("/")[0]||reading||String(r.front||""));
-  const card = {front:String(r.front||"").trim(), romaji, ko, speak, label:`${ko} [${romaji}]`};
-  if(!isKana){ card.ex=String(r.example||"").trim(); card.exy=String(r.example_reading||"").trim(); card.exk=String(r.example_ko||"").trim(); }
-  card._order = parseInt(r.order_in_cat,10)||0;
-  return card;
-}
-
-async function tryFetchRows(url){
-  try{ const res=await fetch(url,{cache:"no-store"}); const j=await res.json(); return Array.isArray(j)?j:(j.cards||null); }
-  catch(e){ return null; }
-}
-function ingestRows(rows, markReady){
-  const built={};
-  rows.forEach(r=>{ const cat=String(r.category||"").trim(); if(!cat) return; (built[cat]=built[cat]||[]).push(rowToCard(r)); });
-  Object.keys(built).forEach(cat=>{ built[cat].sort((a,b)=>a._order-b._order); built[cat].forEach(c=>delete c._order); DATA[cat]=built[cat]; });
-  if(markReady){ ["kana","kanji"].forEach(tab=> NAV[tab].forEach(g=> g.items.forEach(it=>{
-    if(DATA[it.code] && DATA[it.code].length){
-      it.ready=true;
-      if(!(it.tier==="paid" && !isOwned(it.code))) it.n=DATA[it.code].length;
-    }
-  }))); }
-  return Object.keys(built);
-}
-// 무료 데이터: 정적 JSON(GitHub Pages 동봉) 우선 → GAS 무료 API 폴백 → 내장 데이터
-async function loadData(){
-  let rows = await tryFetchRows("cards_free.json");
-  if((!rows||!rows.length) && API_URL) rows = await tryFetchRows(API_URL + (API_URL.includes("?")?"&":"?") + "action=cards");
-  if(!rows || !rows.length) return false;
-  ingestRows(rows, true);
-  return true;
-}
-
-// ── 라이선스(email+token) 기반 유료 로딩 ──
-let LIC = (()=>{ try{ return JSON.parse(localStorage.getItem('license')||'null'); }catch(e){ return null; } })();
-async function restorePurchase(email, token){
-  if(!API_URL) throw new Error("서버 URL 미설정");
-  const r = await fetch(`${API_URL}?action=entitlement&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`,{cache:"no-store"});
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error||"키가 올바르지 않습니다");
-  LIC={email,token}; localStorage.setItem('license', JSON.stringify(LIC));
-  OWNED = new Set(j.packs); saveOwned(); renderNav();
-  return j.packs;
-}
-async function loadPaidCategory(it){
-  if(!LIC || !API_URL) return false;
-  const r = await fetch(`${API_URL}?action=paidcards&email=${encodeURIComponent(LIC.email)}&token=${encodeURIComponent(LIC.token)}&category=${encodeURIComponent(it.code)}`,{cache:"no-store"});
-  const j = await r.json();
-  if(!j.ok || !j.cards || !j.cards.length) return false;
-  ingestRows(j.cards, false); it.ready=true; it.n=DATA[it.code].length;
-  return true;
-}
-
-// ── 50음도표 (무료, 터치 발음) ──
-const GOJUON_H=[["あ","い","う","え","お"],["か","き","く","け","こ"],["さ","し","す","せ","そ"],["た","ち","つ","て","と"],["な","に","ぬ","ね","の"],["は","ひ","ふ","へ","ほ"],["ま","み","む","め","も"],["や","","ゆ","","よ"],["ら","り","る","れ","ろ"],["わ","","を","","ん"]];
-const GOJUON_K=[["ア","イ","ウ","エ","オ"],["カ","キ","ク","ケ","コ"],["サ","シ","ス","セ","ソ"],["タ","チ","ツ","テ","ト"],["ナ","ニ","ヌ","ネ","ノ"],["ハ","ヒ","フ","ヘ","ホ"],["マ","ミ","ム","メ","モ"],["ヤ","","ユ","","ヨ"],["ラ","リ","ル","レ","ロ"],["ワ","","ヲ","","ン"]];
-const ROMAJI=[["a","i","u","e","o"],["ka","ki","ku","ke","ko"],["sa","shi","su","se","so"],["ta","chi","tsu","te","to"],["na","ni","nu","ne","no"],["ha","hi","fu","he","ho"],["ma","mi","mu","me","mo"],["ya","","yu","","yo"],["ra","ri","ru","re","ro"],["wa","","o","","n"]];
-let chartKind="h";
-function openChart(){ renderChart(chartKind); show("chartScreen"); }
-function setChart(kind,btn){ chartKind=kind; [...$("chartSeg").children].forEach(b=>b.classList.remove("on")); btn.classList.add("on"); renderChart(kind); }
-function renderChart(kind){
-  const rows = kind==="h" ? GOJUON_H : GOJUON_K;
-  const grid=$("chartGrid"); grid.innerHTML="";
-  rows.forEach((row,ri)=>row.forEach((ch,ci)=>{
-    const cell=document.createElement("div");
-    if(!ch){ cell.className="chart-cell empty"; grid.appendChild(cell); return; }
-    cell.className="chart-cell";
-    cell.innerHTML=`<div class="kn jp">${ch}</div><div class="rm">${ROMAJI[ri][ci]}</div>`;
-    cell.onclick=()=>{ speak(ch); cell.classList.add("hit"); setTimeout(()=>cell.classList.remove("hit"),350); };
-    grid.appendChild(cell);
-  }));
-}
-
-// ── 내 구매 · 로그인 (이메일+라이선스 키) ──
-function openAccount(){ renderAccount(); show("account"); }
-function renderAccount(){
-  const out=$("accLoggedOut"), inn=$("accLoggedIn");
-  if(LIC){ out.style.display="none"; inn.style.display="block"; $("accWho").textContent=LIC.email; accFill(); }
-  else { out.style.display="block"; inn.style.display="none"; }
-}
-function packName(code){
-  if(code==="ALL") return "라이프타임 · 전체 팩";
-  let f=null; ["kana","kanji"].forEach(t=>NAV[t].forEach(g=>g.items.forEach(it=>{ if(it.code===code) f=it; })));
-  return f ? f.ko : code;
-}
-async function accFill(){
-  const box=$("accPacks"); box.innerHTML='<div class="acc-row">불러오는 중…</div>';
-  let details=null;
-  try{
-    const r=await fetch(`${API_URL}?action=entitlement&email=${encodeURIComponent(LIC.email)}&token=${encodeURIComponent(LIC.token)}`,{cache:"no-store"});
-    const j=await r.json();
-    if(j.ok){ OWNED=new Set(j.packs); saveOwned(); details=j.details||null; }
-  }catch(e){}
-  box.innerHTML="";
-  const packs=[...OWNED];
-  if(!packs.length){ box.innerHTML='<div class="acc-row">구매 내역이 없습니다</div>'; return; }
-  packs.forEach(p=>{
-    const d=details && details.find(x=>x.pack===p);
-    const when=d && d.date ? new Date(d.date).toLocaleDateString("ko-KR") : "";
-    const row=document.createElement("div"); row.className="acc-row";
-    row.innerHTML=`<b>${packName(p)}</b><span>${when ? when+" 구매" : "보유 중"}</span>`;
-    box.appendChild(row);
-  });
-  renderNav();
-}
-async function accLogin(){
-  const email=$("accEmail").value.trim(), token=$("accToken").value.trim();
-  if(!email||!token){ toast("이메일과 라이선스 키를 모두 입력하세요"); return; }
-  toast("확인 중…");
-  try{ await restorePurchase(email, token); toast("로그인 완료!"); renderAccount(); }
-  catch(e){ toast("실패: "+(e.message||e)); }
-}
-function accLogout(){
-  try{ localStorage.removeItem('license'); localStorage.removeItem('owned_packs'); }catch(e){}
-  LIC=null; OWNED=new Set(); renderNav(); renderAccount(); toast("로그아웃했어요");
-}
-
-async function initApp(){
-  const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 끔";
-  initPaddle();
-  await loadData();
-  renderNav();
-}
-initApp();
-</script>
-</body>
-</html>
+  $("pauseBtn").innerHTML=paused?'<svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z" fill="#1
