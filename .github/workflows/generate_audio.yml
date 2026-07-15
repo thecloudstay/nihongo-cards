@@ -1,0 +1,40 @@
+# GitHub Actions로 오디오 증분 생성 → 저장소에 커밋 (GitHub Pages가 자동 서빙)
+#
+# 설정: Settings > Secrets and variables > Actions > New repository secret
+#       이름 GOOGLE_TTS_KEY, 값 = GCP TTS API 키
+# 실행: Actions 탭 > generate-audio > Run workflow (수동)
+#       또는 CSV 파일 push 시 자동 실행
+
+name: generate-audio
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "**/*.csv"
+
+permissions:
+  contents: write
+
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate audio (incremental)
+        env:
+          GOOGLE_TTS_KEY: ${{ secrets.GOOGLE_TTS_KEY }}
+        run: python generate_audio.py
+
+      - name: Commit audio files
+        run: |
+          git config user.name "audio-bot"
+          git config user.email "actions@github.com"
+          git add audio/ audio_manifest.json
+          git diff --cached --quiet || git commit -m "chore: generate audio (incremental)"
+          git push
