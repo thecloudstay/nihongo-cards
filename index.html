@@ -34,8 +34,8 @@
   .hd-actions{position:absolute;top:14px;right:18px;display:flex;gap:7px;z-index:5}
   .home-hd .app{font-size:32px;font-weight:900;letter-spacing:-.8px}
   .home-hd .app .en{font-size:14px;color:var(--sub);font-weight:600;margin-top:6px;letter-spacing:.5px}
-  .tabs{display:flex;gap:8px;padding:0 24px 14px;border-bottom:1px solid var(--line)}
-  .tabs button{flex:1;padding:14px;border:none;background:none;font-size:17px;font-weight:800;color:var(--sub);
+  .tabs{display:flex;gap:4px;padding:0 12px 14px;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tabs button{flex:1 0 auto;padding:12px 9px;border:none;background:none;font-size:15px;font-weight:800;color:var(--sub);white-space:nowrap;
     border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-15px;transition:.15s}
   .tabs button .s{display:block;font-size:12px;font-weight:600;margin-top:3px;opacity:.7}
   .tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
@@ -183,8 +183,11 @@
     <div class="app">일본어 카드모음<div class="en">にほんご カード · 読みテスト</div></div>
   </div>
   <div class="tabs">
-    <button class="on" data-sec="kana" onclick="switchTab('kana',this)">かな 기초<span class="s">仮名</span></button>
+    <button class="on" data-sec="kana" onclick="switchTab('kana',this)">기초<span class="s">基礎</span></button>
+    <button data-sec="vocab" onclick="switchTab('vocab',this)">실전어휘<span class="s">語彙</span></button>
     <button data-sec="kanji" onclick="switchTab('kanji',this)">한자<span class="s">漢字</span></button>
+    <button data-sec="sentence" onclick="switchTab('sentence',this)">통문장<span class="s">例文</span></button>
+    <button data-sec="grammar" onclick="switchTab('grammar',this)">문법<span class="s">文法</span></button>
   </div>
   <div class="list" id="catList"></div>
   <div class="legal-links"><a href="privacy.html">개인정보처리방침</a> · <a href="terms.html">이용약관·환불정책</a></div>
@@ -331,6 +334,15 @@ const NAV = {
       {code:"N2",ko:"N2 · 중상급",jp:"N2",n:362,ready:false,tier:"paid"},
       {code:"N1",ko:"N1 · 상급",jp:"N1",n:1077,ready:false,tier:"paid"},
     ]},
+  ],
+  vocab:[
+    {ko:"JLPT 실전 어휘 · 빈칸(끼워넣기)",jp:"実戦語彙",items:[
+      {code:"V5",ko:"N5 어휘",jp:"N5 語彙",n:118,ready:false,tier:"free",sent:true},
+      {code:"V4",ko:"N4 어휘",jp:"N4 語彙",n:158,ready:false,tier:"free",sent:true},
+      {code:"V3",ko:"N3 어휘",jp:"N3 語彙",n:170,ready:false,tier:"free",sent:true},
+      {code:"V2",ko:"N2 어휘",jp:"N2 語彙",n:210,ready:false,tier:"free",sent:true},
+      {code:"V1",ko:"N1 어휘",jp:"N1 語彙",n:210,ready:false,tier:"free",sent:true},
+    ]},
     {ko:"상황·장면별",jp:"場面別",items:[
       {code:"B2",ko:"호텔",jp:"ホテル",n:100,ready:false,tier:"paid"},
       {code:"B1",ko:"공항·출입국",jp:"空港・出入国",n:100,ready:false,tier:"paid"},
@@ -362,31 +374,28 @@ const NAV = {
       {code:"C3",ko:"평론·신서",jp:"評論・新書",n:100,ready:false,tier:"paid"},
       {code:"C4",ko:"접속·부사",jp:"接続・副詞",n:100,ready:false,tier:"paid"},
     ]},
-    {ko:"문장암기 · 수험(빈칸)",jp:"文で覚える・JLPT",items:[
+  ],
+  sentence:[
+    {ko:"통문장 암기 · 수험(빈칸)",jp:"例文・JLPT",items:[
       {code:"S1",ko:"N5 문장",jp:"N5 例文",n:162,ready:false,tier:"free",sent:true},
       {code:"S2",ko:"N4 문장",jp:"N4 例文",n:165,ready:false,tier:"free",sent:true},
       {code:"S3",ko:"N3 문장",jp:"N3 例文",n:160,ready:false,tier:"free",sent:true},
       {code:"S4",ko:"N2 문장",jp:"N2 例文",n:155,ready:false,tier:"free",sent:true},
       {code:"S5",ko:"N1 문장",jp:"N1 例文",n:155,ready:false,tier:"free",sent:true},
     ]},
-    {ko:"문장암기 · 실전(빈칸)",jp:"文で覚える・実戦",items:[
+    {ko:"통문장 암기 · 실전(빈칸)",jp:"例文・実戦",items:[
       {code:"ST",ko:"여행 문장",jp:"旅行 例文",n:164,ready:false,tier:"free",sent:true},
       {code:"SB",ko:"비즈니스 문장",jp:"ビジネス 例文",n:166,ready:false,tier:"free",sent:true},
       {code:"SD",ko:"일상회화 문장",jp:"日常会話 例文",n:160,ready:false,tier:"free",sent:true},
     ]},
+  ],
+  grammar:[
     {ko:"문법 · 빈칸(끼워넣기)",jp:"文法・穴埋め",items:[
       {code:"GP",ko:"조사",jp:"助詞",n:52,ready:false,tier:"free",sent:true},
       {code:"GADV",ko:"부사",jp:"副詞",n:52,ready:false,tier:"free",sent:true},
       {code:"GV",ko:"동사 활용",jp:"動詞の活用",n:64,ready:false,tier:"free",sent:true},
       {code:"GADJ",ko:"형용사",jp:"形容詞",n:67,ready:false,tier:"free",sent:true},
       {code:"GF",ko:"문형·기능어",jp:"文型",n:105,ready:false,tier:"free",sent:true},
-    ]},
-    {ko:"실전 어휘 · 빈칸(끼워넣기)",jp:"実戦語彙・穴埋め",items:[
-      {code:"V5",ko:"N5 어휘",jp:"N5 語彙",n:118,ready:false,tier:"free",sent:true},
-      {code:"V4",ko:"N4 어휘",jp:"N4 語彙",n:158,ready:false,tier:"free",sent:true},
-      {code:"V3",ko:"N3 어휘",jp:"N3 語彙",n:170,ready:false,tier:"free",sent:true},
-      {code:"V2",ko:"N2 어휘",jp:"N2 語彙",n:210,ready:false,tier:"free",sent:true},
-      {code:"V1",ko:"N1 어휘",jp:"N1 語彙",n:210,ready:false,tier:"free",sent:true},
     ]},
   ],
 };
@@ -522,6 +531,9 @@ function stopQuiz(){
 }
 const isKanjiCat=()=> curCat && !["hiragana","katakana"].includes(curCat.code);
 const isSent=()=> !!(curCat && curCat.sent);   // 문장암기(cloze) 팩
+// ── 무료/유료 경계 (앱 UI) — 무료=카나+기초필수 12팩만, 나머지는 미리보기 10장+유료 ──
+const FREE_APP = new Set(["hiragana","katakana","num","week","time","body","dir","color","family","weather","greet","ask"]);
+function tierOf(it){ return FREE_APP.has(it.code) ? "free" : "paid"; }
 const optText=c=> isSent() ? c.front : (!isKanjiCat() ? c.label : (CONF.mode==="reading" ? c.romaji : c.ko));
 function clozeText(q){ const w=q.front||"", s=q.ex||""; const i=s.indexOf(w); return i<0 ? s : (s.slice(0,i)+"（　）"+s.slice(i+w.length)); }
 
@@ -569,8 +581,9 @@ let OWNED = new Set((()=>{ try{ return JSON.parse(localStorage.getItem('owned_pa
 function saveOwned(){ try{ localStorage.setItem('owned_packs', JSON.stringify([...OWNED])); }catch(e){} }
 function isOwned(code){ return OWNED.has(code) || OWNED.has("ALL"); }   // 라이프타임(ALL) 포함
 function grantPack(code){ OWNED.add(code); saveOwned(); renderNav(); }   // 구매 완료 후 호출(추후 서버 연동)
-function isUnlocked(it){ return it.tier!=="paid" || OWNED.has(it.code); }
-function priceOf(it){ return PACK_PRICE[it.code] || PACK_PRICE._default; }
+function isUnlocked(it){ return tierOf(it)!=="paid" || OWNED.has(it.code); }
+function computePrice(n){ n=+n||0; const rate = n<20?40 : n<100?30 : n<200?25 : n<300?20 : 15; return Math.round(n*rate/100)*100; }
+function priceOf(it){ if(PACK_PRICE[it.code]) return PACK_PRICE[it.code]; return "₩"+computePrice(it.n).toLocaleString(); }
 function openBuy(it){
   initPaddle();
   const priceId = PRICE_IDS[it.code];
@@ -612,7 +625,7 @@ function renderNav(){
     }
     g.items.forEach(it=>{
       const el=document.createElement("div");
-      const paid = it.tier==="paid";
+      const paid = tierOf(it)==="paid";
       const owned = paid && isOwned(it.code);
       // 무료인데 데이터 없는 것만 비활성(준비중). 유료는 항상 클릭 가능(구매/열기).
       el.className="cat"+((!paid && !it.ready)?" soon":"");
@@ -637,7 +650,7 @@ function switchTab(sec,btn){ curTab=sec; document.querySelectorAll(".tabs button
 
 let previewMode=false; // 유료 미보유 카테고리 20장 무료 체험 중 여부
 async function pickCat(it){
-  const paid = it.tier==="paid";
+  const paid = tierOf(it)==="paid";
   const owned = paid && isOwned(it.code);
   const have = (DATA[it.code]||[]).length;
   if(!paid && !it.ready){ toast("곧 준비됩니다"); return; }            // 무료 준비중
@@ -888,11 +901,11 @@ function ingestRows(rows, markReady){
   const built={};
   rows.forEach(r=>{ const cat=String(r.category||"").trim(); if(!cat) return; (built[cat]=built[cat]||[]).push(rowToCard(r)); });
   Object.keys(built).forEach(cat=>{ built[cat].sort((a,b)=>a._order-b._order); built[cat].forEach(c=>delete c._order); DATA[cat]=built[cat]; });
-  if(markReady){ ["kana","kanji"].forEach(tab=> NAV[tab].forEach(g=> g.items.forEach(it=>{
+  if(markReady){ Object.keys(NAV).forEach(tab=> NAV[tab].forEach(g=> g.items.forEach(it=>{
     if(DATA[it.code] && DATA[it.code].length){
       it.ready=true;
       // 유료 미보유는 미리보기 20장만 로드된 상태 → 표기 장수는 하드코딩(전체) 유지
-      if(!(it.tier==="paid" && !isOwned(it.code))) it.n=DATA[it.code].length;
+      if(!(tierOf(it)==="paid" && !isOwned(it.code))) it.n=DATA[it.code].length;
     }
   }))); }
   return Object.keys(built);
@@ -965,7 +978,7 @@ function renderAccount(){
 }
 function packName(code){
   if(code==="ALL") return "라이프타임 · 전체 팩";
-  let f=null; ["kana","kanji"].forEach(t=>NAV[t].forEach(g=>g.items.forEach(it=>{ if(it.code===code) f=it; })));
+  let f=null; Object.keys(NAV).forEach(t=>NAV[t].forEach(g=>g.items.forEach(it=>{ if(it.code===code) f=it; })));
   return f ? f.ko : code;
 }
 async function accFill(){
