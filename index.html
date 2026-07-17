@@ -43,9 +43,14 @@
   .grp{margin-top:20px}
   .grp{margin-top:26px}
   .grp-h{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 15px;
-    background:#fff1ec;border-left:5px solid var(--accent);border-radius:12px}
+    background:#fff1ec;border-left:5px solid var(--accent);border-radius:12px;
+    cursor:pointer;user-select:none}
   .grp-h .k{font-size:16px;font-weight:900;color:var(--ink);letter-spacing:-.3px}
   .grp-h .j{font-size:12px;color:var(--accent);font-weight:700}
+  .grp-arrow{margin-left:auto;color:var(--accent);font-size:13px;transition:transform .2s}
+  .grp.collapsed .grp-arrow{transform:rotate(-90deg)}
+  .grp.collapsed .grp-items{display:none}
+  .grp.collapsed .grp-h{margin-bottom:0}
   .cat{display:flex;align-items:center;gap:14px;padding:19px 18px;border:1px solid var(--line);
     border-radius:18px;margin-bottom:11px;cursor:pointer;background:#fff;transition:.15s;
     box-shadow:0 1px 3px rgba(0,0,0,.03)}
@@ -91,6 +96,9 @@
   @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
   .glyph{font-size:150px;line-height:1;font-weight:500;animation:pop .18s ease}
   .glyph.small{font-size:104px}
+  .glyph.cloze{font-size:27px;line-height:1.55;font-weight:700;word-break:keep-all;padding:0 16px;max-width:560px}
+  .example .ansline{font-size:14px;color:var(--ink);font-weight:700;margin-bottom:6px}
+  .example .ansline .y{color:var(--accent);font-weight:600}
   .example{min-height:44px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s;margin:-6px 0 10px}
   .example.show{opacity:1}
   .example .card2{background:var(--soft);border-radius:12px;padding:10px 22px;text-align:center}
@@ -295,16 +303,24 @@ const NAV = {
       {code:"katakana",ko:"가타카나",jp:"カタカナ",n:111,ready:false,tier:"free"},
     ]},
     {ko:"기초 필수",jp:"基礎",items:[
-      {code:"num",ko:"숫자",jp:"数字",n:18,ready:false,tier:"free"},
-      {code:"week",ko:"요일·날짜",jp:"曜日・日付",n:17,ready:false,tier:"free"},
-      {code:"time",ko:"시간",jp:"時間",n:18,ready:false,tier:"free"},
-      {code:"body",ko:"신체",jp:"体",n:25,ready:false,tier:"free"},
-      {code:"dir",ko:"방향·위치",jp:"方向・位置",n:20,ready:false,tier:"free"},
-      {code:"color",ko:"색깔",jp:"色",n:18,ready:false,tier:"free"},
-      {code:"family",ko:"가족",jp:"家族",n:20,ready:false,tier:"free"},
-      {code:"weather",ko:"계절·날씨",jp:"季節・天気",n:20,ready:false,tier:"free"},
-      {code:"greet",ko:"인사·표현",jp:"挨拶",n:20,ready:false,tier:"free"},
-      {code:"ask",ko:"지시·의문",jp:"指示・疑問",n:20,ready:false,tier:"free"},
+      {code:"num",ko:"숫자",jp:"数字",n:54,ready:false,tier:"free"},
+      {code:"week",ko:"요일·날짜",jp:"曜日・日付",n:53,ready:false,tier:"free"},
+      {code:"time",ko:"시간",jp:"時間",n:53,ready:false,tier:"free"},
+      {code:"body",ko:"신체",jp:"体",n:55,ready:false,tier:"free"},
+      {code:"dir",ko:"방향·위치",jp:"方向・位置",n:55,ready:false,tier:"free"},
+      {code:"color",ko:"색깔",jp:"色",n:55,ready:false,tier:"free"},
+      {code:"family",ko:"가족",jp:"家族",n:55,ready:false,tier:"free"},
+      {code:"weather",ko:"계절·날씨",jp:"季節・天気",n:54,ready:false,tier:"free"},
+      {code:"greet",ko:"인사·표현",jp:"挨拶",n:54,ready:false,tier:"free"},
+      {code:"ask",ko:"지시·의문",jp:"指示・疑問",n:54,ready:false,tier:"free"},
+    ]},
+    {ko:"주제·생활",jp:"テーマ",items:[
+      {code:"shape",ko:"도형",jp:"図形",n:55,ready:false,tier:"free"},
+      {code:"country",ko:"나라 이름",jp:"国名",n:55,ready:false,tier:"free"},
+      {code:"animal",ko:"동물",jp:"動物",n:55,ready:false,tier:"free"},
+      {code:"nature",ko:"자연",jp:"自然",n:55,ready:false,tier:"free"},
+      {code:"job",ko:"직업",jp:"職業",n:55,ready:false,tier:"free"},
+      {code:"food",ko:"음식·채소",jp:"食べ物・野菜",n:58,ready:false,tier:"free"},
     ]},
   ],
   kanji:[
@@ -345,6 +361,32 @@ const NAV = {
       {code:"C2",ko:"소설 빈출",jp:"小説によく出る",n:100,ready:false,tier:"paid"},
       {code:"C3",ko:"평론·신서",jp:"評論・新書",n:100,ready:false,tier:"paid"},
       {code:"C4",ko:"접속·부사",jp:"接続・副詞",n:100,ready:false,tier:"paid"},
+    ]},
+    {ko:"문장암기 · 수험(빈칸)",jp:"文で覚える・JLPT",items:[
+      {code:"S1",ko:"N5 문장",jp:"N5 例文",n:162,ready:false,tier:"free",sent:true},
+      {code:"S2",ko:"N4 문장",jp:"N4 例文",n:165,ready:false,tier:"free",sent:true},
+      {code:"S3",ko:"N3 문장",jp:"N3 例文",n:160,ready:false,tier:"free",sent:true},
+      {code:"S4",ko:"N2 문장",jp:"N2 例文",n:155,ready:false,tier:"free",sent:true},
+      {code:"S5",ko:"N1 문장",jp:"N1 例文",n:155,ready:false,tier:"free",sent:true},
+    ]},
+    {ko:"문장암기 · 실전(빈칸)",jp:"文で覚える・実戦",items:[
+      {code:"ST",ko:"여행 문장",jp:"旅行 例文",n:164,ready:false,tier:"free",sent:true},
+      {code:"SB",ko:"비즈니스 문장",jp:"ビジネス 例文",n:166,ready:false,tier:"free",sent:true},
+      {code:"SD",ko:"일상회화 문장",jp:"日常会話 例文",n:160,ready:false,tier:"free",sent:true},
+    ]},
+    {ko:"문법 · 빈칸(끼워넣기)",jp:"文法・穴埋め",items:[
+      {code:"GP",ko:"조사",jp:"助詞",n:52,ready:false,tier:"free",sent:true},
+      {code:"GADV",ko:"부사",jp:"副詞",n:52,ready:false,tier:"free",sent:true},
+      {code:"GV",ko:"동사 활용",jp:"動詞の活用",n:64,ready:false,tier:"free",sent:true},
+      {code:"GADJ",ko:"형용사",jp:"形容詞",n:67,ready:false,tier:"free",sent:true},
+      {code:"GF",ko:"문형·기능어",jp:"文型",n:105,ready:false,tier:"free",sent:true},
+    ]},
+    {ko:"실전 어휘 · 빈칸(끼워넣기)",jp:"実戦語彙・穴埋め",items:[
+      {code:"V5",ko:"N5 어휘",jp:"N5 語彙",n:118,ready:false,tier:"free",sent:true},
+      {code:"V4",ko:"N4 어휘",jp:"N4 語彙",n:158,ready:false,tier:"free",sent:true},
+      {code:"V3",ko:"N3 어휘",jp:"N3 語彙",n:170,ready:false,tier:"free",sent:true},
+      {code:"V2",ko:"N2 어휘",jp:"N2 語彙",n:210,ready:false,tier:"free",sent:true},
+      {code:"V1",ko:"N1 어휘",jp:"N1 語彙",n:210,ready:false,tier:"free",sent:true},
     ]},
   ],
 };
@@ -479,7 +521,9 @@ function stopQuiz(){
   Object.values(_audioCache||{}).forEach(a=>{ try{ a.pause(); }catch(e){} });
 }
 const isKanjiCat=()=> curCat && !["hiragana","katakana"].includes(curCat.code);
-const optText=c=> !isKanjiCat() ? c.label : (CONF.mode==="reading" ? c.romaji : c.ko);
+const isSent=()=> !!(curCat && curCat.sent);   // 문장암기(cloze) 팩
+const optText=c=> isSent() ? c.front : (!isKanjiCat() ? c.label : (CONF.mode==="reading" ? c.romaji : c.ko));
+function clozeText(q){ const w=q.front||"", s=q.ex||""; const i=s.indexOf(w); return i<0 ? s : (s.slice(0,i)+"（　）"+s.slice(i+w.length)); }
 
 // ══ 구매·소유(entitlement) ══ 스테이지·카테고리별 1회 구매 = 영구 소유
 // 가격(표시용). 카테고리 코드별로 다르게 줄 수 있고, 없으면 _default 사용.
@@ -555,7 +599,17 @@ function renderNav(){
   }
   groups.forEach(g=>{
     const gd=document.createElement("div"); gd.className="grp";
-    if(g.ko){ gd.innerHTML=`<div class="grp-h"><span class="k">${g.ko}</span><span class="j jp">${g.jp}</span></div>`; }
+    let wrap=gd;
+    if(g.ko){                                   // 대주제 = 아코디언(접기/펴기)
+      const st=navCollapsed();
+      const collapsed = (g.ko in st) ? st[g.ko] : true;   // 기본: 접힘
+      if(collapsed) gd.classList.add("collapsed");
+      const h=document.createElement("div"); h.className="grp-h";
+      h.innerHTML=`<span class="k">${g.ko}</span><span class="j jp">${g.jp}</span><span class="grp-arrow">▾</span>`;
+      h.onclick=()=>{ gd.classList.toggle("collapsed"); const s=navCollapsed(); s[g.ko]=gd.classList.contains("collapsed"); saveNavCollapsed(s); };
+      gd.appendChild(h);
+      wrap=document.createElement("div"); wrap.className="grp-items"; gd.appendChild(wrap);
+    }
     g.items.forEach(it=>{
       const el=document.createElement("div");
       const paid = it.tier==="paid";
@@ -572,11 +626,13 @@ function renderNav(){
         <div class="meta"><span class="num">${it.n}자</span>${badge}</div>
         <span class="arrow">›</span>`;
       el.onclick=()=>pickCat(it);
-      gd.appendChild(el);
+      wrap.appendChild(el);
     });
     box.appendChild(gd);
   });
 }
+function navCollapsed(){ try{ return JSON.parse(localStorage.getItem('nav_collapsed')||'{}'); }catch(e){ return {}; } }
+function saveNavCollapsed(s){ try{ localStorage.setItem('nav_collapsed', JSON.stringify(s)); }catch(e){} }
 function switchTab(sec,btn){ curTab=sec; document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("on")); btn.classList.add("on"); renderNav(); }
 
 let previewMode=false; // 유료 미보유 카테고리 20장 무료 체험 중 여부
@@ -596,7 +652,7 @@ async function pickCat(it){
   if(!(DATA[it.code]||[]).length){ toast("데이터 준비 중입니다"); return; }
   curCat=it;
   $("setupK").textContent=it.ko; $("setupJ").textContent=it.jp;
-  $("typeRow").style.display = isKanjiCat() ? "block" : "none";
+  $("typeRow").style.display = (isKanjiCat() && !it.sent) ? "block" : "none";
   const pv=$("previewNote");
   if(pv){
     pv.style.display = previewMode ? "block" : "none";
@@ -618,14 +674,16 @@ function startQuiz(){
   const n = CONF.count===0 ? pool.length : Math.min(CONF.count,pool.length);
   deck=shuffle(pool).slice(0,n);
   qi=0;correct=0;misses=[];
-  $("qtitle").textContent = isKanjiCat() ? `${curCat.ko} · ${CONF.mode==="reading"?"읽기":"뜻"}` : `${curCat.ko} 읽기`;
+  $("qtitle").textContent = isSent() ? `${curCat.ko} · 빈칸` : (isKanjiCat() ? `${curCat.ko} · ${CONF.mode==="reading"?"읽기":"뜻"}` : `${curCat.ko} 읽기`);
   $("scoreTot").textContent=deck.length;
   show("quizScreen"); loadQ();
 }
 
 function loadQ(){
   answered=false;paused=false;
-  const q=deck[qi]; const g=$("glyph"); g.textContent=q.front; g.classList.toggle("small",q.front.length>1);
+  const q=deck[qi]; const g=$("glyph");
+  if(isSent()){ g.textContent=clozeText(q); g.classList.add("cloze"); g.classList.remove("small"); }
+  else { g.classList.remove("cloze"); g.textContent=q.front; g.classList.toggle("small",q.front.length>1); }
   $("count").textContent=`${qi+1} / ${deck.length}`;
   $("example").className="example"; $("example").innerHTML="";
   const pool=DATA[curCat.code];
@@ -634,7 +692,7 @@ function loadQ(){
   const box=$("opts");box.className="opts";box.innerHTML="";
   opts.forEach(o=>{const b=document.createElement("button");b.className="opt";b.textContent=optText(o);b.dataset.front=o.front;b.onclick=()=>choose(b,o,q);box.appendChild(b);});
   // 문제가 뜰 때 발음: 읽기 맞히기 모드는 답이 노출되므로 제외, 그 외(뜻모드·카나)는 바로 발음
-  if(!(isKanjiCat() && CONF.mode==="reading")){ sched(()=>speak(q.speak), 250); }
+  if(!(isKanjiCat() && CONF.mode==="reading") && !isSent()){ sched(()=>speak(q.speak), 250); }
   startTimer();
 }
 function startTimer(){
@@ -674,7 +732,9 @@ function timeUp(){
 }
 function showExample(q){
   const e=$("example");
+  const ans = isSent() ? `<div class="ansline"><span class="jp">${q.front}</span> <span class="y">${q.romaji}</span> · ${q.ko}</div>` : "";
   e.innerHTML=`<div class="card2">
+    ${ans}
     <div class="w jp">${q.ex}</div>
     <div class="yrow"><span class="y jp">${q.exy}</span><button class="exspeak" onclick="speak('${q.exy}')" aria-label="발음">🔊</button></div>
     <div class="m">${q.exk}</div></div>`;
@@ -703,7 +763,21 @@ function speak(t){
   }
   speakWS(t);
 }
-function speakWS(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).split("/")[0]);u.lang="ja-JP";u.rate=0.85;speechSynthesis.speak(u);}catch(e){}}
+// 브라우저 음성 폴백 — 가능한 최상의 일본어 음성 선택(구글 > 애플 자연음 > 기타 ja)
+let _jaVoice=null;
+function pickJaVoice(){
+  try{
+    const vs=speechSynthesis.getVoices()||[];
+    if(!vs.length) return null;
+    const ja=vs.filter(v=>/ja[-_]?jp/i.test(v.lang)||/^ja$/i.test(v.lang)||/japan/i.test(v.name));
+    return ja.find(v=>/google/i.test(v.name))
+        || ja.find(v=>/(natural|neural)/i.test(v.name))
+        || ja.find(v=>/(kyoko|otoya|hattori|o-ren|sakura|nanami|keita)/i.test(v.name))
+        || ja[0] || null;
+  }catch(e){ return null; }
+}
+try{ speechSynthesis.onvoiceschanged=()=>{ _jaVoice=pickJaVoice(); }; _jaVoice=pickJaVoice(); }catch(e){}
+function speakWS(t){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(t).split("/")[0]);u.lang="ja-JP";u.rate=0.9; if(!_jaVoice)_jaVoice=pickJaVoice(); if(_jaVoice)u.voice=_jaVoice; speechSynthesis.speak(u);}catch(e){}}
 // ── 효과음: 정답=밝은 아르페지오+일본어 칭찬, 오답=강한 부저 ──
 let _actx;
 function _ac(){ _actx=_actx||new (window.AudioContext||window.webkitAudioContext)(); if(_actx.state==="suspended")_actx.resume(); return _actx; }
@@ -801,6 +875,7 @@ function rowToCard(r){
   const speak = isKana ? String(r.front||reading) : (reading.split("/")[0]||reading||String(r.front||""));
   const card = {front:String(r.front||"").trim(), romaji, ko, speak, label:`${ko} [${romaji}]`};
   if(!isKana){ card.ex=String(r.example||"").trim(); card.exy=String(r.example_reading||"").trim(); card.exk=String(r.example_ko||"").trim(); }
+  card.sent = String(r.type||"").trim()==="sentence";
   card._order = parseInt(r.order_in_cat,10)||0;
   return card;
 }
