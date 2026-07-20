@@ -540,12 +540,17 @@ function clozeText(q){ const w=q.front||"", s=q.ex||""; const i=s.indexOf(w); re
 // ══ 구매·소유(entitlement) ══ 스테이지·카테고리별 1회 구매 = 영구 소유
 // 가격(표시용). 카테고리 코드별로 다르게 줄 수 있고, 없으면 _default 사용.
 // 가격 정책(확정): 자당 30원 × 유료 80자(100자 중 20자 무료 미리보기) = 팩당 ₩2,400 균일
-const PACK_PRICE = { _default:"₩2,500", N4:"₩4,400", N3:"₩5,200", N2:"₩5,400", N1:"₩16,200" };  // 자당 크기비례 차등
+const PACK_PRICE = {};  // 개별가는 computePrice(50% 런칭)로 자동계산, 번들가는 BUNDLE_PRICE
 // 배포 후 Paddle 체크아웃 링크를 카테고리 코드별로 채우면 '구매' 시 그 링크가 열림.
 const CHECKOUT_URL = {};   // (구방식 폴백용 — 현재 미사용)
 // ── Paddle 결제 (라이브) ──
 const PADDLE_CLIENT_TOKEN = "live_d8a7d39a54fd3b9827f27ef03e1"; // 공개용 클라이언트 토큰
 const PRICE_IDS = {
+  N5:"pri_01kxzm5g3grbqpkw1vd3fe6fw8",
+  BUNDLE_THEME:"pri_01kxzkn1y2j5scxz6fkh2wnndf",   // 주제·생활 올팩 ₩4,800
+  BUNDLE_V:"pri_01kxzkvwa0hyt3gx15n9w54hys",       // 실전어휘 올팩 ₩9,800
+  BUNDLE_S:"pri_01kxzkz51czkee5kqt2exs4wmn",       // 통문장 올팩 ₩16,100
+  BUNDLE_G:"pri_01kxzm2g0j2kgj63z7x53vg1sn",       // 문법 올팩 ₩4,800
   N4:"pri_01kxj6d22tv7rbzsmz2twejs51",
   N3:"pri_01kxj7194vbqz2z9cjzmxcpqa3", N2:"pri_01kxj71a3hyeh5pp2gx9wazr4a", N1:"pri_01kxj71b3qwmke74krv2an0k79",
   B1:"pri_01kxj71c1gazp64efqpxk4trv4", B2:"pri_01kxj71h75kg9mp4mdsqjez6e9", B3:"pri_01kxj71j4w6nv8p0kwh4660b45",
@@ -563,6 +568,20 @@ const PRICE_IDS = {
   BUNDLE_C:"pri_01kxj729e9qy4qnzmes9nn49hn",  // 독서 올팩 ₩4,900
   ALL:"pri_01kxj72aaah1gvg89ry7p793gv"        // 라이프타임 ₩19,900
 };
+// ── 번들 중심 판매(07-17): 팩 클릭 → 소속 그룹 번들 체크아웃, 번들 보유 시 그룹 전체 잠금해제 ──
+const BUNDLE_MEMBERS = {
+  BUNDLE_THEME:["shape","country","animal","nature","job","food"],
+  BUNDLE_V:["V5","V4","V3","V2","V1"],
+  BUNDLE_S:["S1","S2","S3","S4","S5","ST","SB","SD"],
+  BUNDLE_G:["GP","GADV","GV","GADJ","GF"],
+  BUNDLE_B:["B1","B2","B3","B4","B5","B6","B7","B8","B9","B10","B11","B12","B13","B14"],
+  BUNDLE_A:["A1","A2","A3","A4","A5","A6","A7"],
+  BUNDLE_C:["C1","C2","C3","C4"],
+  BUNDLE_N:["N4","N3","N2","N1"]
+};
+// 신규 번들=50% 런칭가 / 기존 번들(B·A·N·C·ALL)=기존 Paddle 가격(이미 저렴)에 일치
+const BUNDLE_PRICE = { BUNDLE_THEME:"₩4,800", BUNDLE_V:"₩9,800", BUNDLE_S:"₩16,100", BUNDLE_G:"₩4,800", BUNDLE_B:"₩16,900", BUNDLE_A:"₩8,900", BUNDLE_C:"₩4,900", BUNDLE_N:"₩5,900", ALL:"₩19,900" };
+const PACK_TO_BUNDLE = (()=>{ const m={}; for(const b in BUNDLE_MEMBERS) BUNDLE_MEMBERS[b].forEach(c=>m[c]=b); return m; })();
 let _paddleReady=false;
 function initPaddle(){
   try{
@@ -579,14 +598,14 @@ function initPaddle(){
 // 보유팩: 결제 완료(서버 entitlement) 또는 로컬 저장. 지금은 기기 localStorage.
 let OWNED = new Set((()=>{ try{ return JSON.parse(localStorage.getItem('owned_packs')||'[]'); }catch(e){ return []; } })());
 function saveOwned(){ try{ localStorage.setItem('owned_packs', JSON.stringify([...OWNED])); }catch(e){} }
-function isOwned(code){ return OWNED.has(code) || OWNED.has("ALL"); }   // 라이프타임(ALL) 포함
+function isOwned(code){ if(OWNED.has(code)||OWNED.has("ALL")) return true; for(const b of OWNED){ if(BUNDLE_MEMBERS[b] && BUNDLE_MEMBERS[b].includes(code)) return true; } return false; }   // 라이프타임(ALL)+번들 포함
 function grantPack(code){ OWNED.add(code); saveOwned(); renderNav(); }   // 구매 완료 후 호출(추후 서버 연동)
 function isUnlocked(it){ return tierOf(it)!=="paid" || OWNED.has(it.code); }
 function computePrice(n){ n=+n||0; const rate = n<20?40 : n<100?30 : n<200?25 : n<300?20 : 15; return Math.round(n*rate*0.5/100)*100; }  // 런칭 50% 할인
-function priceOf(it){ if(PACK_PRICE[it.code]) return PACK_PRICE[it.code]; return "₩"+computePrice(it.n).toLocaleString(); }
+function priceOf(it){ if(PACK_TO_BUNDLE[it.code] && BUNDLE_PRICE[PACK_TO_BUNDLE[it.code]]) return BUNDLE_PRICE[PACK_TO_BUNDLE[it.code]]+" · 그룹전체"; return "₩"+computePrice(it.n).toLocaleString(); }
 function openBuy(it){
   initPaddle();
-  const priceId = PRICE_IDS[it.code];
+  const priceId = PRICE_IDS[PACK_TO_BUNDLE[it.code]] || PRICE_IDS[it.code];
   if(priceId && window.Paddle && _paddleReady){
     const opts = { items:[{ priceId: priceId, quantity:1 }], settings:{ locale:"ko" } };
     if(LIC && LIC.email) opts.customer = { email: LIC.email };
