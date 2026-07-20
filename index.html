@@ -582,7 +582,7 @@ function saveOwned(){ try{ localStorage.setItem('owned_packs', JSON.stringify([.
 function isOwned(code){ return OWNED.has(code) || OWNED.has("ALL"); }   // 라이프타임(ALL) 포함
 function grantPack(code){ OWNED.add(code); saveOwned(); renderNav(); }   // 구매 완료 후 호출(추후 서버 연동)
 function isUnlocked(it){ return tierOf(it)!=="paid" || OWNED.has(it.code); }
-function computePrice(n){ n=+n||0; const rate = n<20?40 : n<100?30 : n<200?25 : n<300?20 : 15; return Math.round(n*rate/100)*100; }
+function computePrice(n){ n=+n||0; const rate = n<20?40 : n<100?30 : n<200?25 : n<300?20 : 15; return Math.round(n*rate*0.5/100)*100; }  // 런칭 50% 할인
 function priceOf(it){ if(PACK_PRICE[it.code]) return PACK_PRICE[it.code]; return "₩"+computePrice(it.n).toLocaleString(); }
 function openBuy(it){
   initPaddle();
@@ -636,7 +636,7 @@ function renderNav(){
       else if(it.ready) badge = '<span class="badge free">무료</span>';
       else badge = '<span class="badge soon">준비중</span>';
       el.innerHTML=`<div class="txt"><div class="k">${it.ko}</div><div class="j jp">${it.jp}</div></div>
-        <div class="meta"><span class="num">${it.n}자</span>${badge}</div>
+        <div class="meta"><span class="num">${it.n}${it.sent?"문장":"자"}</span>${badge}</div>
         <span class="arrow">›</span>`;
       el.onclick=()=>pickCat(it);
       wrap.appendChild(el);
@@ -711,7 +711,8 @@ function loadQ(){
 function startTimer(){
   clearInterval(timerId);
   if(CONF.time===0){$("tbar").style.width="100%";$("tlabel").textContent="∞";return;}
-  const total=CONF.time*1000, t0=performance.now();
+  const secs = isSent() ? Math.max(CONF.time,8) : CONF.time;   // 문장(cloze)은 읽을 시간 최소 8초 보장
+  const total=secs*1000, t0=performance.now();
   $("tbar").style.width="100%";
   timerId=setInterval(()=>{ if(paused){return;}
     const left=Math.max(0,total-(performance.now()-t0));
