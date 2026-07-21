@@ -213,6 +213,62 @@
 .ios-sheet .sheet .step{display:flex;gap:10px;align-items:center;margin:6px 0}
 .ios-sheet .sheet .n{background:#ff7a59;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none}
 .ios-sheet .close{width:100%;margin-top:14px;background:#f0f0f0;border:none;border-radius:12px;padding:12px;font-weight:700}
+
+/* ── 카드 도감·수집 ── */
+.coll-bar{margin:8px 16px 0;padding:10px 14px;border-radius:12px;background:#f7f7f8;border:1px solid #eee;
+  display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer}
+.coll-bar .pct{color:#ff7a59}
+.coll-bar .ssr{margin-left:auto;font-size:12px;color:#c9a227;font-weight:800}
+.coll-sum{display:flex;gap:8px;margin:12px 16px}
+.coll-sum .box{flex:1;background:#f7f7f8;border-radius:12px;padding:10px;text-align:center}
+.coll-sum .box b{display:block;font-size:17px}
+.coll-sum .box small{font-size:11px;color:#9a9a9a}
+.coll-chips{display:flex;gap:6px;overflow-x:auto;padding:6px 16px;-webkit-overflow-scrolling:touch}
+.coll-chips button{flex:none;border:1px solid #eee;background:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;white-space:nowrap}
+.coll-chips button.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.coll-prog{margin:4px 16px 8px;font-size:12px;color:#9a9a9a}
+.coll-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 24px}
+.ccard{aspect-ratio:3/4;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#fff;border:2px solid #eee;position:relative;overflow:hidden}
+.ccard .g{font-size:22px;font-weight:800;line-height:1.15;text-align:center;padding:0 4px;word-break:break-all}
+.ccard .k{font-size:9px;color:#9a9a9a;margin-top:3px;text-align:center;padding:0 3px;max-height:24px;overflow:hidden}
+.ccard .rb{position:absolute;top:4px;left:5px;font-size:8px;font-weight:900;letter-spacing:.5px}
+.ccard.locked{background:#f2f2f3;border-color:#e8e8e8}
+.ccard.locked .g{color:#c8c8cc}
+.ccard.r0{border-color:#d7d7db}.ccard.r0 .rb{color:#a0a0a6}
+.ccard.r1{border-color:#5aa2ff}.ccard.r1 .rb{color:#3d8bff}
+.ccard.r2{border-color:#a06bff;box-shadow:0 0 8px rgba(160,107,255,.35)}.ccard.r2 .rb{color:#8b4dff}
+.ccard.r3{border-color:#e8b923;box-shadow:0 0 10px rgba(232,185,35,.45)}.ccard.r3 .rb{color:#c9a227}
+.ccard.r3::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.75) 45%,rgba(255,215,120,.5) 50%,rgba(255,255,255,.75) 55%,transparent 70%);
+  animation:holo 2.6s linear infinite;pointer-events:none}
+@keyframes holo{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+/* 획득 토스트(퀴즈 중) */
+.card-get{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;background:#1a1a1a;color:#fff;
+  border-radius:999px;padding:8px 16px;font-size:13px;font-weight:700;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+.card-get.show{opacity:1}
+.card-get .sr{color:#c8a5ff}.card-get .ssr{color:#ffd76a}
+/* 팩 개봉 오버레이 */
+.pack-ov{position:fixed;inset:0;background:rgba(10,10,14,.92);z-index:80;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+.pack-ov.on{display:flex}
+.pack-ov h2{color:#fff;font-size:18px;margin:0}
+.pack-ov .hint{color:#9a9aa4;font-size:13px}
+.pack-cards{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:480px}
+.pcard{width:74px;height:104px;perspective:600px;cursor:pointer}
+.pcard .inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .5s}
+.pcard.flip .inner{transform:rotateY(180deg)}
+.pcard .face{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.pcard .back{background:linear-gradient(135deg,#ff7a59,#ff9d7a);color:#fff;font-size:30px;font-weight:900}
+.pcard .front{transform:rotateY(180deg);background:#fff;overflow:hidden}
+.pcard .front .g{font-size:20px;font-weight:800;text-align:center;padding:0 3px}
+.pcard .front .k{font-size:9px;color:#9a9a9a;margin-top:2px;text-align:center;padding:0 3px}
+.pcard .front .rb{position:absolute;top:4px;left:5px;font-size:8px;font-weight:900}
+.pcard .front.r1{border:2px solid #5aa2ff}.pcard .front.r1 .rb{color:#3d8bff}
+.pcard .front.r2{border:2px solid #a06bff;box-shadow:0 0 12px rgba(160,107,255,.6)}.pcard .front.r2 .rb{color:#8b4dff}
+.pcard .front.r3{border:2px solid #e8b923;box-shadow:0 0 16px rgba(232,185,35,.8)}.pcard .front.r3 .rb{color:#c9a227}
+.pcard .front.r3::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.8) 48%,rgba(255,215,120,.6) 52%,transparent 70%);animation:holo 2.2s linear infinite}
+.pcard .front.r0{border:2px solid #d7d7db}.pcard .front.r0 .rb{color:#a0a0a6}
+.pack-ov .pk-done{background:#ff7a59;color:#fff;border:none;border-radius:12px;padding:12px 26px;font-weight:800;font-size:14px;display:none}
+.pack-btn{background:linear-gradient(135deg,#8b5cf6,#c084fc)!important;color:#fff!important}
 </style>
 </head>
 <body>
@@ -230,6 +286,10 @@
     <div class="dc-ico">🎯</div>
     <div><div class="dc-tt" id="dcTitle">오늘의 10문제</div><div class="dc-sub" id="dcSub">전국 동일 문제 · 매일 0시 갱신</div></div>
     <div class="dc-streak" id="dcStreak"></div>
+  </div>
+  <div class="coll-bar" id="collBar" style="display:none" onclick="openColl()">
+    📚 카드 도감 <span class="pct" id="collPct">0%</span>
+    <span class="ssr" id="collSSRBadge"></span>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">기초<span class="s">基礎</span></button>
@@ -324,6 +384,32 @@
     <button class="close" onclick="$('iosSheet').classList.remove('on')">닫기</button>
   </div>
 </div>
+
+<!-- ═══ 카드 도감 ═══ -->
+<div class="screen" id="collScreen">
+  <div class="top">
+    <button class="back" onclick="show('home')">‹</button>
+    <span class="title">카드 도감<span class="s"> 図鑑</span></span>
+  </div>
+  <div class="coll-sum">
+    <div class="box"><b id="csTotal">0</b><small>수집</small></div>
+    <div class="box"><b id="csPct">0%</b><small>수집률</small></div>
+    <div class="box"><b id="csSR" style="color:#8b4dff">0</b><small>SR</small></div>
+    <div class="box"><b id="csSSR" style="color:#c9a227">0</b><small>SSR</small></div>
+  </div>
+  <div style="text-align:center;margin:2px 16px 4px"><button class="restore-link" onclick="shareColl()">📤 내 도감 자랑하기</button></div>
+  <div class="coll-chips" id="collChips"></div>
+  <div class="coll-prog" id="collProg"></div>
+  <div class="coll-grid" id="collGrid"></div>
+</div>
+
+<div class="pack-ov" id="packOv">
+  <h2 id="pkTitle">🎁 오늘의 카드팩</h2>
+  <div class="hint" id="pkHint">카드를 눌러서 뒤집어 보세요!</div>
+  <div class="pack-cards" id="pkCards"></div>
+  <button class="pk-done" id="pkDone" onclick="closePack()">도감에 등록 완료 ✓</button>
+</div>
+<div class="card-get" id="cardGet"></div>
 
 <!-- ═══ 50음도표 (무료) ═══ -->
 <div class="screen" id="chartScreen">
@@ -587,7 +673,7 @@ const $=id=>document.getElementById(id);
 let curTab="kana", curCat=null;
 let CONF={count:20,time:5,mode:"meaning"};
 let deck=[],qi=0,correct=0,misses=[],answered=false,paused=false,timerId=null,reviewRound=0;
-let results=[],dailyMode=false;
+let results=[],dailyMode=false,combo=0;
 // 퀴즈 중 예약된 콜백(발음·다음문제)을 추적해 화면 이탈 시 전부 취소 (뒤로가기 버그 방지)
 let _pend=[];
 function sched(fn,ms){ const id=setTimeout(fn,ms); _pend.push(id); return id; }
@@ -769,7 +855,7 @@ $("segType").addEventListener("click",e=>{ if(e.target.dataset.m){[...$("segType
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 
 function startQuiz(){
-  reviewRound=0; dailyMode=false; results=[];
+  reviewRound=0; dailyMode=false; results=[]; combo=0;
   const pool=DATA[curCat.code];
   const n = CONF.count===0 ? pool.length : Math.min(CONF.count,pool.length);
   deck=shuffle(pool).slice(0,n);
@@ -814,8 +900,8 @@ function choose(btn,o,q){
   const box=$("opts");box.classList.add("locked");
   const ok = o.front===q.front;
   results.push(ok);
-  if(ok){btn.classList.add("correct");correct++;}
-  else{btn.classList.add("wrong");misses.push(q);[...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");});}
+  if(ok){btn.classList.add("correct");correct++; combo++; collectCard(q); }
+  else{btn.classList.add("wrong");combo=0;misses.push(q);[...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");});}
   [...box.children].forEach(b=>{if(!b.classList.contains("correct")&&!b.classList.contains("wrong"))b.classList.add("dim");});
   sfx(ok?"ok":"fail");
   const showEx = isKanjiCat() && q.ex;
@@ -824,7 +910,7 @@ function choose(btn,o,q){
   sched(nextQ, showEx ? 3200 : 1300);                         // 예문 재생이 잘리지 않게 여유
 }
 function timeUp(){
-  if(answered)return; answered=true; misses.push(deck[qi]); results.push(false);
+  if(answered)return; answered=true; combo=0; misses.push(deck[qi]); results.push(false);
   const q=deck[qi]; const box=$("opts");box.classList.add("locked");
   [...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");else b.classList.add("dim");});
   sfx("fail");
@@ -950,6 +1036,106 @@ document.addEventListener("touchstart",_unlockAudio,{once:true});
 document.addEventListener("click",_unlockAudio,{once:true});
 document.addEventListener("keydown",_unlockAudio,{once:true});
 
+// ═══════════ 카드 수집·도감 (전부 localStorage — GAS·서버 무관) ═══════════
+const RAR_NAME=["N","R","SR","SSR"];
+function getColl(){ try{ return JSON.parse(localStorage.getItem("collection")||"{}"); }catch(e){ return {}; } }
+function saveColl(c){ try{ localStorage.setItem("collection",JSON.stringify(c)); }catch(e){} }
+function comboRarity(){ return combo>=10?3 : combo>=5?2 : combo>=3?1 : 0; }
+function collectCard(q){
+  if(reviewRound>0) return;                       // 복습은 수집 제외(파밍 방지)
+  const cat=q._cat||(curCat?curCat.code:null); if(!cat||cat==="__daily") return;
+  const r=comboRarity(), c=getColl(), k=cat+"|"+q.front, cur=c[k];
+  let evt=null;
+  if(!cur){ c[k]={r:r,n:1}; evt="new"; }
+  else { cur.n=(cur.n||0)+1; if(r>cur.r){ cur.r=r; evt="up"; } }
+  saveColl(c);
+  if(evt){
+    const tag = r===3?'<span class="ssr">SSR</span>' : r===2?'<span class="sr">SR</span>' : RAR_NAME[r];
+    cardGetToast((evt==="new"?"🃏 카드 획득! ":"⬆ 등급 UP! ")+q.front+" ["+tag+"]"+(combo>=3?" · "+combo+"콤보":""));
+  }
+  renderCollBar();
+}
+let _cgT=null;
+function cardGetToast(html){ const el=$("cardGet"); el.innerHTML=html; el.classList.add("show");
+  clearTimeout(_cgT); _cgT=setTimeout(()=>el.classList.remove("show"),1500); }
+function collStats(){
+  const c=getColl(); let tot=0,sr=0,ssr=0;
+  Object.values(c).forEach(v=>{ tot++; if(v.r===2)sr++; if(v.r===3)ssr++; });
+  let poolTot=0; Object.keys(DATA).forEach(k=>{ poolTot+=(DATA[k]||[]).length; });
+  return {tot,sr,ssr,poolTot};
+}
+function renderCollBar(){
+  const el=$("collBar"); if(!el) return;
+  const s=collStats(); if(!s.poolTot){ el.style.display="none"; return; }
+  el.style.display="flex";
+  $("collPct").textContent=(s.tot/s.poolTot*100).toFixed(1)+"% ("+s.tot+"장)";
+  $("collSSRBadge").textContent = s.ssr>0 ? "SSR ×"+s.ssr : "";
+}
+let _collCat=null;
+function openColl(){
+  const s=collStats();
+  $("csTotal").textContent=s.tot; $("csPct").textContent=s.poolTot?(s.tot/s.poolTot*100).toFixed(1)+"%":"0%";
+  $("csSR").textContent=s.sr; $("csSSR").textContent=s.ssr;
+  const chips=$("collChips"); chips.innerHTML="";
+  const cats=[];
+  Object.keys(NAV).forEach(sec=>NAV[sec].forEach(g=>g.items.forEach(it=>{ if((DATA[it.code]||[]).length) cats.push(it); })));
+  if(!_collCat||!cats.find(x=>x.code===_collCat)) _collCat=cats.length?cats[0].code:null;
+  cats.forEach(it=>{
+    const b=document.createElement("button"); b.textContent=it.ko;
+    if(it.code===_collCat) b.classList.add("on");
+    b.onclick=()=>{ _collCat=it.code; openColl(); };
+    chips.appendChild(b);
+  });
+  renderCollGrid();
+  show("collScreen");
+}
+function renderCollGrid(){
+  const grid=$("collGrid"), c=getColl(), pool=DATA[_collCat]||[];
+  const got=pool.filter(x=>c[_collCat+"|"+x.front]).length;
+  $("collProg").textContent=`${got} / ${pool.length} 수집 (${pool.length?(got/pool.length*100).toFixed(0):0}%) — 퀴즈에서 정답을 맞히면 수집돼요. 3콤보 R · 5콤보 SR · 10콤보 SSR!`;
+  grid.innerHTML="";
+  pool.forEach(x=>{
+    const e=c[_collCat+"|"+x.front], d=document.createElement("div");
+    if(e){ d.className="ccard r"+e.r;
+      d.innerHTML=`<span class="rb">${RAR_NAME[e.r]}</span><div class="g jp">${x.front}</div><div class="k">${x.ko||""}</div>`; }
+    else { d.className="ccard locked"; d.innerHTML=`<div class="g">?</div>`; }
+    grid.appendChild(d);
+  });
+}
+async function shareColl(){
+  const s=collStats();
+  const txt=`📚 일본어 카드 도감\n${s.tot}장 수집 (${s.poolTot?(s.tot/s.poolTot*100).toFixed(1):0}%) · SR ${s.sr} · SSR ${s.ssr}\n너도 모아볼래? https://nihongocards.fyi`;
+  try{ if(navigator.share){ await navigator.share({text:txt}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
+  try{ await navigator.clipboard.writeText(txt); toast("도감 자랑을 복사했어요! 📋"); }catch(e){ toast("복사 실패"); }
+}
+// ── 카드팩 개봉 (일일챌린지 보상, 하루 1회) ──
+function packClaimedToday(){ try{ return localStorage.getItem("pack_last")===kstDate(0); }catch(e){ return true; } }
+function rollRarity(){ const r=Math.random(); return r<0.03?3 : r<0.15?2 : r<0.40?1 : 0; }
+function openPack(){
+  if(packClaimedToday()){ toast("오늘의 팩은 이미 열었어요 — 내일 또!"); return; }
+  if(DAILY_POOL.length<20){ toast("데이터 준비 중"); return; }
+  try{ localStorage.setItem("pack_last",kstDate(0)); }catch(e){}
+  const wrap=$("pkCards"); wrap.innerHTML=""; $("pkDone").style.display="none";
+  $("pkHint").textContent="카드를 눌러서 뒤집어 보세요!";
+  let flipped=0; const picks=[];
+  while(picks.length<5){ const x=DAILY_POOL[Math.floor(Math.random()*DAILY_POOL.length)]; if(!picks.includes(x)) picks.push(x); }
+  picks.forEach(x=>{
+    const r=rollRarity();
+    // 도감 반영 (신규 or 등급업)
+    const c=getColl(), k=(x._cat||"misc")+"|"+x.front, cur=c[k];
+    if(!cur) c[k]={r:r,n:1}; else { cur.n++; if(r>cur.r) cur.r=r; }
+    saveColl(c);
+    const d=document.createElement("div"); d.className="pcard";
+    d.innerHTML=`<div class="inner"><div class="face back">?</div>
+      <div class="face front r${r}"><span class="rb">${RAR_NAME[r]}</span><div class="g jp">${x.front}</div><div class="k">${x.ko||""}</div></div></div>`;
+    d.onclick=()=>{ if(d.classList.contains("flip"))return; d.classList.add("flip"); sfx("ok"); flipped++;
+      if(flipped===5){ $("pkHint").textContent="오늘의 5장 획득!"; $("pkDone").style.display="block"; renderCollBar(); } };
+    wrap.appendChild(d);
+  });
+  $("packOv").classList.add("on");
+}
+function closePack(){ $("packOv").classList.remove("on"); renderCollBar(); }
+
 // ═══════════ 바이럴: 오늘의 10문제 · 스트릭 · 공유 · PWA ═══════════
 const DAILY_EPOCH="2026-07-21";           // #1 기준일
 const DAILY_CODES=["num","week","time","body","dir","color","family","weather","greet","ask"]; // 무료 단어팩(전원 동일 보장)
@@ -959,7 +1145,7 @@ function kstDate(offset){ const d=new Date(Date.now()+9*3600e3+(offset||0)*86400
 function dailyNo(){ return Math.max(1, Math.round((new Date(kstDate(0))-new Date(DAILY_EPOCH))/86400e3)+1); }
 function seedRng(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
   return function(){ h=Math.imul(h^(h>>>16),2246822507); h=Math.imul(h^(h>>>13),3266489909); return ((h^=h>>>16)>>>0)/4294967296; }; }
-function buildDailyPool(){ DAILY_POOL=[]; DAILY_CODES.forEach(c=>{ (DATA[c]||[]).forEach(x=>DAILY_POOL.push(x)); }); }
+function buildDailyPool(){ DAILY_POOL=[]; DAILY_CODES.forEach(c=>{ (DATA[c]||[]).forEach(x=>{ const y=Object.assign({},x); y._cat=c; DAILY_POOL.push(y); }); }); }
 function dailyDeck(){
   const rng=seedRng("nihongo-"+kstDate(0)); const idx=new Set();
   while(idx.size<Math.min(10,DAILY_POOL.length)) idx.add(Math.floor(rng()*DAILY_POOL.length));
@@ -987,7 +1173,7 @@ function renderDaily(){
 }
 function startDaily(){
   if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
-  dailyMode=true; reviewRound=0; results=[]; misses=[]; correct=0; qi=0;
+  dailyMode=true; reviewRound=0; results=[]; misses=[]; correct=0; qi=0; combo=0;
   curCat=DAILY_CAT; previewMode=false;
   deck=dailyDeck();
   $("qtitle").textContent=`오늘의 10문제 #${dailyNo()}`;
@@ -1092,6 +1278,13 @@ function finish(){
     dn.style.display="block";
     sb.textContent="📤 결과 공유하고 친구와 비교하기";
     renderDaily();
+    const oldPk=$("packBtn"); if(oldPk) oldPk.remove();
+    if(!packClaimedToday()){
+      const pk=document.createElement("button"); pk.id="packBtn"; pk.className="primary pack-btn";
+      pk.textContent="🎁 보상: 오늘의 카드팩 열기 (5장)";
+      pk.onclick=openPack;
+      document.querySelector("#done .actions").prepend(pk);
+    }
   } else { sb.textContent="📤 결과 공유하기"; }
   _shareText=buildShare();
   maybeShowPwa();
@@ -1262,6 +1455,7 @@ async function initApp(){
   await loadData();
   renderNav();
   renderDaily();
+  renderCollBar();
 }
 initApp();
 </script>
