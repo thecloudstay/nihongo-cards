@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>일본어 카드모음 — 일본어 단어·JLPT 학습 자료</title>
+  <link>https://nihongocards.fyi/</link>
+  <description>히라가나·가타카나부터 JLPT N5~N1 한자·어휘·문법까지. 4지선다 퀴즈로 외우는 무료 일본어 단어카드.</description>
+  <language>ko</language>
+  <lastBuildDate>Tue, 21 Jul 2026 09:00:00 +0900</lastBuildDate>
+  <atom:link href="https://nihongocards.fyi/rss.xml" rel="self" type="application/rss+xml"/>
+
+  <item>
+    <title>히라가나 표 — 46자 읽기·발음 연습 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/hiragana.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/hiragana.html</guid>
+    <pubDate>Tue, 21 Jul 2026 09:00:00 +0900</pubDate>
+    <description>일본어 히라가나 46자 전체 표와 읽기. 무료로 발음까지 연습하세요.</description>
+  </item>
+  <item>
+    <title>가타카나 표 — 111자 전체 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/katakana.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/katakana.html</guid>
+    <pubDate>Tue, 21 Jul 2026 08:50:00 +0900</pubDate>
+    <description>가타카나 111자(청음·탁음·요음) 표와 읽기. 무료 연습.</description>
+  </item>
+  <item>
+    <title>JLPT N5 필수 단어(어휘) — 예문 빈칸 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n5-vocabulary.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n5-vocabulary.html</guid>
+    <pubDate>Tue, 21 Jul 2026 08:40:00 +0900</pubDate>
+    <description>JLPT N5 실전 어휘를 예문 빈칸으로 암기. 무료.</description>
+  </item>
+  <item>
+    <title>JLPT N4 필수 단어(어휘) — 예문 빈칸 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n4-vocabulary.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n4-vocabulary.html</guid>
+    <pubDate>Tue, 21 Jul 2026 08:30:00 +0900</pubDate>
+    <description>JLPT N4 실전 어휘를 예문 빈칸으로 암기. 무료.</description>
+  </item>
+  <item>
+    <title>JLPT N3 필수 단어(어휘) — 예문 빈칸 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n3-vocabulary.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n3-vocabulary.html</guid>
+    <pubDate>Tue, 21 Jul 2026 08:20:00 +0900</pubDate>
+    <description>JLPT N3 실전 어휘를 예문 빈칸으로 암기. 무료.</description>
+  </item>
+  <item>
+    <title>JLPT N2 필수 단어(어휘) — 예문 빈칸 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n2-vocabulary.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n2-vocabulary.html</guid>
+    <pubDate>Tue, 21 Jul 2026 08:10:00 +0900</pubDate>
+    <description>JLPT N2 실전 어휘를 예문 빈칸으로 암기. 무료.</description>
+  </item>
+  <item>
+    <title>JLPT N1 필수 단어(어휘) — 예문 빈칸 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n1-vocabulary.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n1-vocabulary.html</guid>
+    <pubDate>Tue, 21 Jul 2026 08:00:00 +0900</pubDate>
+    <description>JLPT N1 실전 어휘를 예문 빈칸으로 암기. 무료.</description>
+  </item>
+  <item>
+    <title>JLPT N5 한자 리스트 — 뜻·읽기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n5-kanji.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n5-kanji.html</guid>
+    <pubDate>Tue, 21 Jul 2026 07:50:00 +0900</pubDate>
+    <description>JLPT N5 필수 한자 전체를 뜻·음훈독과 함께. 무료 단어카드.</description>
+  </item>
+  <item>
+    <title>JLPT N4 한자 리스트 — 뜻·읽기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n4-kanji.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n4-kanji.html</guid>
+    <pubDate>Tue, 21 Jul 2026 07:40:00 +0900</pubDate>
+    <description>JLPT N4 한자 전체를 뜻·읽기와 함께 정리. 미리보기 무료.</description>
+  </item>
+  <item>
+    <title>JLPT N3 한자 리스트 — 뜻·읽기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n3-kanji.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n3-kanji.html</guid>
+    <pubDate>Tue, 21 Jul 2026 07:30:00 +0900</pubDate>
+    <description>JLPT N3 한자 전체 리스트. 미리보기 무료.</description>
+  </item>
+  <item>
+    <title>JLPT N2 한자 리스트 — 뜻·읽기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n2-kanji.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n2-kanji.html</guid>
+    <pubDate>Tue, 21 Jul 2026 07:20:00 +0900</pubDate>
+    <description>JLPT N2 한자 전체 리스트. 미리보기 무료.</description>
+  </item>
+  <item>
+    <title>JLPT N1 한자 리스트 — 뜻·읽기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/jlpt-n1-kanji.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/jlpt-n1-kanji.html</guid>
+    <pubDate>Tue, 21 Jul 2026 07:10:00 +0900</pubDate>
+    <description>JLPT N1 한자 전체 리스트. 미리보기 무료.</description>
+  </item>
+  <item>
+    <title>일본어 인사 표현 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-greetings.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-greetings.html</guid>
+    <pubDate>Tue, 21 Jul 2026 07:00:00 +0900</pubDate>
+    <description>안녕하세요·고맙습니다 등 기본 인사. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 숫자 — 1부터 세는 법 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-numbers.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-numbers.html</guid>
+    <pubDate>Tue, 21 Jul 2026 06:50:00 +0900</pubDate>
+    <description>일본어 숫자 읽기(一二三…)와 세는 법. 무료 단어카드.</description>
+  </item>
+  <item>
+    <title>일본 여행 회화 예문 빈칸 — 여행 문장 암기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-travel-phrases.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-travel-phrases.html</guid>
+    <pubDate>Tue, 21 Jul 2026 06:40:00 +0900</pubDate>
+    <description>공항·호텔·식당·교통 등 여행 실전 문장을 빈칸으로 암기. 무료.</description>
+  </item>
+  <item>
+    <title>일상 회화 일본어 예문 빈칸 — 회화 문장 암기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-daily-phrases.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-daily-phrases.html</guid>
+    <pubDate>Tue, 21 Jul 2026 06:30:00 +0900</pubDate>
+    <description>집·친구·감정 등 일상 회화 문장을 빈칸으로 암기. 무료.</description>
+  </item>
+  <item>
+    <title>비즈니스 일본어 예문 빈칸 — 실무 문장 암기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-business-phrases.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-business-phrases.html</guid>
+    <pubDate>Tue, 21 Jul 2026 06:20:00 +0900</pubDate>
+    <description>이메일·회의·경어 등 비즈니스 일본어 문장을 빈칸으로 암기. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 조사 정리 — は·が·を·に 예문 빈칸 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-particles.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-particles.html</guid>
+    <pubDate>Tue, 21 Jul 2026 06:10:00 +0900</pubDate>
+    <description>조사(は·が·を·に·で·へ 등)를 예문 빈칸으로 익히기. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 동사 활용 — て형·ない형·た형 예문 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-verb-conjugation.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-verb-conjugation.html</guid>
+    <pubDate>Tue, 21 Jul 2026 06:00:00 +0900</pubDate>
+    <description>동사 활용(ます·て·ない·た·가능·수동)을 예문 빈칸으로. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 형용사 — い·な형용사 활용 예문 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-adjectives.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-adjectives.html</guid>
+    <pubDate>Tue, 21 Jul 2026 05:50:00 +0900</pubDate>
+    <description>い형·な형 형용사와 활용을 예문 빈칸으로. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 부사 모음 — 예문 빈칸 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-adverbs.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-adverbs.html</guid>
+    <pubDate>Tue, 21 Jul 2026 05:40:00 +0900</pubDate>
+    <description>자주 쓰는 부사(とても·あまり·もう 등)를 예문으로. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 핵심 문형 — JLPT 문법 예문 빈칸 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-grammar-patterns.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-grammar-patterns.html</guid>
+    <pubDate>Tue, 21 Jul 2026 05:30:00 +0900</pubDate>
+    <description>JLPT 빈출 문형(〜たばかり 등)을 예문 빈칸으로. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 요일·날짜 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-days.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-days.html</guid>
+    <pubDate>Tue, 21 Jul 2026 05:20:00 +0900</pubDate>
+    <description>월화수목금토일 요일과 날짜 표현. 무료 학습.</description>
+  </item>
+  <item>
+    <title>일본어 시간 표현 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-time.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-time.html</guid>
+    <pubDate>Tue, 21 Jul 2026 05:10:00 +0900</pubDate>
+    <description>시·분·오전오후 등 시간 표현 단어. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 색깔 단어 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-colors.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-colors.html</guid>
+    <pubDate>Tue, 21 Jul 2026 05:00:00 +0900</pubDate>
+    <description>빨강·파랑 등 색 이름 일본어. 무료 학습.</description>
+  </item>
+  <item>
+    <title>일본어 가족 호칭 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-family.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-family.html</guid>
+    <pubDate>Tue, 21 Jul 2026 04:50:00 +0900</pubDate>
+    <description>아버지·어머니·형제 등 가족 단어. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 음식·채소·과일 단어 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-food.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-food.html</guid>
+    <pubDate>Tue, 21 Jul 2026 04:40:00 +0900</pubDate>
+    <description>사과·채소·고기 등 음식 일본어. 무료 단어카드.</description>
+  </item>
+  <item>
+    <title>일본어 예문 빈칸 채우기 — N5 문장 암기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-example-sentences-n5.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-example-sentences-n5.html</guid>
+    <pubDate>Tue, 21 Jul 2026 04:30:00 +0900</pubDate>
+    <description>N5 필수 단어를 예문 속에서 익히는 빈칸(cloze) 학습. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 예문 빈칸 채우기 — N4 문장 암기 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-example-sentences-n4.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-example-sentences-n4.html</guid>
+    <pubDate>Tue, 21 Jul 2026 04:20:00 +0900</pubDate>
+    <description>N4 어휘를 예문 빈칸으로 익히는 문장 암기. 무료.</description>
+  </item>
+  <item>
+    <title>일본어 독서 최빈출 100 단어 | 일본어 카드모음</title>
+    <link>https://nihongocards.fyi/seo/japanese-frequent-100.html</link>
+    <guid isPermaLink="true">https://nihongocards.fyi/seo/japanese-frequent-100.html</guid>
+    <pubDate>Tue, 21 Jul 2026 04:10:00 +0900</pubDate>
+    <description>책·소설에 가장 자주 나오는 단어 100. 무료.</description>
+  </item>
+</channel>
+</rss>
