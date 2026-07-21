@@ -269,6 +269,30 @@
 .pcard .front.r0{border:2px solid #d7d7db}.pcard .front.r0 .rb{color:#a0a0a6}
 .pack-ov .pk-done{background:#ff7a59;color:#fff;border:none;border-radius:12px;padding:12px 26px;font-weight:800;font-size:14px;display:none}
 .pack-btn{background:linear-gradient(135deg,#8b5cf6,#c084fc)!important;color:#fff!important}
+
+/* ── 도파민: 콤보 게이지 ── */
+.combo-badge{position:absolute;right:14px;top:52px;z-index:5;font-weight:900;font-size:14px;
+  padding:5px 12px;border-radius:999px;background:#f0f0f2;color:#9a9a9a;display:none;transition:transform .12s}
+.combo-badge.show{display:block}
+.combo-badge.pop{transform:scale(1.25)}
+.combo-badge.c1{background:#e5f0ff;color:#3d8bff}
+.combo-badge.c2{background:#efe5ff;color:#8b4dff;box-shadow:0 0 10px rgba(139,77,255,.4)}
+.combo-badge.c3{background:linear-gradient(135deg,#ffe9a8,#ffd76a);color:#8a6d00;box-shadow:0 0 14px rgba(232,185,35,.65);animation:comboGold 1s ease-in-out infinite}
+@keyframes comboGold{0%,100%{box-shadow:0 0 8px rgba(232,185,35,.5)}50%{box-shadow:0 0 18px rgba(232,185,35,.9)}}
+/* 팩 개봉 서스펜스: 차징 */
+.pcard.charge .inner{animation:chargeShake .09s linear infinite}
+.pcard.charge .back{background:linear-gradient(135deg,#8b5cf6,#c084fc)!important}
+.pcard.charge.gold .back{background:linear-gradient(135deg,#e8b923,#ffd76a)!important;box-shadow:0 0 22px rgba(232,185,35,.95)}
+@keyframes chargeShake{0%{transform:translateX(-2px) rotate(-1.2deg)}50%{transform:translateX(2px) rotate(1.2deg)}100%{transform:translateX(-2px) rotate(-1.2deg)}}
+.ssr-flash{position:fixed;inset:0;background:radial-gradient(circle,rgba(255,225,130,.95),rgba(255,215,80,0) 70%);
+  z-index:90;pointer-events:none;opacity:0}
+.ssr-flash.go{animation:ssrFlash .7s ease-out}
+@keyframes ssrFlash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+/* 보너스 드랍 토스트 강화 */
+.card-get.bonus{background:linear-gradient(135deg,#8b5cf6,#c084fc);box-shadow:0 4px 18px rgba(139,92,246,.6);font-size:14px}
+.card-get.bonus.gold{background:linear-gradient(135deg,#e8b923,#ffd76a);color:#4a3900;box-shadow:0 4px 18px rgba(232,185,35,.7)}
+/* 확정팩·피티 안내 */
+.pk-sub{color:#ffd76a;font-size:13px;font-weight:800}
 </style>
 </head>
 <body>
@@ -339,6 +363,7 @@
     <button class="back" onclick="show('setup')">‹</button>
     <span class="title" id="qtitle">읽기 테스트</span>
     <span class="count" id="count">1 / 20</span>
+    <span class="combo-badge" id="comboBadge"></span>
   </div>
   <div class="timer"><i id="tbar"></i></div>
   <div class="timer-label" id="tlabel">0:05</div>
@@ -410,6 +435,7 @@
   <button class="pk-done" id="pkDone" onclick="closePack()">도감에 등록 완료 ✓</button>
 </div>
 <div class="card-get" id="cardGet"></div>
+<div class="ssr-flash" id="ssrFlash"></div>
 
 <!-- ═══ 50음도표 (무료) ═══ -->
 <div class="screen" id="chartScreen">
@@ -871,6 +897,7 @@ function loadQ(){
   if(isSent()){ g.textContent=clozeText(q); g.classList.add("cloze"); g.classList.remove("small"); }
   else { g.classList.remove("cloze"); g.textContent=q.front; g.classList.toggle("small",q.front.length>1); }
   $("count").textContent=`${qi+1} / ${deck.length}`;
+  updateComboBadge();
   $("example").className="example"; $("example").innerHTML="";
   const pool = dailyMode ? DAILY_POOL : DATA[curCat.code];
   const wrongs=shuffle(pool.filter(x=>x.front!==q.front)).slice(0,3);
@@ -900,9 +927,10 @@ function choose(btn,o,q){
   const box=$("opts");box.classList.add("locked");
   const ok = o.front===q.front;
   results.push(ok);
-  if(ok){btn.classList.add("correct");correct++; combo++; collectCard(q); }
+  if(ok){btn.classList.add("correct");correct++; combo++; collectCard(q); bonusDrop(); }
   else{btn.classList.add("wrong");combo=0;misses.push(q);[...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");});}
   [...box.children].forEach(b=>{if(!b.classList.contains("correct")&&!b.classList.contains("wrong"))b.classList.add("dim");});
+  updateComboBadge();
   sfx(ok?"ok":"fail");
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
@@ -910,7 +938,7 @@ function choose(btn,o,q){
   sched(nextQ, showEx ? 3200 : 1300);                         // 예문 재생이 잘리지 않게 여유
 }
 function timeUp(){
-  if(answered)return; answered=true; combo=0; misses.push(deck[qi]); results.push(false);
+  if(answered)return; answered=true; combo=0; updateComboBadge(); misses.push(deck[qi]); results.push(false);
   const q=deck[qi]; const box=$("opts");box.classList.add("locked");
   [...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");else b.classList.add("dim");});
   sfx("fail");
@@ -1041,6 +1069,14 @@ const RAR_NAME=["N","R","SR","SSR"];
 function getColl(){ try{ return JSON.parse(localStorage.getItem("collection")||"{}"); }catch(e){ return {}; } }
 function saveColl(c){ try{ localStorage.setItem("collection",JSON.stringify(c)); }catch(e){} }
 function comboRarity(){ return combo>=10?3 : combo>=5?2 : combo>=3?1 : 0; }
+function updateComboBadge(){
+  const el=$("comboBadge"); if(!el) return;
+  if(combo<2){ el.classList.remove("show"); return; }
+  const r=comboRarity();
+  el.className="combo-badge show"+(r?" c"+r:"");
+  el.textContent="🔥 "+combo+" 콤보"+(r===3?" MAX!":r===2?" SR존!":r===1?" R존!":"");
+  el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+}
 function collectCard(q){
   if(reviewRound>0) return;                       // 복습은 수집 제외(파밍 방지)
   const cat=q._cat||(curCat?curCat.code:null); if(!cat||cat==="__daily") return;
@@ -1053,6 +1089,25 @@ function collectCard(q){
     const tag = r===3?'<span class="ssr">SSR</span>' : r===2?'<span class="sr">SR</span>' : RAR_NAME[r];
     cardGetToast((evt==="new"?"🃏 카드 획득! ":"⬆ 등급 UP! ")+q.front+" ["+tag+"]"+(combo>=3?" · "+combo+"콤보":""));
   }
+  renderCollBar();
+}
+// 변동비율 보상: 정답 시 5% 확률 랜덤 보너스 카드 (R 이상 보장)
+function bonusDrop(){
+  if(reviewRound>0 || Math.random()>=0.05) return;
+  const pool = dailyMode ? DAILY_POOL : (DATA[curCat?curCat.code:null]||[]);
+  if(!pool.length) return;
+  const x=pool[Math.floor(Math.random()*pool.length)];
+  const r=Math.max(1, rollRarity());
+  const cat=x._cat||(curCat?curCat.code:null); if(!cat||cat==="__daily") return;
+  const c=getColl(), k=cat+"|"+x.front, cur=c[k];
+  if(!cur) c[k]={r:r,n:1}; else { cur.n++; if(r>cur.r) cur.r=r; }
+  saveColl(c);
+  const el=$("cardGet");
+  el.className="card-get bonus"+(r===3?" gold":"");
+  el.innerHTML="💫 보너스 드랍! "+x.front+" ["+RAR_NAME[r]+"]";
+  el.classList.add("show");
+  if(r===3){ const f=$("ssrFlash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); }
+  clearTimeout(_cgT); _cgT=setTimeout(()=>{ el.classList.remove("show"); el.className="card-get"; },1900);
   renderCollBar();
 }
 let _cgT=null;
@@ -1110,28 +1165,45 @@ async function shareColl(){
 }
 // ── 카드팩 개봉 (일일챌린지 보상, 하루 1회) ──
 function packClaimedToday(){ try{ return localStorage.getItem("pack_last")===kstDate(0); }catch(e){ return true; } }
-function rollRarity(){ const r=Math.random(); return r<0.03?3 : r<0.15?2 : r<0.40?1 : 0; }
+let PACK_MIN=0, PACK_LABEL="";
+function getPity(){ try{ return +localStorage.getItem("pity")||0; }catch(e){ return 0; } }
+function setPity(v){ try{ localStorage.setItem("pity",v); }catch(e){} }
+function rollRarity(min){ const r=Math.random(); const v = r<0.03?3 : r<0.15?2 : r<0.40?1 : 0; return Math.max(v, min||0); }
 function openPack(){
   if(packClaimedToday()){ toast("오늘의 팩은 이미 열었어요 — 내일 또!"); return; }
   if(DAILY_POOL.length<20){ toast("데이터 준비 중"); return; }
   try{ localStorage.setItem("pack_last",kstDate(0)); }catch(e){}
+  // 피티(천장): 10팩째까지 SSR 없으면 확정
+  const pityNow=getPity(); const pityForce = pityNow>=9;
   const wrap=$("pkCards"); wrap.innerHTML=""; $("pkDone").style.display="none";
-  $("pkHint").textContent="카드를 눌러서 뒤집어 보세요!";
+  $("pkTitle").innerHTML="🎁 오늘의 카드팩"+(PACK_LABEL?` <span class="pk-sub">${PACK_LABEL}</span>`:"");
+  $("pkHint").textContent = pityForce ? "✨ 천장 도달 — 이번 팩엔 SSR이 반드시 들어있어요!" : "카드를 눌러서 뒤집어 보세요!";
   let flipped=0; const picks=[];
   while(picks.length<5){ const x=DAILY_POOL[Math.floor(Math.random()*DAILY_POOL.length)]; if(!picks.includes(x)) picks.push(x); }
-  picks.forEach(x=>{
-    const r=rollRarity();
+  const forceIdx = pityForce ? Math.floor(Math.random()*5) : -1;
+  let gotSSR=false;
+  picks.forEach((x,pi)=>{
+    const r = pi===forceIdx ? 3 : rollRarity(PACK_MIN);
     // 도감 반영 (신규 or 등급업)
     const c=getColl(), k=(x._cat||"misc")+"|"+x.front, cur=c[k];
     if(!cur) c[k]={r:r,n:1}; else { cur.n++; if(r>cur.r) cur.r=r; }
     saveColl(c);
+    if(r===3) gotSSR=true;
     const d=document.createElement("div"); d.className="pcard";
     d.innerHTML=`<div class="inner"><div class="face back">?</div>
       <div class="face front r${r}"><span class="rb">${RAR_NAME[r]}</span><div class="g jp">${x.front}</div><div class="k">${x.ko||""}</div></div></div>`;
-    d.onclick=()=>{ if(d.classList.contains("flip"))return; d.classList.add("flip"); sfx("ok"); flipped++;
-      if(flipped===5){ $("pkHint").textContent="오늘의 5장 획득!"; $("pkDone").style.display="block"; renderCollBar(); } };
+    d.onclick=()=>{
+      if(d.classList.contains("flip")||d.classList.contains("charge"))return;
+      const done=()=>{ d.classList.remove("charge","gold"); d.classList.add("flip"); sfx("ok"); flipped++;
+        if(r===3){ const f=$("ssrFlash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); }
+        if(flipped===5){ $("pkHint").textContent="오늘의 5장 획득!"; $("pkDone").style.display="block"; renderCollBar(); } };
+      if(r>=2){ d.classList.add("charge"); if(r===3) d.classList.add("gold"); setTimeout(done, r===3?1100:700); }  // SR+ 서스펜스 차징
+      else done();
+    };
     wrap.appendChild(d);
   });
+  setPity(gotSSR ? 0 : getPity()+1);
+  PACK_MIN=0; PACK_LABEL="";
   $("packOv").classList.add("on");
 }
 function closePack(){ $("packOv").classList.remove("on"); renderCollBar(); }
@@ -1280,8 +1352,19 @@ function finish(){
     renderDaily();
     const oldPk=$("packBtn"); if(oldPk) oldPk.remove();
     if(!packClaimedToday()){
+      // 스트릭 마일스톤 → 오늘 팩 확정등급 업그레이드 (3일 R·7일 SR·14일 SR·30일 SSR)
+      const sNow=dailyState(); const ms=sNow.ms||[];
+      const MS=[[30,3,"SSR 확정!"],[14,2,"SR 확정!"],[7,2,"SR 확정!"],[3,1,"R 확정!"]];
+      PACK_MIN=0; PACK_LABEL="";
+      for(const [d,r,label] of MS){
+        if((sNow.streak||0)>=d && !ms.includes(d)){
+          PACK_MIN=r; PACK_LABEL=`🔥${d}일 연속 보상 · ${label}`;
+          ms.push(d); sNow.ms=ms; saveDailyState(sNow);
+          break;
+        }
+      }
       const pk=document.createElement("button"); pk.id="packBtn"; pk.className="primary pack-btn";
-      pk.textContent="🎁 보상: 오늘의 카드팩 열기 (5장)";
+      pk.textContent = PACK_LABEL ? `🎁 ${PACK_LABEL.replace("🔥","")} 카드팩 열기` : (getPity()>=9 ? "🎁 카드팩 열기 (✨SSR 확정)" : "🎁 보상: 오늘의 카드팩 열기 (5장)");
       pk.onclick=openPack;
       document.querySelector("#done .actions").prepend(pk);
     }
