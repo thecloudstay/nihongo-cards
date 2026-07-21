@@ -1,0 +1,17 @@
+{
+  "name": "일본어 카드모음 — 단어 암기 · JLPT",
+  "short_name": "일본어 카드",
+  "description": "히라가나부터 JLPT N1까지, 4지선다 퀴즈로 외우는 무료 일본어 단어장",
+  "start_url": "./?src=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ff7a59",
+  "lang": "ko",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

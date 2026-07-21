@@ -21,6 +21,9 @@
 <link rel="alternate" type="application/rss+xml" title="일본어 카드모음 RSS" href="https://nihongocards.fyi/rss.xml">
 <meta name="keywords" content="일본어 단어장,일본어 단어 암기,JLPT 단어,히라가나 외우기,가타카나,일본어 한자,일본어 퀴즈,JLPT N5,JLPT N3,무료 일본어">
 <meta name="theme-color" content="#ff7a59">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 <style>
   :root{
@@ -179,6 +182,37 @@
   .acc-out{margin-top:22px;width:100%;padding:15px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:#c33;font-weight:700;cursor:pointer}
   .toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;font-size:13px;font-weight:600;padding:12px 20px;border-radius:30px;opacity:0;transition:.25s;pointer-events:none;z-index:100}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── 바이럴: 오늘의 10문제 카드 ── */
+.daily-card{margin:14px 16px 2px;padding:14px 16px;border-radius:16px;cursor:pointer;
+  background:linear-gradient(135deg,#ff7a59,#ff9d7a);color:#fff;display:flex;align-items:center;gap:12px;
+  box-shadow:0 4px 14px rgba(255,122,89,.35);transition:transform .12s}
+.daily-card:active{transform:scale(.98)}
+.daily-card .dc-ico{font-size:26px}
+.daily-card .dc-tt{font-weight:800;font-size:15px}
+.daily-card .dc-sub{font-size:12px;opacity:.92;margin-top:2px}
+.daily-card .dc-streak{margin-left:auto;text-align:center;font-weight:800;font-size:15px;white-space:nowrap}
+.daily-card .dc-streak small{display:block;font-weight:600;font-size:10px;opacity:.9}
+.daily-card.done-today{background:linear-gradient(135deg,#33c07a,#6ad39a);box-shadow:0 4px 14px rgba(51,192,122,.3)}
+/* 결과 등급/공유 */
+.rank-label{text-align:center;font-weight:800;font-size:16px;margin:6px 0 2px}
+.share-btn{background:#1a1a1a;color:#fff}
+.share-btn:active{opacity:.85}
+.daily-note{text-align:center;font-size:12px;color:#9a9a9a;margin-top:8px}
+/* PWA 설치 배너 */
+.pwa-tip{margin:10px 16px 0;padding:12px 14px;border-radius:14px;background:#fff7f4;border:1px solid #ffd9cc;
+  display:flex;align-items:center;gap:10px;font-size:13px}
+.pwa-tip b{color:#ff7a59}
+.pwa-tip button{margin-left:auto;background:#ff7a59;color:#fff;border:none;border-radius:10px;padding:8px 12px;font-weight:700;font-size:12px;white-space:nowrap}
+.pwa-tip .pwa-x{background:none;color:#b0b0b0;font-size:16px;padding:4px 6px;margin-left:4px}
+/* iOS 설치 안내 시트 */
+.ios-sheet{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:99;align-items:flex-end}
+.ios-sheet.on{display:flex}
+.ios-sheet .sheet{background:#fff;width:100%;max-width:520px;margin:0 auto;border-radius:20px 20px 0 0;padding:22px 20px 30px;font-size:14px;line-height:1.8}
+.ios-sheet .sheet h3{margin:0 0 8px;font-size:16px}
+.ios-sheet .sheet .step{display:flex;gap:10px;align-items:center;margin:6px 0}
+.ios-sheet .sheet .n{background:#ff7a59;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex:none}
+.ios-sheet .close{width:100%;margin-top:14px;background:#f0f0f0;border:none;border-radius:12px;padding:12px;font-weight:700}
 </style>
 </head>
 <body>
@@ -191,6 +225,11 @@
       <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켬</button>
     </div>
     <div class="app">일본어 카드모음<div class="en">にほんご カード · 読みテスト</div></div>
+  </div>
+  <div class="daily-card" id="dailyCard" style="display:none" onclick="startDaily()">
+    <div class="dc-ico">🎯</div>
+    <div><div class="dc-tt" id="dcTitle">오늘의 10문제</div><div class="dc-sub" id="dcSub">전국 동일 문제 · 매일 0시 갱신</div></div>
+    <div class="dc-streak" id="dcStreak"></div>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">기초<span class="s">基礎</span></button>
@@ -262,10 +301,27 @@
 <div class="done" id="done">
   <div class="scorebox"><div class="blob" id="blob"><div class="score"><span id="scoreNum">0</span><small>/ <span id="scoreTot">20</span></small></div></div></div>
   <div class="label" id="doneLabel">내 점수</div>
+  <div class="rank-label" id="rankLabel" style="display:none"></div>
   <div class="miss-list" id="missWrap"><h3 id="missTitle">틀린 문자</h3><div id="missRows"></div></div>
   <div class="actions">
+    <button class="primary share-btn" id="shareBtn" onclick="doShare()">📤 결과 공유하기</button>
     <button class="primary" id="reviewBtn" onclick="reviewMiss()">틀린 문자 다시 풀기</button>
     <button onclick="show('home')">다른 카드 고르기</button>
+  </div>
+  <div class="daily-note" id="dailyNote" style="display:none"></div>
+  <div class="pwa-tip" id="pwaTip" style="display:none">
+    <span>📲 <b>홈 화면에 추가</b>하면 앱처럼 매일 이어할 수 있어요</span>
+    <button onclick="promptInstall()">추가</button>
+    <button class="pwa-x" onclick="dismissPwa()">✕</button>
+  </div>
+</div>
+<div class="ios-sheet" id="iosSheet" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sheet">
+    <h3>📲 홈 화면에 추가하기</h3>
+    <div class="step"><span class="n">1</span>하단 <b>공유 버튼</b>(□↑)을 누르세요</div>
+    <div class="step"><span class="n">2</span><b>"홈 화면에 추가"</b>를 선택하세요</div>
+    <div class="step"><span class="n">3</span>아이콘으로 매일 바로 접속! 🔥</div>
+    <button class="close" onclick="$('iosSheet').classList.remove('on')">닫기</button>
   </div>
 </div>
 
@@ -531,6 +587,7 @@ const $=id=>document.getElementById(id);
 let curTab="kana", curCat=null;
 let CONF={count:20,time:5,mode:"meaning"};
 let deck=[],qi=0,correct=0,misses=[],answered=false,paused=false,timerId=null,reviewRound=0;
+let results=[],dailyMode=false;
 // 퀴즈 중 예약된 콜백(발음·다음문제)을 추적해 화면 이탈 시 전부 취소 (뒤로가기 버그 방지)
 let _pend=[];
 function sched(fn,ms){ const id=setTimeout(fn,ms); _pend.push(id); return id; }
@@ -544,7 +601,8 @@ const isSent=()=> !!(curCat && curCat.sent);   // 문장암기(cloze) 팩
 // ── 무료/유료 경계 (앱 UI) — 무료=카나+기초필수 12팩만, 나머지는 미리보기 10장+유료 ──
 const FREE_APP = new Set(["hiragana","katakana","num","week","time","body","dir","color","family","weather","greet","ask"]);
 function tierOf(it){ return FREE_APP.has(it.code) ? "free" : "paid"; }
-const optText=c=> isSent() ? c.front : (!isKanjiCat() ? c.label : (CONF.mode==="reading" ? c.romaji : c.ko));
+const qMode=()=> (typeof dailyMode!=="undefined"&&dailyMode) ? "meaning" : CONF.mode;
+const optText=c=> isSent() ? c.front : (!isKanjiCat() ? c.label : (qMode()==="reading" ? c.romaji : c.ko));
 function clozeText(q){ const w=q.front||"", s=q.ex||""; const i=s.indexOf(w); return i<0 ? s : (s.slice(0,i)+"（　）"+s.slice(i+w.length)); }
 
 // ══ 구매·소유(entitlement) ══ 스테이지·카테고리별 1회 구매 = 영구 소유
@@ -711,12 +769,12 @@ $("segType").addEventListener("click",e=>{ if(e.target.dataset.m){[...$("segType
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 
 function startQuiz(){
-  reviewRound=0;
+  reviewRound=0; dailyMode=false; results=[];
   const pool=DATA[curCat.code];
   const n = CONF.count===0 ? pool.length : Math.min(CONF.count,pool.length);
   deck=shuffle(pool).slice(0,n);
   qi=0;correct=0;misses=[];
-  $("qtitle").textContent = isSent() ? `${curCat.ko} · 빈칸` : (isKanjiCat() ? `${curCat.ko} · ${CONF.mode==="reading"?"읽기":"뜻"}` : `${curCat.ko} 읽기`);
+  $("qtitle").textContent = isSent() ? `${curCat.ko} · 빈칸` : (isKanjiCat() ? `${curCat.ko} · ${qMode()==="reading"?"읽기":"뜻"}` : `${curCat.ko} 읽기`);
   $("scoreTot").textContent=deck.length;
   show("quizScreen"); loadQ();
 }
@@ -728,19 +786,20 @@ function loadQ(){
   else { g.classList.remove("cloze"); g.textContent=q.front; g.classList.toggle("small",q.front.length>1); }
   $("count").textContent=`${qi+1} / ${deck.length}`;
   $("example").className="example"; $("example").innerHTML="";
-  const pool=DATA[curCat.code];
+  const pool = dailyMode ? DAILY_POOL : DATA[curCat.code];
   const wrongs=shuffle(pool.filter(x=>x.front!==q.front)).slice(0,3);
   const opts=shuffle([q,...wrongs]);
   const box=$("opts");box.className="opts";box.innerHTML="";
   opts.forEach(o=>{const b=document.createElement("button");b.className="opt";b.textContent=optText(o);b.dataset.front=o.front;b.onclick=()=>choose(b,o,q);box.appendChild(b);});
   // 문제가 뜰 때 발음: 읽기 맞히기 모드는 답이 노출되므로 제외, 그 외(뜻모드·카나)는 바로 발음
-  if(!(isKanjiCat() && CONF.mode==="reading") && !isSent()){ sched(()=>speak(q.speak), 250); }
+  if(!(isKanjiCat() && qMode()==="reading") && !isSent()){ sched(()=>speak(q.speak), 250); }
   startTimer();
 }
 function startTimer(){
   clearInterval(timerId);
-  if(CONF.time===0){$("tbar").style.width="100%";$("tlabel").textContent="∞";return;}
-  const secs = isSent() ? Math.max(CONF.time,8) : CONF.time;   // 문장(cloze)은 읽을 시간 최소 8초 보장
+  const confTime = dailyMode ? 5 : CONF.time;
+  if(confTime===0){$("tbar").style.width="100%";$("tlabel").textContent="∞";return;}
+  const secs = isSent() ? Math.max(confTime,8) : confTime;   // 문장(cloze)은 읽을 시간 최소 8초 보장
   const total=secs*1000, t0=performance.now();
   $("tbar").style.width="100%";
   timerId=setInterval(()=>{ if(paused){return;}
@@ -754,6 +813,7 @@ function choose(btn,o,q){
   if(answered)return; answered=true; clearInterval(timerId);
   const box=$("opts");box.classList.add("locked");
   const ok = o.front===q.front;
+  results.push(ok);
   if(ok){btn.classList.add("correct");correct++;}
   else{btn.classList.add("wrong");misses.push(q);[...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");});}
   [...box.children].forEach(b=>{if(!b.classList.contains("correct")&&!b.classList.contains("wrong"))b.classList.add("dim");});
@@ -764,7 +824,7 @@ function choose(btn,o,q){
   sched(nextQ, showEx ? 3200 : 1300);                         // 예문 재생이 잘리지 않게 여유
 }
 function timeUp(){
-  if(answered)return; answered=true; misses.push(deck[qi]);
+  if(answered)return; answered=true; misses.push(deck[qi]); results.push(false);
   const q=deck[qi]; const box=$("opts");box.classList.add("locked");
   [...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");else b.classList.add("dim");});
   sfx("fail");
@@ -890,6 +950,111 @@ document.addEventListener("touchstart",_unlockAudio,{once:true});
 document.addEventListener("click",_unlockAudio,{once:true});
 document.addEventListener("keydown",_unlockAudio,{once:true});
 
+// ═══════════ 바이럴: 오늘의 10문제 · 스트릭 · 공유 · PWA ═══════════
+const DAILY_EPOCH="2026-07-21";           // #1 기준일
+const DAILY_CODES=["num","week","time","body","dir","color","family","weather","greet","ask"]; // 무료 단어팩(전원 동일 보장)
+let DAILY_POOL=[];
+const DAILY_CAT={code:"__daily",ko:"오늘의 10문제",jp:"今日の10問",sent:false};
+function kstDate(offset){ const d=new Date(Date.now()+9*3600e3+(offset||0)*86400e3); return d.toISOString().slice(0,10); }
+function dailyNo(){ return Math.max(1, Math.round((new Date(kstDate(0))-new Date(DAILY_EPOCH))/86400e3)+1); }
+function seedRng(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
+  return function(){ h=Math.imul(h^(h>>>16),2246822507); h=Math.imul(h^(h>>>13),3266489909); return ((h^=h>>>16)>>>0)/4294967296; }; }
+function buildDailyPool(){ DAILY_POOL=[]; DAILY_CODES.forEach(c=>{ (DATA[c]||[]).forEach(x=>DAILY_POOL.push(x)); }); }
+function dailyDeck(){
+  const rng=seedRng("nihongo-"+kstDate(0)); const idx=new Set();
+  while(idx.size<Math.min(10,DAILY_POOL.length)) idx.add(Math.floor(rng()*DAILY_POOL.length));
+  return [...idx].map(i=>DAILY_POOL[i]);
+}
+function dailyState(){ try{ return JSON.parse(localStorage.getItem("daily_state")||"{}"); }catch(e){ return {}; } }
+function saveDailyState(s){ try{ localStorage.setItem("daily_state",JSON.stringify(s)); }catch(e){} }
+function renderDaily(){
+  buildDailyPool();
+  const el=$("dailyCard"); if(!el) return;
+  if(DAILY_POOL.length<20){ el.style.display="none"; return; }
+  el.style.display="flex";
+  const s=dailyState(), today=kstDate(0);
+  const streak=(s.last===today||s.last===kstDate(-1))?(s.streak||0):0;
+  $("dcStreak").innerHTML = streak>0 ? `🔥 ${streak}일<small>연속</small>` : `#${dailyNo()}<small>오늘</small>`;
+  if(s.last===today){
+    el.classList.add("done-today");
+    $("dcTitle").textContent="오늘의 10문제 완료!";
+    $("dcSub").textContent=`${s.score} · 내일 0시에 새 문제 · 다시 풀어보기`;
+  } else {
+    el.classList.remove("done-today");
+    $("dcTitle").textContent=`오늘의 10문제 #${dailyNo()}`;
+    $("dcSub").textContent="모두에게 같은 문제 · 결과를 친구와 비교해보세요";
+  }
+}
+function startDaily(){
+  if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
+  dailyMode=true; reviewRound=0; results=[]; misses=[]; correct=0; qi=0;
+  curCat=DAILY_CAT; previewMode=false;
+  deck=dailyDeck();
+  $("qtitle").textContent=`오늘의 10문제 #${dailyNo()}`;
+  $("scoreTot").textContent=deck.length;
+  show("quizScreen"); loadQ();
+}
+function updateStreak(scoreText){
+  const s=dailyState(), today=kstDate(0);
+  if(s.last===today){ s.score=scoreText; saveDailyState(s); return s.streak||1; }
+  s.streak=(s.last===kstDate(-1))?(s.streak||0)+1:1;
+  s.last=today; s.score=scoreText; s.best=Math.max(s.best||0,s.streak); s.total=(s.total||0)+1;
+  saveDailyState(s); return s.streak;
+}
+function rankOf(pct){
+  if(pct>=100) return "満点! 오늘의 사범 🏆";
+  if(pct>=90) return "달인의 감각 ⚡";
+  if(pct>=70) return "상승세 수험생 📈";
+  if(pct>=50) return "꾸준함이 무기 💪";
+  return "내일의 역전 🌱";
+}
+function emojiGrid(){
+  let g=""; results.forEach((ok,i)=>{ g+=ok?"🟩":"⬛"; if((i+1)%10===0&&i<results.length-1)g+="\n"; }); return g;
+}
+let _shareText="";
+function buildShare(){
+  const total=results.length, pct=total?Math.round(correct/total*100):0;
+  if(dailyMode){
+    const st=dailyState();
+    let txt=`일본어 카드모음 · 오늘의 10문제 #${dailyNo()}\n${emojiGrid()} ${correct}/${total}\n${rankOf(pct)}`;
+    if((st.streak||0)>1) txt+=` · 🔥${st.streak}일 연속`;
+    txt+=`\nhttps://nihongocards.fyi`;
+    return txt;
+  }
+  const name=curCat?(curCat.ko||""):"";
+  return `일본어 카드모음 · ${name}\n${emojiGrid()} ${correct}/${total} (${pct}%)\n${rankOf(pct)}\nhttps://nihongocards.fyi`;
+}
+async function doShare(){
+  const txt=_shareText||buildShare();
+  try{
+    if(navigator.share){ await navigator.share({text:txt}); return; }
+  }catch(e){ if(e && e.name==="AbortError") return; }
+  try{ await navigator.clipboard.writeText(txt); toast("결과를 복사했어요! 카톡에 붙여넣기 📋"); }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); try{document.execCommand("copy"); toast("결과를 복사했어요! 카톡에 붙여넣기 📋");}catch(_){toast("복사 실패 — 직접 캡처해주세요");}
+    ta.remove();
+  }
+}
+// ── PWA 설치 ──
+let _bip=null;
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); _bip=e; });
+function isStandalone(){ return matchMedia("(display-mode: standalone)").matches || navigator.standalone===true; }
+function isIOS(){ return /iPhone|iPad|iPod/.test(navigator.userAgent); }
+function pwaDismissed(){ try{ const ts=+localStorage.getItem("pwa_dismiss")||0; return Date.now()-ts < 3*86400e3; }catch(e){ return false; } }
+function dismissPwa(){ try{ localStorage.setItem("pwa_dismiss",Date.now()); }catch(e){} $("pwaTip").style.display="none"; }
+function maybeShowPwa(){
+  if(isStandalone()||pwaDismissed()) return;
+  if(_bip || isIOS()) $("pwaTip").style.display="flex";
+}
+async function promptInstall(){
+  if(_bip){ _bip.prompt(); const r=await _bip.userChoice.catch(()=>null); _bip=null; $("pwaTip").style.display="none";
+    if(r && r.outcome==="accepted") toast("설치 완료! 홈 화면에서 만나요 🎉"); return; }
+  if(isIOS()){ $("iosSheet").classList.add("on"); return; }
+  toast("브라우저 메뉴에서 '홈 화면에 추가'를 눌러주세요");
+}
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); }); }
+
 function finish(){
   clearInterval(timerId);
   $("scoreNum").textContent=correct; $("scoreTot").textContent=deck.length;
@@ -914,10 +1079,26 @@ function finish(){
     document.querySelector("#done .actions").prepend(b);
   }
   window._miss=uniq.slice();
+  // ── 바이럴: 등급·공유·데일리·PWA ──
+  const total=results.length||deck.length, pct=total?Math.round(correct/total*100):0;
+  const rk=$("rankLabel");
+  if(reviewRound===0 && results.length){ rk.textContent=rankOf(pct); rk.style.display="block"; }
+  else rk.style.display="none";
+  const sb=$("shareBtn"); sb.style.display = (reviewRound===0 && results.length) ? "block" : "none";
+  const dn=$("dailyNote"); dn.style.display="none";
+  if(dailyMode && reviewRound===0){
+    const st=updateStreak(`${correct}/${total}`);
+    dn.innerHTML=`🔥 <b>${st}일 연속</b> 도전 중 · 내일 0시에 새 문제가 나와요`;
+    dn.style.display="block";
+    sb.textContent="📤 결과 공유하고 친구와 비교하기";
+    renderDaily();
+  } else { sb.textContent="📤 결과 공유하기"; }
+  _shareText=buildShare();
+  maybeShowPwa();
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $("done").classList.add("on");
 }
 function reviewMiss(){
-  reviewRound++; deck=shuffle(window._miss);qi=0;correct=0;misses=[];
+  reviewRound++; deck=shuffle(window._miss);qi=0;correct=0;misses=[]; results=[];
   $("qtitle").textContent=`복습 ${reviewRound}회차 · ${deck.length}개`; $("scoreTot").textContent=deck.length;
   $("done").classList.remove("on"); show("quizScreen"); loadQ();
 }
@@ -1080,6 +1261,7 @@ async function initApp(){
   initPaddle();
   await loadData();
   renderNav();
+  renderDaily();
 }
 initApp();
 </script>
