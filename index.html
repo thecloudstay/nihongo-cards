@@ -293,6 +293,17 @@
 .card-get.bonus.gold{background:linear-gradient(135deg,#e8b923,#ffd76a);color:#4a3900;box-shadow:0 4px 18px rgba(232,185,35,.7)}
 /* 확정팩·피티 안내 */
 .pk-sub{color:#ffd76a;font-size:13px;font-weight:800}
+
+/* ── 학습 보상(유료팩 선물) ── */
+.rw-ov{position:fixed;inset:0;background:rgba(10,10,14,.92);z-index:85;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px}
+.rw-ov.on{display:flex}
+.rw-ov h2{color:#fff;margin:0;font-size:18px}
+.rw-ov .sub{color:#ffd76a;font-size:13px;font-weight:800}
+.rw-list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px}
+.rw-list button{background:#fff;border:none;border-radius:14px;padding:14px 16px;font-size:14px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.rw-list button small{color:#9a9a9a;font-weight:600}
+.rw-ov .rw-close{background:none;border:none;color:#9a9aa4;font-size:13px;padding:8px}
+.rw-btn{background:linear-gradient(135deg,#0ea56b,#34d399)!important;color:#fff!important}
 </style>
 </head>
 <body>
@@ -433,6 +444,12 @@
   <div class="hint" id="pkHint">카드를 눌러서 뒤집어 보세요!</div>
   <div class="pack-cards" id="pkCards"></div>
   <button class="pk-done" id="pkDone" onclick="closePack()">도감에 등록 완료 ✓</button>
+</div>
+<div class="rw-ov" id="rwOv">
+  <h2>🎖 학습 보상</h2>
+  <div class="sub" id="rwSub"></div>
+  <div class="rw-list" id="rwList"></div>
+  <button class="rw-close" onclick="$('rwOv').classList.remove('on')">나중에 받기 (결과 화면에서 다시 열 수 있어요)</button>
 </div>
 <div class="card-get" id="cardGet"></div>
 <div class="ssr-flash" id="ssrFlash"></div>
@@ -1163,6 +1180,57 @@ async function shareColl(){
   try{ if(navigator.share){ await navigator.share({text:txt}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
   try{ await navigator.clipboard.writeText(txt); toast("도감 자랑을 복사했어요! 📋"); }catch(e){ toast("복사 실패"); }
 }
+// ── 학습 보상: 꾸준함 → 유료팩 선물 (기기 로컬 해제, cards_all에서 데이터 로딩) ──
+const REWARD_TABLE=[
+  {d:7,  pool:["shape","country","animal","nature","job","food"], label:"주제·생활 팩 1개 선택"},
+  {d:14, pool:["shape","country","animal","nature","job","food"], label:"주제·생활 팩 1개 추가 선택"},
+  {d:30, pool:["V5","N5"], label:"JLPT N5 팩 선택 (어휘/한자)"},
+  {d:60, pool:["S1"], label:"N5 문장팩 지급"},
+];
+function findNavItem(code){ let f=null; Object.keys(NAV).forEach(s=>NAV[s].forEach(g=>g.items.forEach(it=>{ if(it.code===code) f=it; }))); return f; }
+function pendingReward(){
+  const st=dailyState(), done=st.rw||[];
+  return REWARD_TABLE.find(r=> (st.total||0)>=r.d && !done.includes(r.d)) || null;
+}
+let _allRowsCache=null;
+async function fetchAllRows(){
+  if(_allRowsCache) return _allRowsCache;
+  const rows=await tryFetchRows("cards_all.json");
+  if(rows&&rows.length) _allRowsCache=rows;
+  return _allRowsCache||[];
+}
+function openReward(){
+  const r=pendingReward(); if(!r){ toast("받을 보상이 없어요"); return; }
+  $("rwSub").textContent=`일일챌린지 ${r.d}회 달성 — ${r.label}`;
+  const list=$("rwList"); list.innerHTML="";
+  const choices=r.pool.map(findNavItem).filter(it=>it&&!isOwned(it.code));
+  if(!choices.length){ // 전부 보유 → 그냥 소진 처리
+    const st=dailyState(); (st.rw=st.rw||[]).push(r.d); saveDailyState(st);
+    toast("이미 모두 보유 중 — 다음 보상을 기대하세요!"); return;
+  }
+  choices.forEach(it=>{
+    const b=document.createElement("button");
+    b.innerHTML=`${it.ko} <small>${it.n}장 영구 해제</small>`;
+    b.onclick=()=>claimReward(r,it);
+    list.appendChild(b);
+  });
+  $("rwOv").classList.add("on");
+}
+async function claimReward(r,it){
+  $("rwOv").classList.remove("on");
+  const st=dailyState(); (st.rw=st.rw||[]).push(r.d); saveDailyState(st);
+  OWNED.add(it.code); saveOwned();
+  toast("🎉 "+it.ko+" 팩이 열렸어요! 데이터 로딩 중…");
+  try{
+    const rows=await fetchAllRows();
+    const mine=rows.filter(x=>String(x.category||"").trim()===it.code);
+    if(mine.length){ ingestRows(mine,false); it.ready=true; it.n=(DATA[it.code]||[]).length; }
+  }catch(e){}
+  renderNav(); renderCollBar();
+  toast("🎉 "+it.ko+" "+((DATA[it.code]||[]).length||it.n)+"장 — 지금 바로 풀 수 있어요!");
+  const btn=$("rewardBtn"); if(btn) btn.remove();
+}
+
 // ── 카드팩 개봉 (일일챌린지 보상, 하루 1회) ──
 function packClaimedToday(){ try{ return localStorage.getItem("pack_last")===kstDate(0); }catch(e){ return true; } }
 let PACK_MIN=0, PACK_LABEL="";
@@ -1367,6 +1435,13 @@ function finish(){
       pk.textContent = PACK_LABEL ? `🎁 ${PACK_LABEL.replace("🔥","")} 카드팩 열기` : (getPity()>=9 ? "🎁 카드팩 열기 (✨SSR 확정)" : "🎁 보상: 오늘의 카드팩 열기 (5장)");
       pk.onclick=openPack;
       document.querySelector("#done .actions").prepend(pk);
+    }
+    const oldRw=$("rewardBtn"); if(oldRw) oldRw.remove();
+    if(pendingReward()){
+      const rw=document.createElement("button"); rw.id="rewardBtn"; rw.className="primary rw-btn";
+      rw.textContent="🎖 학습 보상 도착 — 유료팩 무료로 받기!";
+      rw.onclick=openReward;
+      document.querySelector("#done .actions").prepend(rw);
     }
   } else { sb.textContent="📤 결과 공유하기"; }
   _shareText=buildShare();
