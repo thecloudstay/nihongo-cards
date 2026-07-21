@@ -535,7 +535,7 @@ function sched(fn,ms){ const id=setTimeout(fn,ms); _pend.push(id); return id; }
 function stopQuiz(){
   clearInterval(timerId); _pend.forEach(clearTimeout); _pend=[];
   try{ speechSynthesis.cancel(); }catch(e){}
-  Object.values(_audioCache||{}).forEach(a=>{ try{ a.pause(); }catch(e){} });
+  try{ if(_sharedAudio){ _sharedAudio.pause(); } }catch(e){}
 }
 const isKanjiCat=()=> curCat && !["hiragana","katakana"].includes(curCat.code);
 const isSent=()=> !!(curCat && curCat.sent);   // 문장암기(cloze) 팩
@@ -788,7 +788,18 @@ function togglePause(){ paused=!paused;
 }
 // ── 발음: 사전생성 MP3(audio_manifest.json) 우선 → Web Speech 폴백 ──
 // manifest: { "かな텍스트": "md5해시" } — generate_audio.py가 생성, audio/{해시}.mp3
-let AUDIO_MANIFEST=null; const _audioCache={};
+let AUDIO_MANIFEST=null;
+// iOS/사파리는 "사용자 제스처 중 재생된 그 오디오 엘리먼트"만 이후 자유 재생이 허용된다.
+// 단어마다 new Audio()를 만들면 자동 발음이 전부 차단되므로, 엘리먼트 1개를 공유해 src만 교체한다.
+let _sharedAudio=null;
+function _getAudioEl(){
+  if(!_sharedAudio){
+    _sharedAudio=new Audio();
+    _sharedAudio.preload="auto";
+    try{ _sharedAudio.setAttribute("playsinline",""); }catch(e){}
+  }
+  return _sharedAudio;
+}
 (async()=>{ try{ const r=await fetch("audio_manifest.json",{cache:"no-store"}); if(r.ok) AUDIO_MANIFEST=await r.json(); }catch(e){} })();
 function speak(t){
   t=String(t||""); if(!t||MUTED) return;
@@ -796,8 +807,12 @@ function speak(t){
     const h=AUDIO_MANIFEST[t]||AUDIO_MANIFEST[t.split("/")[0]];
     if(h){
       try{
-        const a=_audioCache[h]||(_audioCache[h]=new Audio("audio/"+h+".mp3"));
-        a.currentTime=0; a.play().catch(()=>speakWS(t));
+        const a=_getAudioEl();
+        const src="audio/"+h+".mp3";
+        if(!a.src || a.src.indexOf(src)===-1){ a.src=src; a.load(); }
+        a.currentTime=0;
+        const p=a.play();
+        if(p&&p.catch) p.catch(()=>speakWS(t));
         return;
       }catch(e){}
     }
@@ -856,11 +871,22 @@ let _unlocked=false;
 function _unlockAudio(){
   if(_unlocked) return; _unlocked=true;
   try{ _ac(); }catch(e){}
-  try{ const a=new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="); a.volume=0; const p=a.play(); if(p&&p.then)p.catch(()=>{}); }catch(e){}
+  // 공유 오디오 엘리먼트를 "제스처 중"에 한 번 재생시켜 프라임 → 이후 자동 발음 허용
+  try{
+    const a=_getAudioEl();
+    a.src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+    a.volume=0;
+    const p=a.play();
+    if(p&&p.then) p.then(()=>{ try{a.pause(); a.volume=1;}catch(e){} }).catch(()=>{ try{a.volume=1;}catch(e){} });
+    else { try{a.volume=1;}catch(e){} }
+  }catch(e){}
   try{ speechSynthesis.cancel(); }catch(e){}
 }
 document.addEventListener("pointerdown",_unlockAudio,{once:true});
 document.addEventListener("touchend",_unlockAudio,{once:true});
+document.addEventListener("touchstart",_unlockAudio,{once:true});
+document.addEventListener("click",_unlockAudio,{once:true});
+document.addEventListener("keydown",_unlockAudio,{once:true});
 
 function finish(){
   clearInterval(timerId);
