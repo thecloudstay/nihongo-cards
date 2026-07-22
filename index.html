@@ -744,7 +744,7 @@ const isSent=()=> !!(curCat && curCat.sent);   // 문장암기(cloze) 팩
 const FREE_APP = new Set(["hiragana","katakana","num","week","time","body","dir","color","family","weather","greet","ask"]);
 function tierOf(it){ return FREE_APP.has(it.code) ? "free" : "paid"; }
 const qMode=()=> (typeof dailyMode!=="undefined"&&dailyMode) ? "meaning" : CONF.mode;
-const optText=c=>{ const m=qMode(); return isSent() ? c.front : (!isKanjiCat() ? c.label : (m==="reading" ? c.romaji : m==="write" ? c.front : c.ko)); };
+const optText=c=>{ const m=qMode(); return isSent() ? (m==="listen" ? (c.exk||c.ko) : c.front) : (!isKanjiCat() ? c.label : (m==="reading" ? c.romaji : m==="write" ? c.front : c.ko)); };
 function clozeText(q){ const w=q.front||"", s=q.ex||""; const i=s.indexOf(w); return i<0 ? s : (s.slice(0,i)+"（　）"+s.slice(i+w.length)); }
 
 // ══ 구매·소유(entitlement) ══ 스테이지·카테고리별 1회 구매 = 영구 소유
@@ -894,7 +894,17 @@ async function pickCat(it){
   if(!(DATA[it.code]||[]).length){ toast("데이터 준비 중입니다"); return; }
   curCat=it;
   $("setupK").textContent=it.ko; $("setupJ").textContent=it.jp;
-  $("typeRow").style.display = (isKanjiCat() && !it.sent) ? "block" : "none";
+  const sentPack = !!it.sent;
+  $("typeRow").style.display = isKanjiCat() ? "block" : "none";
+  [...$("segType").children].forEach(b=>{
+    const bm=b.dataset.m;
+    b.style.display = sentPack ? ((bm==="meaning"||bm==="listen")?"":"none") : "";
+    if(bm==="meaning") b.textContent = sentPack ? "빈칸 채우기" : "뜻 맞히기";
+  });
+  if(sentPack && (CONF.mode==="reading"||CONF.mode==="write")){
+    CONF.mode="meaning";
+    [...$("segType").children].forEach(b=>b.classList.toggle("on",b.dataset.m==="meaning"));
+  }
   const pv=$("previewNote");
   if(pv){
     pv.style.display = previewMode ? "block" : "none";
@@ -914,13 +924,13 @@ function startQuiz(){
   reviewRound=0; dailyMode=false; results=[]; combo=0;
   let pool=DATA[curCat.code];
   if(CONF.mode==="listen"){
-    pool=pool.filter(hasAudio);
+    pool = curCat.sent ? pool.filter(hasSentAudio) : pool.filter(hasAudio);
     if(pool.length<4){ toast("이 팩은 청해 음성 준비 중이에요 — 다른 유형으로 풀어주세요"); return; }
   }
   const n = CONF.count===0 ? pool.length : Math.min(CONF.count,pool.length);
   deck=shuffle(pool).slice(0,n);
   qi=0;correct=0;misses=[];
-  $("qtitle").textContent = isSent() ? `${curCat.ko} · 빈칸` : (isKanjiCat() ? `${curCat.ko} · ${({meaning:"뜻",reading:"읽기",listen:"🎧청해",write:"표기"})[qMode()]||"뜻"}` : `${curCat.ko} 읽기`);
+  $("qtitle").textContent = isSent() ? `${curCat.ko} · ${qMode()==="listen"?"🎧청해":"빈칸"}` : (isKanjiCat() ? `${curCat.ko} · ${({meaning:"뜻",reading:"읽기",listen:"🎧청해",write:"표기"})[qMode()]||"뜻"}` : `${curCat.ko} 읽기`);
   $("scoreTot").textContent=deck.length;
   show("quizScreen"); loadQ();
 }
@@ -930,7 +940,11 @@ function loadQ(){
   const q=deck[qi]; const g=$("glyph");
   const m=qMode();
   g.classList.remove("listen"); g.onclick=null;
-  if(isSent()){ g.textContent=clozeText(q); g.classList.add("cloze"); g.classList.remove("small"); }
+  if(isSent() && m==="listen" && !dailyMode){
+    g.classList.remove("cloze","small"); g.classList.add("listen");
+    g.textContent="🔊"; g.onclick=()=>speak(q.exy);
+  }
+  else if(isSent()){ g.textContent=clozeText(q); g.classList.add("cloze"); g.classList.remove("small"); }
   else if(m==="listen" && !dailyMode){
     g.classList.remove("cloze","small"); g.classList.add("listen");
     g.textContent="🔊"; g.onclick=()=>speak(q.speak);
@@ -954,7 +968,7 @@ function loadQ(){
   const box=$("opts");box.className="opts";box.innerHTML="";
   opts.forEach(o=>{const b=document.createElement("button");b.className="opt";b.textContent=optText(o);b.dataset.front=o.front;b.onclick=()=>choose(b,o,q);box.appendChild(b);});
   // 문제가 뜰 때 발음: 읽기 맞히기 모드는 답이 노출되므로 제외, 그 외(뜻모드·카나)는 바로 발음
-  if(m==="listen" && !dailyMode){ sched(()=>speak(q.speak), 300); }
+  if(m==="listen" && !dailyMode){ sched(()=>speak(isSent()? q.exy : q.speak), 300); }
   else if(!(isKanjiCat() && (m==="reading"||m==="write")) && !isSent()){ sched(()=>speak(q.speak), 250); }
   startTimer();
 }
@@ -980,7 +994,9 @@ function choose(btn,o,q){
   if(ok){btn.classList.add("correct");correct++; combo++; collectCard(q); bonusDrop(); }
   else{btn.classList.add("wrong");combo=0;misses.push(q);[...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");});}
   [...box.children].forEach(b=>{if(!b.classList.contains("correct")&&!b.classList.contains("wrong"))b.classList.add("dim");});
-  if(qMode()==="listen" && !dailyMode){ const g=$("glyph"); g.classList.remove("listen"); g.onclick=null; g.textContent=q.front; g.classList.toggle("small",q.front.length>1); }
+  if(qMode()==="listen" && !dailyMode){ const g=$("glyph"); g.classList.remove("listen"); g.onclick=null;
+    if(isSent()){ g.textContent=q.ex; g.classList.add("cloze"); }
+    else { g.textContent=q.front; g.classList.toggle("small",q.front.length>1); } }
   updateComboBadge();
   sfx(ok?"ok":"fail");
   const showEx = isKanjiCat() && q.ex;
@@ -992,7 +1008,9 @@ function timeUp(){
   if(answered)return; answered=true; combo=0; updateComboBadge(); misses.push(deck[qi]); results.push(false);
   const q=deck[qi]; const box=$("opts");box.classList.add("locked");
   [...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");else b.classList.add("dim");});
-  if(qMode()==="listen" && !dailyMode){ const g=$("glyph"); g.classList.remove("listen"); g.onclick=null; g.textContent=q.front; g.classList.toggle("small",q.front.length>1); }
+  if(qMode()==="listen" && !dailyMode){ const g=$("glyph"); g.classList.remove("listen"); g.onclick=null;
+    if(isSent()){ g.textContent=q.ex; g.classList.add("cloze"); }
+    else { g.textContent=q.front; g.classList.toggle("small",q.front.length>1); } }
   sfx("fail");
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
@@ -1033,6 +1051,10 @@ function hasAudio(q){
   if(!AUDIO_MANIFEST||!q) return false;
   const s=String(q.speak||"");
   return !!(AUDIO_MANIFEST[s]||AUDIO_MANIFEST[s.split("/")[0]]);
+}
+function hasSentAudio(q){
+  if(!AUDIO_MANIFEST||!q) return false;
+  return !!AUDIO_MANIFEST[String(q.exy||"")];
 }
 // F1: JLPT식 읽기 오답 — 탁음/장음/촉음 변형
 const _DAKU={"か":"が","き":"ぎ","く":"ぐ","け":"げ","こ":"ご","さ":"ざ","し":"じ","す":"ず","せ":"ぜ","そ":"ぞ","た":"だ","ち":"ぢ","つ":"づ","て":"で","と":"ど","は":"ば","ひ":"び","ふ":"ぶ","へ":"べ","ほ":"ぼ"};
