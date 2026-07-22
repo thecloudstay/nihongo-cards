@@ -9,7 +9,7 @@ generate_audio.py — 카드 かな 오디오 1회 사전 생성 (Google Cloud T
 사용법 (GitHub Actions): .github/workflows/generate_audio.yml (시크릿 GOOGLE_TTS_KEY)
 
 동작:
-  1. CSV_GLOB에 걸리는 모든 CSV에서 reading / example_reading 고유값 추출 (+칭찬 보이스)
+  1. cards_all.json(최신 원본)+CSV에서 reading / example_reading 고유값 추출 (+칭찬 보이스, 카나 front 포함)
   2. 훈/음 슬래시 표기("あら/せん")는 첫 번째 읽기만 합성 (앱 speak 규칙과 동일)
   3. 파일명 = md5(합성텍스트 + 보이스) → 같은 읽기는 자동 중복제거
   4. audio/ 에 이미 있는 해시는 스킵 (증분 생성)
@@ -56,16 +56,30 @@ def synthesize(text: str) -> bytes:
 
 def collect_texts() -> list:
     texts = set(EXTRA_TEXTS)
-    files = sorted(glob.glob(CSV_GLOB))
-    if not files:
-        sys.exit("CSV 파일이 없습니다: " + CSV_GLOB)
-    for path in files:
+    # 1) 배포 JSON이 항상 최신 원본 — cards_all.json 우선 (CSV는 구버전일 수 있음)
+    for jf in ("cards_all.json", "cards_free.json"):
+        if os.path.exists(jf):
+            with open(jf, encoding="utf-8") as f:
+                for row in json.load(f):
+                    for col in COLUMNS:
+                        t = str(row.get(col) or "").strip()
+                        if t and KANA_RE.search(t):
+                            texts.add(t)
+                    # 카나 카드는 front 자체가 발음 대상 (앱 speak 규칙)
+                    if str(row.get("type") or "").strip() == "kana":
+                        t = str(row.get("front") or "").strip()
+                        if t and KANA_RE.search(t):
+                            texts.add(t)
+    # 2) CSV도 병행 수집 (있을 때만)
+    for path in sorted(glob.glob(CSV_GLOB)):
         with open(path, encoding="utf-8-sig", newline="") as f:
             for row in csv.DictReader(f):
                 for col in COLUMNS:
                     t = (row.get(col) or "").strip()
                     if t and KANA_RE.search(t):
                         texts.add(t)
+    if not texts:
+        sys.exit("수집된 텍스트가 없습니다 (cards_all.json/CSV 확인)")
     return sorted(texts)
 
 def main():
