@@ -315,6 +315,18 @@
 .glyph.listen{cursor:pointer;user-select:none;font-size:64px!important;letter-spacing:0}
 .glyph.listen:active{transform:scale(.94)}
 .listen-hint{text-align:center;color:var(--sub);font-size:12px;margin-top:-6px}
+
+/* ── 타임어택 ── */
+.ta-bar{margin:8px 16px 0;padding:10px 14px;border-radius:12px;background:var(--ink);color:#fff;
+  display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;cursor:pointer}
+.ta-bar .best{margin-left:auto;color:var(--rg2);font-size:12px}
+.ta-bar:active{transform:scale(.985)}
+.tbar-hot i{background:var(--miss)!important}
+.ta-score-pop{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:55;
+  font-weight:900;font-size:15px;color:var(--accent);opacity:0;pointer-events:none;transition:all .5s}
+.ta-score-pop.go{opacity:1;transform:translateX(-50%) translateY(-14px)}
+.new-record{display:inline-block;background:var(--rg-bg);color:var(--rg-ink);border:1px solid var(--rg2);
+  border-radius:999px;padding:3px 10px;font-size:11px;font-weight:900;margin-left:6px}
 </style>
 </head>
 <body>
@@ -336,6 +348,10 @@
   <div class="coll-bar" id="collBar" style="display:none" onclick="openColl()">
     📚 카드 도감 <span class="pct" id="collPct">0%</span>
     <span class="ssr" id="collSSRBadge"></span>
+  </div>
+  <div class="ta-bar" id="taBar" style="display:none" onclick="startTimeAttack()">
+    ⚡ 타임어택 60초 <span style="font-weight:600;font-size:12px;opacity:.8">— 몇 점까지 가능?</span>
+    <span class="best" id="taBest"></span>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">기초<span class="s">基礎</span></button>
@@ -465,6 +481,7 @@
   <button class="rw-close" onclick="$('rwOv').classList.remove('on')">나중에 받기 (결과 화면에서 다시 열 수 있어요)</button>
 </div>
 <div class="card-get" id="cardGet"></div>
+<div class="ta-score-pop" id="taPop"></div>
 <div class="ssr-flash" id="ssrFlash"></div>
 
 <!-- ═══ 50음도표 (무료) ═══ -->
@@ -730,11 +747,14 @@ let curTab="kana", curCat=null;
 let CONF={count:20,time:5,mode:"meaning"};
 let deck=[],qi=0,correct=0,misses=[],answered=false,paused=false,timerId=null,reviewRound=0;
 let results=[],dailyMode=false,combo=0;
+let taMode=false,taScore=0,taMax=0,taCount=0,taTimer=null,taEndAt=0;
 // 퀴즈 중 예약된 콜백(발음·다음문제)을 추적해 화면 이탈 시 전부 취소 (뒤로가기 버그 방지)
 let _pend=[];
 function sched(fn,ms){ const id=setTimeout(fn,ms); _pend.push(id); return id; }
 function stopQuiz(){
-  clearInterval(timerId); _pend.forEach(clearTimeout); _pend=[];
+  clearInterval(timerId); clearInterval(taTimer); taMode=false;
+  const tm=document.querySelector(".timer"); if(tm) tm.classList.remove("tbar-hot");
+  _pend.forEach(clearTimeout); _pend=[];
   try{ speechSynthesis.cancel(); }catch(e){}
   try{ if(_sharedAudio){ _sharedAudio.pause(); } }catch(e){}
 }
@@ -743,7 +763,7 @@ const isSent=()=> !!(curCat && curCat.sent);   // 문장암기(cloze) 팩
 // ── 무료/유료 경계 (앱 UI) — 무료=카나+기초필수 12팩만, 나머지는 미리보기 10장+유료 ──
 const FREE_APP = new Set(["hiragana","katakana","num","week","time","body","dir","color","family","weather","greet","ask"]);
 function tierOf(it){ return FREE_APP.has(it.code) ? "free" : "paid"; }
-const qMode=()=> (typeof dailyMode!=="undefined"&&dailyMode) ? "meaning" : CONF.mode;
+const qMode=()=> ((typeof dailyMode!=="undefined"&&dailyMode)||(typeof taMode!=="undefined"&&taMode)) ? "meaning" : CONF.mode;
 const optText=c=>{ const m=qMode(); return isSent() ? (m==="listen" ? (c.exk||c.ko) : c.front) : (!isKanjiCat() ? c.label : (m==="reading" ? c.romaji : m==="write" ? c.front : c.ko)); };
 function clozeText(q){ const w=q.front||"", s=q.ex||""; const i=s.indexOf(w); return i<0 ? s : (s.slice(0,i)+"（　）"+s.slice(i+w.length)); }
 
@@ -953,10 +973,10 @@ function loadQ(){
     g.classList.remove("cloze"); g.textContent=q.romaji||q.front; g.classList.toggle("small",(q.romaji||"").length>1);
   }
   else { g.classList.remove("cloze"); g.textContent=q.front; g.classList.toggle("small",q.front.length>1); }
-  $("count").textContent=`${qi+1} / ${deck.length}`;
+  $("count").textContent = taMode ? `${taScore.toLocaleString()}점` : `${qi+1} / ${deck.length}`;
   updateComboBadge();
   $("example").className="example"; $("example").innerHTML="";
-  const pool = dailyMode ? DAILY_POOL : DATA[curCat.code];
+  const pool = (dailyMode||taMode) ? DAILY_POOL : DATA[curCat.code];
   let wrongs;
   if(m==="reading" && !dailyMode && isKanjiCat()){
     const vars=shuffle(readingVariants(q.romaji)).slice(0,3).map((v,i)=>({front:"__v"+i, romaji:v, ko:"", speak:""}));
@@ -973,6 +993,7 @@ function loadQ(){
   startTimer();
 }
 function startTimer(){
+  if(taMode) return;                 // 타임어택은 전역 60초 타이머가 관리
   clearInterval(timerId);
   const confTime = dailyMode ? 5 : CONF.time;
   if(confTime===0){$("tbar").style.width="100%";$("tlabel").textContent="∞";return;}
@@ -999,6 +1020,12 @@ function choose(btn,o,q){
     else { g.textContent=q.front; g.classList.toggle("small",q.front.length>1); } }
   updateComboBadge();
   sfx(ok?"ok":"fail");
+  if(taMode){                                   // 타임어택: 즉시 다음 문제 + 점수
+    taCount++;
+    if(ok){ const gain=100+combo*20; taScore+=gain; taMax=Math.max(taMax,combo); taPop("+"+gain+(combo>=3?" 🔥x"+combo:"")); }
+    sched(nextQ, ok ? 250 : 650);
+    return;
+  }
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
   sched(()=>speak(showEx ? q.exy : q.speak), ok ? 550 : 500); // 효과음 후 발음 (예문 우선)
@@ -1027,8 +1054,11 @@ function showExample(q){
     <div class="m">${q.exk}</div></div>`;
   e.classList.add("show");
 }
-function skip(){ if(!answered)timeUp(); else nextQ(); }
-function nextQ(){ if(qi<deck.length-1){qi++;loadQ();}else finish(); }
+function skip(){ if(taMode&&!answered){ combo=0; updateComboBadge(); taCount++; results.push(false); misses.push(deck[qi]); answered=true; nextQ(); return; } if(!answered)timeUp(); else nextQ(); }
+function nextQ(){
+  if(taMode){ qi++; if(qi>=deck.length){ deck=shuffle(DAILY_POOL.slice()); qi=0; } loadQ(); return; }
+  if(qi<deck.length-1){qi++;loadQ();}else finish();
+}
 function togglePause(){ paused=!paused;
   $("pauseBtn").innerHTML=paused?'<svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z" fill="#2b2723" stroke="none"/></svg>':'<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
 }
@@ -1191,7 +1221,7 @@ function collectCard(q){
 }
 // 변동비율 보상: 정답 시 5% 확률 랜덤 보너스 카드 (R 이상 보장)
 function bonusDrop(){
-  if(reviewRound>0 || Math.random()>=0.05) return;
+  if(taMode || reviewRound>0 || Math.random()>=0.05) return;
   const pool = dailyMode ? DAILY_POOL : (DATA[curCat?curCat.code:null]||[]);
   if(!pool.length) return;
   const x=pool[Math.floor(Math.random()*pool.length)];
@@ -1356,6 +1386,71 @@ function openPack(){
   $("packOv").classList.add("on");
 }
 function closePack(){ $("packOv").classList.remove("on"); renderCollBar(); }
+
+// ═══════════ G1: 타임어택 60초 (풀=데일리 공통풀, 전부 로컬) ═══════════
+const TA_SECS=60;
+function taBestGet(){ try{ return JSON.parse(localStorage.getItem("ta_best")||"null"); }catch(e){ return null; } }
+function taBestSet(v){ try{ localStorage.setItem("ta_best",JSON.stringify(v)); }catch(e){} }
+function renderTaBar(){
+  const el=$("taBar"); if(!el) return;
+  if(DAILY_POOL.length<20){ el.style.display="none"; return; }
+  el.style.display="flex";
+  const b=taBestGet();
+  $("taBest").textContent = b ? `🏆 ${b.score.toLocaleString()}점` : "첫 도전!";
+}
+function startTimeAttack(){
+  if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
+  taMode=true; dailyMode=false; reviewRound=0;
+  results=[]; misses=[]; correct=0; combo=0; qi=0;
+  taScore=0; taMax=0; taCount=0;
+  curCat={code:"__ta",ko:"타임어택",jp:"タイムアタック",sent:false}; previewMode=false;
+  deck=shuffle(DAILY_POOL.slice());
+  $("qtitle").textContent="⚡ 타임어택";
+  $("scoreTot").textContent="";
+  show("quizScreen");
+  taEndAt=performance.now()+TA_SECS*1000;
+  clearInterval(taTimer);
+  taTimer=setInterval(()=>{
+    const left=Math.max(0,taEndAt-performance.now());
+    $("tbar").style.width=(left/(TA_SECS*1000)*100)+"%";
+    $("tlabel").textContent=Math.ceil(left/1000)+"초";
+    document.querySelector(".timer").classList.toggle("tbar-hot", left<10000);
+    if(left<=0){ clearInterval(taTimer); taFinish(); }
+  },100);
+  loadQ();
+}
+function taPop(txt){ const el=$("taPop"); el.textContent=txt; el.classList.remove("go"); void el.offsetWidth; el.classList.add("go"); }
+function taFinish(){
+  clearInterval(taTimer); clearInterval(timerId); _pend.forEach(clearTimeout); _pend=[];
+  document.querySelector(".timer").classList.remove("tbar-hot");
+  const prev=taBestGet(); const isRecord=!prev||taScore>prev.score;
+  if(isRecord) taBestSet({score:taScore,count:correct,combo:taMax,d:kstDate(0)});
+  // 결과 화면 구성 (기존 done 재사용)
+  $("scoreNum").textContent=correct; $("scoreTot").textContent=taCount;
+  $("doneLabel").textContent="⚡ 타임어택 결과";
+  const rk=$("rankLabel");
+  rk.innerHTML=`${taScore.toLocaleString()}점 · 최대 🔥${taMax}콤보`+(isRecord?`<span class="new-record">🏆 신기록!</span>`:"");
+  rk.style.display="block";
+  $("blob").style.background="linear-gradient(135deg,var(--accent),var(--accent2))";
+  const seen=new Set(); const uniq=misses.filter(m=>{if(seen.has(m.front))return false;seen.add(m.front);return true;});
+  const rows=$("missRows");rows.innerHTML="";
+  uniq.forEach(m=>{const d=document.createElement("div");d.className="mrow";d.innerHTML=`<div class="mg jp">${m.front}</div><div class="ma"><b>${m.ko}</b> · ${m.romaji}</div>`;rows.appendChild(d);});
+  if(uniq.length===0){ $("missWrap").style.display="none"; $("reviewBtn").disabled=true; $("reviewBtn").textContent="다시 풀 문자 없음"; }
+  else { $("missTitle").textContent=`틀린 문제 ${uniq.length}개`; $("missWrap").style.display="block";
+         $("reviewBtn").disabled=false; $("reviewBtn").textContent=`틀린 문제 ${uniq.length}개 다시 풀기`; }
+  window._miss=uniq.slice();
+  const oldCta=$("buyCta"); if(oldCta) oldCta.remove();
+  const oldPk=$("packBtn"); if(oldPk) oldPk.remove();
+  const oldRw=$("rewardBtn"); if(oldRw) oldRw.remove();
+  const sb=$("shareBtn"); sb.style.display="block"; sb.textContent="📤 점수 자랑하기";
+  _shareText=`⚡ 일본어 타임어택 60초\n${taScore.toLocaleString()}점 · ${correct}문제 · 최대 🔥${taMax}콤보`+(isRecord?"\n🏆 신기록 달성!":"")+`\n너도 도전: https://nihongocards.fyi`;
+  const dn=$("dailyNote"); const b=taBestGet();
+  dn.innerHTML=`내 최고기록: <b>${b.score.toLocaleString()}점</b> (${b.combo}콤보)`; dn.style.display="block";
+  taMode=false;
+  renderTaBar(); renderCollBar();
+  maybeShowPwa();
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $("done").classList.add("on");
+}
 
 // ═══════════ 바이럴: 오늘의 10문제 · 스트릭 · 공유 · PWA ═══════════
 const DAILY_EPOCH="2026-07-21";           // #1 기준일
@@ -1530,7 +1625,7 @@ function finish(){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $("done").classList.add("on");
 }
 function reviewMiss(){
-  reviewRound++; deck=shuffle(window._miss);qi=0;correct=0;misses=[]; results=[];
+  reviewRound++; taMode=false; clearInterval(taTimer); deck=shuffle(window._miss);qi=0;correct=0;misses=[]; results=[];
   $("qtitle").textContent=`복습 ${reviewRound}회차 · ${deck.length}개`; $("scoreTot").textContent=deck.length;
   $("done").classList.remove("on"); show("quizScreen"); loadQ();
 }
@@ -1695,6 +1790,7 @@ async function initApp(){
   renderNav();
   renderDaily();
   renderCollBar();
+  renderTaBar();
 }
 initApp();
 </script>
