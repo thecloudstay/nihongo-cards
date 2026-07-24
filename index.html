@@ -327,6 +327,16 @@
 .ta-score-pop.go{opacity:1;transform:translateX(-50%) translateY(-14px)}
 .new-record{display:inline-block;background:var(--rg-bg);color:var(--rg-ink);border:1px solid var(--rg2);
   border-radius:999px;padding:3px 10px;font-size:11px;font-weight:900;margin-left:6px}
+
+/* ── 오답노트 ── */
+.wb-bar{margin:8px 16px 0;padding:10px 14px;border-radius:12px;background:var(--miss-bg);border:1px solid var(--miss-bd);
+  color:var(--miss);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;cursor:pointer}
+.wb-bar small{color:var(--sub);font-weight:600;margin-left:auto}
+/* 백업/복원 */
+.acc-tools{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.acc-tools h4{font-size:13px;margin:0 0 8px;color:var(--sub);font-weight:700}
+.acc-tools .row2{display:flex;gap:8px}
+.acc-tools button{flex:1;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:11px;font-size:13px;font-weight:700}
 </style>
 </head>
 <body>
@@ -339,6 +349,9 @@
       <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켬</button>
     </div>
     <div class="app">일본어 카드모음<div class="en">にほんご カード · 読みテスト</div></div>
+  </div>
+  <div class="wb-bar" id="wbBar" style="display:none" onclick="startWrongbook()">
+    📕 오답노트 <span id="wbCount">0</span>개 <small>맞히면 지워져요 →</small>
   </div>
   <div class="daily-card" id="dailyCard" style="display:none" onclick="startDaily()">
     <div class="dc-ico">🎯</div>
@@ -516,6 +529,14 @@
       <div class="acc-row acc-email" id="accWho"></div>
       <div id="accPacks"></div>
       <button class="acc-out" onclick="accLogout()">이 기기에서 로그아웃</button>
+    </div>
+    <div class="acc-tools">
+      <h4>📦 학습 데이터 백업 · 기기 이전</h4>
+      <div class="row2">
+        <button onclick="exportProgress()">내보내기 (복사)</button>
+        <button onclick="importProgress()">가져오기 (붙여넣기)</button>
+      </div>
+      <p class="acc-desc" style="margin-top:8px;font-size:12px">도감·스트릭·오답노트·최고기록·구매내역을 텍스트로 복사해, 새 기기의 이 화면에서 붙여넣으면 그대로 이어집니다.</p>
     </div>
   </div>
 </div>
@@ -748,7 +769,8 @@ const DATA = {
 
 const $=id=>document.getElementById(id);
 let curTab="kana", curCat=null;
-let CONF={count:20,time:5,mode:"meaning"};
+let CONF=(()=>{ try{ const s=JSON.parse(localStorage.getItem("conf")); if(s&&s.count!==undefined) return s; }catch(e){} return {count:20,time:5,mode:"meaning"}; })();
+function saveConf(){ try{ localStorage.setItem("conf",JSON.stringify(CONF)); }catch(e){} }
 let deck=[],qi=0,correct=0,misses=[],answered=false,paused=false,timerId=null,reviewRound=0;
 let results=[],dailyMode=false,combo=0;
 let taMode=false,taScore=0,taMax=0,taCount=0,taTimer=null,taEndAt=0;
@@ -767,7 +789,7 @@ const isSent=()=> !!(curCat && curCat.sent);   // 문장암기(cloze) 팩
 // ── 무료/유료 경계 (앱 UI) — 무료=카나+기초필수 12팩만, 나머지는 미리보기 10장+유료 ──
 const FREE_APP = new Set(["hiragana","katakana","num","week","time","body","dir","color","family","weather","greet","ask"]);
 function tierOf(it){ return FREE_APP.has(it.code) ? "free" : "paid"; }
-const qMode=()=> ((typeof dailyMode!=="undefined"&&dailyMode)||(typeof taMode!=="undefined"&&taMode)) ? "meaning" : CONF.mode;
+const qMode=()=> ((typeof dailyMode!=="undefined"&&dailyMode)||(typeof taMode!=="undefined"&&taMode)||(typeof wbMode!=="undefined"&&wbMode)) ? "meaning" : CONF.mode;
 const optText=c=>{ const m=qMode(); return isSent() ? (m==="listen" ? (c.exk||c.ko) : c.front) : (!isKanjiCat() ? c.label : (m==="reading" ? c.romaji : m==="write" ? c.front : c.ko)); };
 function clozeText(q){ const w=q.front||"", s=q.ex||""; const i=s.indexOf(w); return i<0 ? s : (s.slice(0,i)+"（　）"+s.slice(i+w.length)); }
 
@@ -945,7 +967,7 @@ $("segType").addEventListener("click",e=>{ if(e.target.dataset.m){[...$("segType
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 
 function startQuiz(){
-  reviewRound=0; dailyMode=false; results=[]; combo=0;
+  reviewRound=0; dailyMode=false; wbMode=false; results=[]; combo=0; saveConf();
   let pool=DATA[curCat.code];
   if(CONF.mode==="listen"){
     pool = curCat.sent ? pool.filter(hasSentAudio) : pool.filter(hasAudio);
@@ -980,7 +1002,7 @@ function loadQ(){
   $("count").textContent = taMode ? `${taScore.toLocaleString()}점` : `${qi+1} / ${deck.length}`;
   updateComboBadge();
   $("example").className="example"; $("example").innerHTML="";
-  const pool = (dailyMode||taMode) ? DAILY_POOL : DATA[curCat.code];
+  const pool = (dailyMode||taMode) ? DAILY_POOL : (wbMode ? (DATA[deck[qi]._cat]||DAILY_POOL) : DATA[curCat.code]);
   let wrongs;
   if(m==="reading" && !dailyMode && isKanjiCat()){
     const vars=shuffle(readingVariants(q.romaji)).slice(0,3).map((v,i)=>({front:"__v"+i, romaji:v, ko:"", speak:""}));
@@ -1016,8 +1038,8 @@ function choose(btn,o,q){
   const box=$("opts");box.classList.add("locked");
   const ok = o.front===q.front;
   results.push(ok);
-  if(ok){btn.classList.add("correct");correct++; combo++; collectCard(q); bonusDrop(); }
-  else{btn.classList.add("wrong");combo=0;misses.push(q);[...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");});}
+  if(ok){btn.classList.add("correct");correct++; combo++; collectCard(q); bonusDrop(); if(wbMode) wbRemove(q); }
+  else{btn.classList.add("wrong");combo=0;misses.push(q); wbAdd(q);[...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");});}
   [...box.children].forEach(b=>{if(!b.classList.contains("correct")&&!b.classList.contains("wrong"))b.classList.add("dim");});
   if(qMode()==="listen" && !dailyMode){ const g=$("glyph"); g.classList.remove("listen"); g.onclick=null;
     if(isSent()){ g.textContent=q.ex; g.classList.add("cloze"); }
@@ -1036,7 +1058,7 @@ function choose(btn,o,q){
   sched(nextQ, showEx ? 3200 : 1300);                         // 예문 재생이 잘리지 않게 여유
 }
 function timeUp(){
-  if(answered)return; answered=true; combo=0; updateComboBadge(); misses.push(deck[qi]); results.push(false);
+  if(answered)return; answered=true; combo=0; updateComboBadge(); misses.push(deck[qi]); results.push(false); wbAdd(deck[qi]);
   const q=deck[qi]; const box=$("opts");box.classList.add("locked");
   [...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");else b.classList.add("dim");});
   if(qMode()==="listen" && !dailyMode){ const g=$("glyph"); g.classList.remove("listen"); g.onclick=null;
@@ -1210,7 +1232,7 @@ function updateComboBadge(){
   el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
 }
 function collectCard(q){
-  if(reviewRound>0) return;                       // 복습은 수집 제외(파밍 방지)
+  if(reviewRound>0||wbMode) return;               // 복습·오답노트는 수집 제외(파밍 방지)
   const cat=q._cat||(curCat?curCat.code:null); if(!cat||cat==="__daily") return;
   const r=comboRarity(), c=getColl(), k=cat+"|"+q.front, cur=c[k];
   let evt=null;
@@ -1225,7 +1247,7 @@ function collectCard(q){
 }
 // 변동비율 보상: 정답 시 5% 확률 랜덤 보너스 카드 (R 이상 보장)
 function bonusDrop(){
-  if(taMode || reviewRound>0 || Math.random()>=0.05) return;
+  if(taMode || wbMode || reviewRound>0 || Math.random()>=0.05) return;
   const pool = dailyMode ? DAILY_POOL : (DATA[curCat?curCat.code:null]||[]);
   if(!pool.length) return;
   const x=pool[Math.floor(Math.random()*pool.length)];
@@ -1391,6 +1413,70 @@ function openPack(){
 }
 function closePack(){ $("packOv").classList.remove("on"); renderCollBar(); }
 
+// ═══════════ 오답노트 (영구, localStorage) ═══════════
+let wbMode=false;
+function getWB(){ try{ return JSON.parse(localStorage.getItem("wrongbook")||"{}"); }catch(e){ return {}; } }
+function saveWB(w){ try{ localStorage.setItem("wrongbook",JSON.stringify(w)); }catch(e){} }
+function wbAdd(q){
+  if(wbMode||taMode) return;                     // 오답노트·타임어택 중 기록 제외(타임어택은 속도전이라 오답 과다)
+  const cat=q._cat||(curCat?curCat.code:null); if(!cat||cat.startsWith("__")) return;
+  const w=getWB(), k=cat+"|"+q.front;
+  w[k]={n:((w[k]||{}).n||0)+1,t:Date.now()};
+  saveWB(w); renderWbBar();
+}
+function wbRemove(q){
+  const w=getWB(); const k=(q._cat||"")+"|"+q.front;
+  if(w[k]){ delete w[k]; saveWB(w); }
+  renderWbBar();
+}
+function renderWbBar(){
+  const el=$("wbBar"); if(!el) return;
+  const n=Object.keys(getWB()).length;
+  if(!n){ el.style.display="none"; return; }
+  el.style.display="flex"; $("wbCount").textContent=n;
+}
+function startWrongbook(){
+  const w=getWB();
+  const items=[];
+  Object.keys(w).forEach(k=>{
+    const i=k.indexOf("|"); const cat=k.slice(0,i), front=k.slice(i+1);
+    const card=(DATA[cat]||[]).find(x=>x.front===front);
+    if(card){ const c=Object.assign({},card); c._cat=cat; items.push(c); }
+  });
+  if(items.length<1){ toast("복습할 오답이 없어요 (데이터 미로딩 팩 제외)"); return; }
+  wbMode=true; dailyMode=false; taMode=false; reviewRound=0;
+  results=[]; misses=[]; correct=0; combo=0; qi=0;
+  curCat={code:"__wb",ko:"오답노트",jp:"苦手ノート",sent:false}; previewMode=false;
+  deck=shuffle(items).slice(0,20);
+  $("qtitle").textContent=`📕 오답노트 (${deck.length}개)`;
+  $("scoreTot").textContent=deck.length;
+  show("quizScreen"); loadQ();
+}
+// ═══════════ 백업/복원 (기기 이전) ═══════════
+const BK_KEYS=["owned_packs","collection","daily_state","ta_best","wrongbook","pack_last","pity","conf","license"];
+async function exportProgress(){
+  const data={_app:"nihongocards",_v:1,_d:new Date().toISOString().slice(0,10)};
+  BK_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!==null) data[k]=v; });
+  const txt=JSON.stringify(data);
+  try{ await navigator.clipboard.writeText(txt); toast("백업을 복사했어요! 메모장·카톡 나에게 보내기로 보관 📋"); }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); try{document.execCommand("copy"); toast("백업을 복사했어요 📋");}catch(_){prompt("아래 텍스트를 복사해 보관하세요",txt);}
+    ta.remove();
+  }
+}
+function importProgress(){
+  const txt=prompt("백업 텍스트를 붙여넣으세요");
+  if(!txt) return;
+  try{
+    const data=JSON.parse(txt);
+    if(data._app!=="nihongocards") throw 0;
+    BK_KEYS.forEach(k=>{ if(data[k]!==undefined) localStorage.setItem(k,data[k]); });
+    toast("복원 완료! 새로고침합니다…");
+    setTimeout(()=>location.reload(),900);
+  }catch(e){ toast("형식이 올바르지 않아요 — 내보내기로 복사한 텍스트인지 확인"); }
+}
+
 // ═══════════ G1: 타임어택 60초 (풀=데일리 공통풀, 전부 로컬) ═══════════
 const TA_SECS=60;
 function taBestGet(){ try{ return JSON.parse(localStorage.getItem("ta_best")||"null"); }catch(e){ return null; } }
@@ -1404,7 +1490,7 @@ function renderTaBar(){
 }
 function startTimeAttack(){
   if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
-  taMode=true; dailyMode=false; reviewRound=0;
+  taMode=true; dailyMode=false; wbMode=false; reviewRound=0;
   results=[]; misses=[]; correct=0; combo=0; qi=0;
   taScore=0; taMax=0; taCount=0;
   curCat={code:"__ta",ko:"타임어택",jp:"タイムアタック",sent:false}; previewMode=false;
@@ -1493,7 +1579,7 @@ function renderDaily(){
 }
 function startDaily(){
   if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
-  dailyMode=true; reviewRound=0; results=[]; misses=[]; correct=0; qi=0; combo=0;
+  dailyMode=true; wbMode=false; reviewRound=0; results=[]; misses=[]; correct=0; qi=0; combo=0;
   curCat=DAILY_CAT; previewMode=false;
   deck=dailyDeck();
   $("qtitle").textContent=`오늘의 10문제 #${dailyNo()}`;
@@ -1795,6 +1881,7 @@ async function initApp(){
   renderDaily();
   renderCollBar();
   renderTaBar();
+  renderWbBar();
 }
 initApp();
 </script>
