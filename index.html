@@ -550,6 +550,7 @@ const NAV = {
     {ko:"",jp:"",items:[
       {code:"hiragana",ko:"히라가나",jp:"ひらがな",n:46,ready:true,tier:"free"},
       {code:"katakana",ko:"가타카나",jp:"カタカナ",n:111,ready:false,tier:"free"},
+      {code:"KSIM",ko:"헷갈리는 가타카나",jp:"間違えやすいカタカナ",n:60,ready:false,tier:"free"},
     ]},
     {ko:"기초 필수",jp:"基礎",items:[
       {code:"num",ko:"숫자",jp:"数字",n:54,ready:false,tier:"free"},
@@ -620,8 +621,13 @@ const NAV = {
       {code:"C3",ko:"평론·신서",jp:"評論・新書",n:100,ready:false,tier:"paid"},
       {code:"C4",ko:"접속·부사",jp:"接続・副詞",n:100,ready:false,tier:"paid"},
     ]},
+    {ko:"가타카나 마스터·빈칸",jp:"カタカナ",items:[
+      {code:"KATA",ko:"가타카나어 기초",jp:"カタカナ語・基礎",n:300,ready:false,tier:"paid",sent:true},
+      {code:"KATA2",ko:"가타카나어 심화",jp:"カタカナ語・応用",n:250,ready:false,tier:"paid",sent:true},
+      {code:"WASEI",ko:"和製英語(함정)",jp:"和製英語",n:97,ready:false,tier:"paid",sent:true},
+      {code:"KABBR",ko:"가타카나 줄임말",jp:"カタカナ略語",n:80,ready:false,tier:"paid",sent:true},
+    ]},
     {ko:"특화·빈칸",jp:"特化",items:[
-      {code:"KATA",ko:"가타카나어",jp:"カタカナ語",n:300,ready:false,tier:"paid",sent:true},
       {code:"CNT",ko:"카운터(조수사)",jp:"助数詞",n:100,ready:false,tier:"paid",sent:true},
     ]},
   ],
@@ -787,7 +793,7 @@ function stopQuiz(){
 const isKanjiCat=()=> curCat && !["hiragana","katakana"].includes(curCat.code);
 const isSent=()=> !!(curCat && curCat.sent);   // 문장암기(cloze) 팩
 // ── 무료/유료 경계 (앱 UI) — 무료=카나+기초필수 12팩만, 나머지는 미리보기 10장+유료 ──
-const FREE_APP = new Set(["hiragana","katakana","num","week","time","body","dir","color","family","weather","greet","ask"]);
+const FREE_APP = new Set(["hiragana","katakana","KSIM","num","week","time","body","dir","color","family","weather","greet","ask"]);
 function tierOf(it){ return FREE_APP.has(it.code) ? "free" : "paid"; }
 const qMode=()=> ((typeof dailyMode!=="undefined"&&dailyMode)||(typeof taMode!=="undefined"&&taMode)||(typeof wbMode!=="undefined"&&wbMode)) ? "meaning" : CONF.mode;
 const optText=c=>{ const m=qMode(); return isSent() ? (m==="listen" ? (c.exk||c.ko) : c.front) : (!isKanjiCat() ? c.label : (m==="reading" ? c.romaji : m==="write" ? c.front : c.ko)); };
