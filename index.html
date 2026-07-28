@@ -452,6 +452,74 @@
 .rep-dots{margin-top:8px;display:flex;gap:5px;justify-content:center}
 .rep-dots i{width:8px;height:8px;border-radius:50%;background:var(--miss-bd);display:block}
 .rep-dots i.on{background:var(--miss)}
+
+/* ══ 원서 읽기 ══ */
+.rd-lv{display:flex;flex-direction:column;gap:9px;padding:12px 16px 20px}
+.rd-book{display:flex;gap:12px;align-items:center;padding:13px 14px;border:1px solid var(--line);
+  background:var(--card);border-radius:15px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink)}
+.rd-book:active{transform:scale(.99);background:var(--soft)}
+.rd-book .lvb{flex:0 0 44px;height:44px;border-radius:12px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-weight:900;font-size:15px;background:var(--soft);color:var(--accent)}
+.rd-book .lvb small{font-size:8.5px;font-weight:700;color:var(--sub)}
+.rd-book .bi{flex:1;min-width:0}
+.rd-book .bt{font-size:16px;font-weight:800}
+.rd-book .ba{font-size:11.5px;color:var(--sub);margin-top:1px}
+.rd-book .bd{font-size:11.5px;color:var(--sub);margin-top:4px;line-height:1.45}
+.rd-book .bp{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--ok)}
+.rd-prog{height:4px;border-radius:3px;background:var(--line);margin-top:6px;overflow:hidden}
+.rd-prog i{display:block;height:100%;background:var(--ok);border-radius:3px}
+.rd-chaps{padding:8px 16px 20px;display:flex;flex-direction:column;gap:7px}
+.rd-chap{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);
+  background:var(--card);border-radius:13px;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left}
+.rd-chap .cn{flex:0 0 26px;height:26px;border-radius:50%;background:var(--soft);color:var(--sub);
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.rd-chap.done .cn{background:var(--ok);color:#fff}
+.rd-chap .ct{flex:1;font-size:14px;font-weight:700}
+.rd-chap .cs{font-size:16px}
+.rd-hd{padding:14px 16px 4px;text-align:center}
+.rd-hd .t{font-size:20px;font-weight:800}
+.rd-hd .a{font-size:12px;color:var(--sub);margin-top:2px}
+.rd-hd .d{font-size:12.5px;color:var(--sub);margin-top:8px;line-height:1.55;text-align:left;
+  background:var(--soft);padding:11px 13px;border-radius:12px}
+.rd-tools{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:8px 16px 4px}
+.rd-tools button{padding:7px 12px;border:1px solid var(--line);background:var(--card);border-radius:16px;
+  font-size:12px;font-weight:700;color:var(--sub);cursor:pointer}
+.rd-tools button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rd-body{padding:10px 16px 4px}
+.rd-s{padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.rd-s:last-child{border-bottom:none}
+.rd-s .jp{font-size:17.5px;line-height:2.15;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.rd-s .ko{font-size:13px;color:var(--sub);margin-top:5px;line-height:1.5;display:none}
+.rd-s.open .ko{display:block}
+.rd-s.cur{background:var(--soft);border-radius:9px}
+.rd-s ruby rt{font-size:.5em;color:var(--accent);font-weight:600}
+.rd-noruby ruby rt{visibility:hidden}
+.rd-w{cursor:pointer;border-bottom:1px dotted transparent}
+.rd-w:active{background:var(--rg-bg)}
+.rd-foot{padding:16px;display:flex;gap:9px}
+.rd-foot button{flex:1;padding:14px 0;border:none;border-radius:13px;font-size:14.5px;font-weight:800;cursor:pointer;
+  background:var(--soft);color:var(--ink);font-family:inherit}
+.rd-foot button.pri{background:var(--ok);color:#fff}
+/* 단어 팝업 */
+.wp{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--card);border-radius:20px 20px 0 0;
+  box-shadow:0 -8px 30px rgba(0,0,0,.14);padding:18px 20px 26px;transform:translateY(110%);transition:transform .22s}
+.wp.on{transform:translateY(0)}
+.wp .w{font-size:30px;font-weight:800;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.wp .r{font-size:15px;color:var(--accent);font-weight:700;margin-top:4px}
+.wp .k{font-size:15px;margin-top:6px}
+.wp .sp{margin-top:12px;padding:9px 16px;border:1px solid var(--line);background:var(--soft);
+  border-radius:11px;font-size:13px;font-weight:800;cursor:pointer;color:var(--ink)}
+.wp .cl{position:absolute;top:14px;right:18px;font-size:20px;color:var(--sub);cursor:pointer;background:none;border:none}
+/* 챕터 결과 */
+.rd-res{padding:26px 20px;text-align:center}
+.rd-res .em{font-size:46px}
+.rd-res .tt{font-size:20px;font-weight:800;margin-top:8px}
+.rd-res .sc{font-size:14px;color:var(--sub);margin-top:6px}
+.rd-stamp{margin:18px auto 0;width:96px;height:96px;border-radius:50%;border:3px dashed var(--ok);
+  display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--ok);
+  animation:stampIn .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes stampIn{0%{transform:scale(2.2) rotate(-18deg);opacity:0}100%{transform:scale(1) rotate(-8deg);opacity:1}}
 </style>
 </head>
 <body>
@@ -469,6 +537,10 @@
     <div class="dc-ico">🎯</div>
     <div><div class="dc-tt" id="dcTitle">오늘의 10문제</div><div class="dc-sub" id="dcSub">전국 동일 문제 · 매일 0시 갱신</div></div>
     <div class="dc-streak" id="dcStreak"></div>
+  </div>
+  <div class="wr-bar" id="rdBar" onclick="openRead()" style="margin-bottom:2px">
+    📖 일본 명작 읽기 <small style="font-weight:600;font-size:12px;color:var(--sub)">— 5세부터 단계별 · 무료</small>
+    <span class="cnt" id="rdProg"></span>
   </div>
   <div class="tiles" id="homeTiles">
     <button class="tile" onclick="openColl()"><span class="dot"></span><i>📚</i><b>카드 도감</b><s id="tColl">0%</s></button>
@@ -699,6 +771,83 @@
   <div class="cj-opts" id="cjOpts"></div>
   <div class="cj-fb" id="cjFb"></div>
   <div class="cj-next" id="cjNextWrap" style="display:none"><button onclick="cjNext()">다음 문제 →</button></div>
+</div>
+
+
+<!-- ═══ 원서 읽기: 목록 ═══ -->
+<div class="screen" id="rdScreen">
+  <div class="top">
+    <button class="back" onclick="show('home')">‹</button>
+    <span class="title">📖 일본 명작 읽기</span>
+  </div>
+  <div class="rd-lv" id="rdList"></div>
+  <div class="wr-done" style="padding:0 16px 24px;font-size:10.5px;opacity:.7">
+    저작권 만료 작품 · 원문 출처: 青空文庫(Aozora Bunko)</div>
+</div>
+
+<!-- ═══ 원서 읽기: 챕터 목록 ═══ -->
+<div class="screen" id="rdBook">
+  <div class="top">
+    <button class="back" onclick="openRead()">‹</button>
+    <span class="title" id="rbTitle">작품</span>
+  </div>
+  <div class="rd-hd">
+    <div class="t" id="rbT">タイトル</div>
+    <div class="a" id="rbA">作者</div>
+    <div class="d" id="rbD"></div>
+  </div>
+  <div class="rd-chaps" id="rbChaps"></div>
+</div>
+
+<!-- ═══ 원서 읽기: 본문 ═══ -->
+<div class="screen" id="rdRead">
+  <div class="top">
+    <button class="back" onclick="rdBackToBook()">‹</button>
+    <span class="title" id="rrTitle">1장</span>
+    <span class="count" id="rrPos"></span>
+  </div>
+  <div class="rd-tools">
+    <button id="rrRuby" onclick="rdToggleRuby()">ふりがな</button>
+    <button id="rrKo" onclick="rdToggleKo()">한국어</button>
+    <button onclick="rdPlayAll()" id="rrPlay">🔊 이어 듣기</button>
+  </div>
+  <div class="rd-body" id="rrBody"></div>
+  <div class="rd-foot">
+    <button onclick="rdWordCards()">📇 단어 카드</button>
+    <button class="pri" onclick="rdStartQuiz()">✏️ 챕터 시험</button>
+  </div>
+</div>
+
+<!-- ═══ 원서 읽기: 챕터 시험 ═══ -->
+<div class="screen" id="rdQuiz">
+  <div class="top">
+    <button class="back" onclick="rdBackToRead()">‹</button>
+    <span class="title" id="rqTitle">챕터 시험</span>
+    <span class="count" id="rqCount">1 / 6</span>
+  </div>
+  <div class="rd-hd"><div class="d" id="rqAsk" style="text-align:center;font-size:15px;font-weight:700;color:var(--ink)"></div></div>
+  <div class="cj-opts" id="rqOpts"></div>
+  <div class="cj-fb" id="rqFb"></div>
+  <div class="cj-next" id="rqNextWrap" style="display:none"><button onclick="rqNext()">다음 →</button></div>
+  <div class="rd-res" id="rqRes" style="display:none">
+    <div class="em" id="rqEm">🎉</div>
+    <div class="tt" id="rqTt">챕터 완료!</div>
+    <div class="sc" id="rqSc"></div>
+    <div class="rd-stamp" id="rqStamp">読</div>
+    <div class="rd-foot" style="padding:22px 0 0">
+      <button onclick="rdBackToBook()">목록으로</button>
+      <button class="pri" id="rqNextCh" onclick="rdNextChapter()">다음 장 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- 단어 팝업 -->
+<div class="wp" id="wordPop">
+  <button class="cl" onclick="closeWordPop()">✕</button>
+  <div class="w" id="wpW"></div>
+  <div class="r" id="wpR"></div>
+  <div class="k" id="wpK"></div>
+  <button class="sp" onclick="wpSpeak()">🔊 발음 듣기</button>
 </div>
 
 <div class="screen" id="account">
@@ -1984,6 +2133,8 @@ function reviewMiss(){
 
 // override show() for done screen properly
 function show(id){
+  if(typeof rdStopPlay==="function" && id!=="rdRead") rdStopPlay();
+  if(typeof closeWordPop==="function" && id!=="rdRead") closeWordPop();
   if(id!=="quizScreen"){ stopQuiz(); repToken++; repRunning=false; const P=$("repPanel"); if(P) P.style.display="none"; }   // 퀴즈 이탈 시 타이머·발음·예약 콜백 전부 정지
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
   $("done").classList.remove("on");
@@ -2490,6 +2641,187 @@ function renderRwTile(){
   }catch(e){ t.textContent="팩 선물"; }
 }
 
+// ══════════ 일본 명작 읽기 (青空文庫 저작권 만료작 · 전부 클라이언트) ══════════
+let BOOKS=null, rdBookCur=null, rdChapCur=0, rdRuby=true, rdKo=false;
+let rqList=[], rqI=0, rqOk=0, rqLock=false;
+function rdState(){ try{ return JSON.parse(localStorage.getItem("reading")||"{}"); }catch(e){ return {}; } }
+function rdSave(o){ try{ localStorage.setItem("reading",JSON.stringify(o)); }catch(e){} }
+function rdDone(bid,n){ const st=rdState(); return ((st[bid]||{}).done||[]).includes(n); }
+function rdMark(bid,n){ const st=rdState(); const b=st[bid]=st[bid]||{done:[]};
+  if(!b.done.includes(n)) b.done.push(n); rdSave(st); renderRdBar(); }
+function rdBookProg(b){ const st=rdState(); const d=((st[b.id]||{}).done||[]).length; return {d, t:b.chapters.length}; }
+function renderRdBar(){
+  const el=$("rdProg"); if(!el||!BOOKS) return;
+  let d=0,t=0; BOOKS.forEach(b=>{ const p=rdBookProg(b); d+=p.d; t+=p.t; });
+  el.textContent = d ? `${d}/${t}장` : "";
+}
+async function loadBooks(){
+  if(BOOKS) return BOOKS;
+  try{ const r=await fetch("books.json",{cache:"no-store"}); if(r.ok) BOOKS=await r.json(); }catch(e){}
+  return BOOKS;
+}
+// {표기|읽기} → <ruby>
+function rdRubyHtml(t){
+  return String(t).replace(/\{([^|{}]+)\|([^|{}]+)\}/g,
+    (m,a,b)=>`<ruby class="rd-w" data-w="${a}" data-r="${b}"><rb>${a}</rb><rt>${b}</rt></ruby>`);
+}
+function rdPlain(t){ return String(t).replace(/\{([^|{}]+)\|[^|{}]+\}/g,'$1'); }
+function rdReading(t){ return String(t).replace(/\{[^|{}]+\|([^|{}]+)\}/g,'$1'); }
+
+async function openRead(){
+  show("rdScreen");
+  const bs=await loadBooks();
+  const wrap=$("rdList");
+  if(!bs||!bs.length){ wrap.innerHTML='<div style="text-align:center;color:var(--sub);padding:40px 0">읽기 자료를 불러오는 중…</div>'; return; }
+  wrap.innerHTML = bs.map((b,i)=>{
+    const p=rdBookProg(b); const pct=Math.round(p.d/p.t*100);
+    return `<button class="rd-book" onclick="openBook(${i})">
+      <span class="lvb">${b.lv}<small>단계</small></span>
+      <span class="bi"><span class="bt">${b.title_ko}</span>
+        <span class="ba">${b.title} · ${b.author_ko} · ${b.lvName}</span>
+        <span class="bd">${b.intro_ko}</span>
+        <span class="rd-prog"><i style="width:${pct}%"></i></span></span>
+      <span class="bp">${p.d?p.d+"/"+p.t:""}</span></button>`;
+  }).join("");
+  renderRdBar();
+}
+function openBook(i){
+  rdBookCur=BOOKS[i];
+  const b=rdBookCur;
+  $("rbTitle").textContent=b.title_ko; $("rbT").textContent=b.title;
+  $("rbA").textContent=`${b.author} (${b.author_ko}) · ${b.lvName}`;
+  $("rbD").textContent=b.intro_ko;
+  $("rbChaps").innerHTML=b.chapters.map((c,k)=>{
+    const dn=rdDone(b.id,c.n);
+    return `<button class="rd-chap ${dn?'done':''}" onclick="openChapter(${k})">
+      <span class="cn">${dn?'✓':c.n}</span><span class="ct">${c.title_ko}</span>
+      <span class="cs">${dn?'🏅':'›'}</span></button>`;
+  }).join("");
+  show("rdBook");
+}
+function openChapter(k){
+  rdChapCur=k;
+  const b=rdBookCur, c=b.chapters[k];
+  $("rrTitle").textContent=c.title_ko;
+  $("rrPos").textContent=`${k+1} / ${b.chapters.length}`;
+  const body=$("rrBody");
+  body.className="rd-body"+(rdRuby?"":" rd-noruby");
+  body.innerHTML=c.s.map((x,i)=>
+    `<div class="rd-s ${rdKo?'open':''}" data-i="${i}" onclick="rdTapSentence(event,${i})">
+       <div class="jp">${rdRubyHtml(x.jp)}</div><div class="ko">${x.ko}</div></div>`).join("");
+  $("rrRuby").classList.toggle("on",rdRuby);
+  $("rrKo").classList.toggle("on",rdKo);
+  show("rdRead");
+}
+function rdTapSentence(e,i){
+  const t=e.target.closest(".rd-w");
+  if(t){ e.stopPropagation(); openWordPop(t.dataset.w, t.dataset.r); return; }
+  const el=e.currentTarget; el.classList.toggle("open");
+  const c=rdBookCur.chapters[rdChapCur];
+  speak(rdReading(c.s[i].jp));
+}
+function rdToggleRuby(){ rdRuby=!rdRuby; $("rrBody").classList.toggle("rd-noruby",!rdRuby); $("rrRuby").classList.toggle("on",rdRuby); }
+function rdToggleKo(){ rdKo=!rdKo; $("rrKo").classList.toggle("on",rdKo);
+  $("rrBody").querySelectorAll(".rd-s").forEach(e=>e.classList.toggle("open",rdKo)); }
+let _rdPlayTok=0;
+async function rdPlayAll(){
+  const c=rdBookCur.chapters[rdChapCur];
+  const my=++_rdPlayTok;
+  const els=[...$("rrBody").querySelectorAll(".rd-s")];
+  $("rrPlay").textContent="⏸ 멈춤";
+  for(let i=0;i<c.s.length;i++){
+    if(my!==_rdPlayTok){ return; }
+    els.forEach(e=>e.classList.remove("cur"));
+    els[i].classList.add("cur"); els[i].scrollIntoView({block:"center",behavior:"smooth"});
+    await speakP(rdReading(c.s[i].jp));
+    if(my!==_rdPlayTok) return;
+    await new Promise(r=>setTimeout(r,180));
+  }
+  els.forEach(e=>e.classList.remove("cur"));
+  $("rrPlay").textContent="🔊 이어 듣기";
+}
+function rdStopPlay(){ _rdPlayTok++; const b=$("rrPlay"); if(b) b.textContent="🔊 이어 듣기"; }
+// ── 단어 팝업 ──
+let _wpW="";
+function openWordPop(w,r){
+  const c=rdBookCur&&rdBookCur.chapters[rdChapCur];
+  const hit=c&&c.words.find(x=>x.w===w);
+  _wpW=r||w;
+  $("wpW").textContent=w; $("wpR").textContent=r||"";
+  $("wpK").textContent=hit?hit.ko:"(이 챕터 단어장에 없는 단어)";
+  $("wordPop").classList.add("on");
+  speak(r||w);
+}
+function closeWordPop(){ $("wordPop").classList.remove("on"); }
+function wpSpeak(){ speak(_wpW); }
+// ── 단어 카드: 그 챕터 단어로 4지선다 ──
+function rdWordCards(){
+  const b=rdBookCur, c=b.chapters[rdChapCur];
+  const pool=b.chapters.flatMap(x=>x.words);
+  rqList=shuffle(c.words).map(w=>{
+    const others=shuffle(pool.filter(x=>x.ko!==w.ko)).slice(0,3).map(x=>x.ko);
+    return {ask:`<span style="font-size:26px;font-weight:800">${w.w}</span><br><span style="font-size:14px;color:var(--accent)">${w.r}</span><br><span style="font-size:13px;color:var(--sub);font-weight:600">이 단어의 뜻은?</span>`,
+            opts:shuffle([w.ko,...others]), a:w.ko, say:w.r, why:`${w.w}（${w.r}）— ${w.ko}`};
+  });
+  rdRunQuiz("📇 단어 카드", false);
+}
+// ── 챕터 시험: 빈칸 + 내용이해 ──
+function rdStartQuiz(){
+  const c=rdBookCur.chapters[rdChapCur];
+  const cz=c.cloze.map(z=>({ask:`<span style="font-size:12px;color:var(--sub);font-weight:700">빈칸에 알맞은 말은?</span><br><span style="font-size:18px;line-height:1.7">${z.jp}</span><br><span style="font-size:12.5px;color:var(--sub);margin-top:6px;display:inline-block">${z.ko}</span>`,
+      opts:z.opts, a:z.a, say:z.a, why:z.ko}));
+  const qz=c.quiz.map(q=>({ask:`<span style="font-size:12px;color:var(--sub);font-weight:700">내용 이해</span><br><span style="font-size:17px;line-height:1.7">${q.q}</span><br><span style="font-size:12.5px;color:var(--sub);margin-top:6px;display:inline-block">${q.q_ko}</span>`,
+      opts:q.opts, a:q.a, say:q.a, why:q.q_ko}));
+  rqList=[...shuffle(cz), ...shuffle(qz)];
+  rdRunQuiz("✏️ 챕터 시험", true);
+}
+function rdRunQuiz(title, markDone){
+  rdStopPlay();
+  rqI=0; rqOk=0; rqLock=false; rqList._mark=markDone;
+  $("rqTitle").textContent=title;
+  $("rqRes").style.display="none";
+  show("rdQuiz"); rqRender();
+}
+function rqRender(){
+  const q=rqList[rqI];
+  $("rqCount").textContent=`${rqI+1} / ${rqList.length}`;
+  $("rqAsk").innerHTML=q.ask;
+  $("rqOpts").innerHTML=q.opts.map((o,i)=>`<button onclick="rqPick(${i})">${o}</button>`).join("");
+  $("rqFb").innerHTML=""; $("rqNextWrap").style.display="none"; rqLock=false;
+}
+function rqPick(i){
+  if(rqLock) return; rqLock=true;
+  const q=rqList[rqI], btns=[...$("rqOpts").querySelectorAll("button")];
+  const ci=q.opts.indexOf(q.a);
+  btns.forEach(b=>b.disabled=true); btns[ci].classList.add("ok");
+  const ok=(i===ci);
+  if(ok){ rqOk++; try{sfx("ok");}catch(e){} } else { btns[i].classList.add("no"); try{sfx("no");}catch(e){} }
+  $("rqFb").innerHTML=(ok?"⭕ ":"❌ ")+q.why;
+  $("rqNextWrap").style.display="block";
+  if(q.say) speak(q.say);
+}
+function rqNext(){
+  if(rqI<rqList.length-1){ rqI++; rqRender(); return; }
+  // 결과
+  const pct=Math.round(rqOk/rqList.length*100);
+  $("rqOpts").innerHTML=""; $("rqFb").innerHTML=""; $("rqNextWrap").style.display="none"; $("rqAsk").innerHTML="";
+  $("rqEm").textContent = pct===100?"🏆":pct>=70?"🎉":"💪";
+  $("rqTt").textContent = pct===100?"만점! 완벽해요":pct>=70?"챕터 완료!":"조금만 더!";
+  $("rqSc").textContent = `${rqList.length}문제 중 ${rqOk}개 정답 · ${pct}%`;
+  const b=rdBookCur, c=b.chapters[rdChapCur];
+  if(rqList._mark && pct>=70){ rdMark(b.id,c.n); }
+  const last=rdChapCur>=b.chapters.length-1;
+  $("rqNextCh").textContent = last ? "🎊 완독!" : "다음 장 →";
+  $("rqRes").style.display="block";
+}
+function rdNextChapter(){
+  const b=rdBookCur;
+  if(rdChapCur>=b.chapters.length-1){ toast("🎊 완독 축하합니다!"); openBook(BOOKS.indexOf(b)); return; }
+  openChapter(rdChapCur+1);
+}
+function rdBackToBook(){ rdStopPlay(); closeWordPop(); openBook(BOOKS.indexOf(rdBookCur)); }
+function rdBackToRead(){ rdStopPlay(); show("rdRead"); }
+
 async function initApp(){
   const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 끔";
   initPaddle();
@@ -2502,6 +2834,7 @@ async function initApp(){
   renderWrBar();
   renderCjBar();
   renderRwTile();
+  loadBooks().then(renderRdBar);
 }
 initApp();
 </script>
