@@ -358,9 +358,10 @@
   background-size:50% 50%;background-position:center}
 .wr-grid:after{content:"";position:absolute;inset:8%;border:1px dashed var(--line);border-radius:6px}
 .wr-tpl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
-  font-size:min(58vw,220px);line-height:1;color:var(--ink);opacity:.14;font-weight:500;
+  font-size:min(58vw,220px);line-height:1;color:var(--ink);opacity:0;font-weight:500;
   font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP","Meiryo",sans-serif;transition:opacity .15s}
-.wr-tpl.hi{opacity:.34} .wr-tpl.off{opacity:0}
+.wr-tpl.faint{opacity:.055} .wr-tpl.mid{opacity:.16} .wr-tpl.off{opacity:0}
+.wr-tpl.reveal{opacity:.42;color:var(--ok)}
 .wr-cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 .wr-meta{margin-top:10px;text-align:center}
 .wr-meta .rd{font-size:17px;font-weight:800;color:var(--accent)}
@@ -372,7 +373,9 @@
 .wr-tools button:active{background:var(--soft)}
 .wr-pen{display:flex;align-items:center;gap:7px;padding:9px 12px;border:1px solid var(--line);border-radius:11px;background:var(--card)}
 .wr-pen i{display:block;border-radius:50%;background:var(--ink)}
-.wr-pen input{width:74px}
+.wr-pen input{width:78px}
+.wr-pen .pl{font-size:12px;font-weight:800;color:var(--sub)}
+.wr-pen b{font-size:12px;font-weight:800;color:var(--sub);min-width:16px;text-align:right}
 .wr-nav{display:flex;gap:8px;justify-content:center;margin-top:14px;padding:0 16px 8px}
 .wr-nav button{flex:1;max-width:110px;padding:12px 0;border:none;border-radius:12px;background:var(--soft);
   color:var(--ink);font-size:14px;font-weight:800;cursor:pointer}
@@ -432,7 +435,9 @@
 /* ══ 획순 ══ */
 .wr-svg{position:absolute;inset:0;pointer-events:none}
 .wr-svg svg{width:100%;height:100%}
-.wr-svg path{fill:none;stroke:var(--accent);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;opacity:.55}
+.wr-svg path{fill:none;stroke:var(--accent);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;opacity:.16}
+.wr-svg.strong path{opacity:.6}
+.wr-svg.strong text{fill:var(--ok)}
 .wr-svg text{font-size:7px;fill:var(--rr-d);font-weight:700}
 .wr-svg.hideNum text{display:none}
 .wr-svg.off{display:none}
@@ -660,8 +665,10 @@
     <button id="wrTplBtn" onclick="wrTplCycle()">본보기: 보통</button>
     <button id="wrOrderBtn" onclick="wrOrderCycle()">획순: 끄기</button>
     <button id="wrPlayBtn" onclick="wrPlayStrokes()">▶ 획순 재생</button>
-    <label class="wr-pen"><i id="wrPenDot" style="width:6px;height:6px"></i>
-      <input type="range" id="wrPen" min="4" max="22" value="10" oninput="wrPenChg()"></label>
+    <button id="wrRevealBtn" onclick="wrReveal()">👀 정답 확인</button>
+    <label class="wr-pen"><span class="pl">펜</span><i id="wrPenDot" style="width:6px;height:6px"></i>
+      <input type="range" id="wrPen" min="3" max="28" value="10" oninput="wrPenChg()"><b id="wrPenNum">10</b></label>
+    <button id="wrWeightBtn" onclick="wrWeightCycle()">글씨 굵기: 보통</button>
   </div>
   <div class="wr-nav">
     <button onclick="wrGo(-1)" id="wrPrev">‹ 이전</button>
@@ -2134,7 +2141,7 @@ const WR_SRC=[
   {code:"hiragana",ko:"히라가나"},{code:"katakana",ko:"가타카나"},{code:"KSIM",ko:"헷갈리는 가타카나"},
   {code:"N5",ko:"N5 한자"},{code:"N4",ko:"N4 한자"},{code:"N3",ko:"N3 한자"},{code:"N2",ko:"N2 한자"},{code:"N1",ko:"N1 한자"}
 ];
-let wrCat="hiragana", wrIdx=0, wrStrokes=[], wrCur=null, wrDrawing=false, wrTplMode=1, wrPenW=10, wrCtx=null, wrDPR=1;
+let wrCat="hiragana", wrIdx=0, wrStrokes=[], wrCur=null, wrDrawing=false, wrTplMode=0, wrPenW=10, wrCtx=null, wrDPR=1;
 function wrLog(){ try{ return JSON.parse(localStorage.getItem("writing")||"{}"); }catch(e){ return {}; } }
 function wrSave(o){ try{ localStorage.setItem("writing",JSON.stringify(o)); }catch(e){} }
 function wrTotal(){ const o=wrLog(); return Object.values(o).reduce((a,b)=>a+(b|0),0); }
@@ -2192,11 +2199,41 @@ function wrMove(e){ if(!wrDrawing) return; e.preventDefault(); wrStrokes[wrStrok
 function wrUp(){ wrDrawing=false; }
 function wrUndo(){ wrStrokes.pop(); wrRedraw(); }
 function wrClear(){ wrStrokes=[]; wrRedraw(); }
-function wrPenChg(){ wrPenW=+$("wrPen").value; const d=$("wrPenDot"); const px=Math.max(4,Math.round(wrPenW*.7)); d.style.width=px+"px"; d.style.height=px+"px"; }
-function wrTplCycle(){
-  wrTplMode=(wrTplMode+1)%3;
-  const t=$("wrTpl"); t.className="wr-tpl"+(wrTplMode===2?" hi":wrTplMode===0?" off":"");
-  $("wrTplBtn").textContent="본보기: "+(wrTplMode===2?"진하게":wrTplMode===0?"끄기":"보통");
+function wrPenChg(){
+  wrPenW=+$("wrPen").value;
+  const d=$("wrPenDot"); const px=Math.max(4,Math.round(wrPenW*.7));
+  d.style.width=px+"px"; d.style.height=px+"px";
+  const n=$("wrPenNum"); if(n) n.textContent=wrPenW;
+  try{ localStorage.setItem("wr_pen",String(wrPenW)); }catch(e){}
+  wrRedraw();
+}
+// 본보기·획순 글자 굵기 (가늘게/보통/굵게)
+let wrWeight=1;
+const WR_W=[{ko:"가늘게",fw:300,sw:2.0},{ko:"보통",fw:500,sw:3.2},{ko:"굵게",fw:800,sw:5.0}];
+function wrApplyWeight(){
+  const w=WR_W[wrWeight];
+  const t=$("wrTpl"); if(t) t.style.fontWeight=w.fw;
+  const box=$("wrSvg"); if(box) box.querySelectorAll("path").forEach(p=>p.style.strokeWidth=w.sw);
+  const b=$("wrWeightBtn"); if(b) b.textContent="글씨 굵기: "+w.ko;
+  try{ localStorage.setItem("wr_weight",String(wrWeight)); }catch(e){}
+}
+function wrWeightCycle(){ wrWeight=(wrWeight+1)%3; wrApplyWeight(); }
+function wrApplyTpl(){
+  const t=$("wrTpl"); if(!t) return;
+  t.className="wr-tpl"+(wrRevealed?" reveal":(wrTplMode===2?" mid":wrTplMode===1?" faint":" off"));
+  const b=$("wrTplBtn"); if(b) b.textContent="힌트: "+(wrTplMode===2?"보통":wrTplMode===1?"희미":"끄기");
+}
+function wrTplCycle(){ wrTplMode=(wrTplMode+1)%3; wrRevealed=false; wrApplyTpl(); wrApplyReveal(); }
+let wrRevealed=false;
+function wrApplyReveal(){
+  const box=$("wrSvg"); if(box) box.classList.toggle("strong", wrRevealed);
+  const b=$("wrRevealBtn"); if(b) b.textContent = wrRevealed ? "🙈 정답 가리기" : "👀 정답 확인";
+}
+async function wrReveal(){
+  wrRevealed=!wrRevealed;
+  wrApplyTpl(); 
+  if(wrRevealed && wrOrderMode===0){ wrOrderMode=1; $("wrOrderBtn").textContent="획순: 번호"; await wrRenderOrder(); }
+  wrApplyReveal();
 }
 
 // ── 획순(KanjiVG, CC BY-SA 3.0) ──
@@ -2227,6 +2264,7 @@ async function wrRenderOrder(){
   box.appendChild(document.importNode(svg,true));
   box.classList.remove("off");
   box.classList.toggle("hideNum", false);
+  wrApplyWeight();
 }
 function wrOrderCycle(){
   wrOrderMode=(wrOrderMode+1)%3;
@@ -2264,13 +2302,15 @@ function wrLoad(){
   if(!list.length){ $("wrTpl").textContent="?"; $("wrRd").textContent="데이터 없음"; $("wrKo").textContent=""; wrCur=null; return; }
   if(wrIdx<0) wrIdx=list.length-1; if(wrIdx>=list.length) wrIdx=0;
   wrCur=list[wrIdx];
+  wrRevealed=false;
   $("wrTpl").textContent=wrCur.front;
+  wrApplyTpl(); wrApplyReveal();
   $("wrRd").innerHTML=(wrCur.romaji||wrCur.front)+' <span class="sp" onclick="wrSpeak()">🔊</span>';
   $("wrKo").textContent=wrCur.ko||"";
   $("wrPos").textContent=`${wrIdx+1} / ${list.length}`;
   if(wrOrderMode!==0) wrRenderOrder(); else { const b=$("wrSvg"); if(b){b.innerHTML="";b.classList.add("off");} }
   const n=(wrLog()[wrCat+"|"+wrCur.front]|0);
-  $("wrDone").innerHTML = n? `이 글자 <b>${n}번</b> 썼어요` : "본보기를 따라 손가락으로 써보세요";
+  $("wrDone").innerHTML = n? `이 글자 <b>${n}번</b> 썼어요` : "읽기·뜻을 보고 먼저 써본 뒤 <b>정답 확인</b>을 누르세요";
   wrClear();
 }
 function wrGo(d){ wrIdx+=d; wrLoad(); }
@@ -2298,7 +2338,9 @@ function openWriting(){
     window.addEventListener("resize",()=>{ if($("wrScreen").classList.contains("on")) wrFitSoon(); });
     window.addEventListener("orientationchange",()=>setTimeout(wrFitSoon,200));
   }
-  wrPenChg();
+  try{ const sp=parseInt(localStorage.getItem("wr_pen")||"",10); if(sp) $("wrPen").value=sp;
+       const sw=parseInt(localStorage.getItem("wr_weight")||"",10); if(!isNaN(sw)) wrWeight=sw; }catch(e){}
+  wrPenChg(); wrApplyWeight(); wrApplyTpl(); wrApplyReveal();
 }
 
 // ══════════ 동사 활용 엔진 + 연습 모드 (전부 클라이언트) ══════════
