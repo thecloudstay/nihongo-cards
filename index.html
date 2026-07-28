@@ -415,6 +415,38 @@
   font-size:15px;font-weight:800;cursor:pointer}
 .cj-hd{display:flex;gap:10px;justify-content:center;font-size:12px;color:var(--sub);font-weight:700;padding:4px 16px 0}
 .cj-hd b{color:var(--ok)}
+
+/* ══ 홈 연습 타일 ══ */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 16px 2px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  padding:13px 4px 11px;border:1px solid var(--line);background:var(--card);border-radius:14px;cursor:pointer;
+  font-family:inherit;color:var(--ink);transition:transform .12s}
+.tile:active{transform:scale(.95);background:var(--soft)}
+.tile i{font-style:normal;font-size:21px;line-height:1}
+.tile b{font-size:12.5px;font-weight:800}
+.tile s{text-decoration:none;font-size:10.5px;font-weight:700;color:var(--sub);min-height:13px}
+.tile.hot{border-color:var(--miss);background:var(--miss-bg)}
+.tile.hot b,.tile.hot s{color:var(--miss)}
+.tile .dot{position:absolute;top:7px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);display:none}
+.tile.new .dot{display:block}
+/* ══ 획순 ══ */
+.wr-svg{position:absolute;inset:0;pointer-events:none}
+.wr-svg svg{width:100%;height:100%}
+.wr-svg path{fill:none;stroke:var(--accent);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;opacity:.55}
+.wr-svg text{font-size:7px;fill:var(--rr-d);font-weight:700}
+.wr-svg.hideNum text{display:none}
+.wr-svg.off{display:none}
+/* ══ 오답 반복 학습 ══ */
+.rep-panel{margin:10px 16px 0;padding:14px;border-radius:14px;background:var(--miss-bg);border:1px solid var(--miss-bd);text-align:center}
+.rep-panel .cnt{font-size:13px;font-weight:800;color:var(--miss)}
+.rep-panel .jp{font-size:20px;font-weight:700;margin-top:8px;line-height:1.4}
+.rep-panel .y{font-size:14px;color:var(--accent);margin-top:4px}
+.rep-panel .m{font-size:13px;color:var(--sub);margin-top:4px}
+.rep-panel .skip{margin-top:11px;padding:8px 18px;border:1px solid var(--miss-bd);background:var(--card);
+  border-radius:10px;font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer}
+.rep-dots{margin-top:8px;display:flex;gap:5px;justify-content:center}
+.rep-dots i{width:8px;height:8px;border-radius:50%;background:var(--miss-bd);display:block}
+.rep-dots i.on{background:var(--miss)}
 </style>
 </head>
 <body>
@@ -428,29 +460,17 @@
     </div>
     <div class="app">일본어 카드모음<div class="en">にほんご カード · 読みテスト</div></div>
   </div>
-  <div class="wb-bar" id="wbBar" style="display:none" onclick="startWrongbook()">
-    📕 오답노트 <span id="wbCount">0</span>개 <small>맞히면 지워져요 →</small>
-  </div>
   <div class="daily-card" id="dailyCard" style="display:none" onclick="startDaily()">
     <div class="dc-ico">🎯</div>
     <div><div class="dc-tt" id="dcTitle">오늘의 10문제</div><div class="dc-sub" id="dcSub">전국 동일 문제 · 매일 0시 갱신</div></div>
     <div class="dc-streak" id="dcStreak"></div>
   </div>
-  <div class="coll-bar" id="collBar" style="display:none" onclick="openColl()">
-    📚 카드 도감 <span class="pct" id="collPct">0%</span>
-    <span class="ssr" id="collSSRBadge"></span>
-  </div>
-  <div class="ta-bar" id="taBar" style="display:none" onclick="startTimeAttack()">
-    ⚡ 타임어택 60초 <span style="font-weight:600;font-size:12px;opacity:.8">— 몇 점까지 가능?</span>
-    <span class="best" id="taBest"></span>
-  </div>
-  <div class="cj-bar" id="cjBar" onclick="openConj()">
-    🔁 동사 활용 연습 <small style="font-weight:600;font-size:12px;opacity:.8">— ます·て·ない·た</small>
-    <span class="cnt" id="cjBest"></span>
-  </div>
-  <div class="wr-bar" id="wrBar" onclick="openWriting()">
-    ✍️ 손글씨 쓰기 연습 <small style="font-weight:600;font-size:12px;color:var(--sub)">— 따라 쓰며 외우기</small>
-    <span class="cnt" id="wrCount"></span>
+  <div class="tiles" id="homeTiles">
+    <button class="tile" onclick="openColl()"><span class="dot"></span><i>📚</i><b>카드 도감</b><s id="tColl">0%</s></button>
+    <button class="tile" onclick="startTimeAttack()"><i>⚡</i><b>타임어택</b><s id="tTa">60초</s></button>
+    <button class="tile" onclick="openConj()"><i>🔁</i><b>동사 활용</b><s id="tCj">ます·て</s></button>
+    <button class="tile" onclick="openWriting()"><i>✍️</i><b>손글씨</b><s id="tWr">따라쓰기</s></button>
+    <button class="tile" id="tileWb" onclick="startWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">기초<span class="s">基礎</span></button>
@@ -486,6 +506,12 @@
         <button data-m="write">표기</button>
       </div>
     </div>
+    <div class="row"><div class="lab">틀렸을 때 반복 <span style="font-weight:600;color:var(--sub);font-size:12px">음성으로</span></div>
+      <div class="seg" id="segRep">
+        <button data-r="0" class="on">안 함</button><button data-r="1">1회</button>
+        <button data-r="2">2회</button><button data-r="3">3회</button><button data-r="5">5회</button>
+      </div>
+    </div>
     <div class="row"><div class="lab">제한 시간 (문제당)</div>
       <div class="seg" id="segTime">
         <button data-t="3">3초</button><button data-t="5" class="on">5초</button>
@@ -509,6 +535,14 @@
   <div class="quiz">
     <div class="glyphwrap"><div class="glyph jp" id="glyph">あ</div></div>
     <div class="example" id="example"></div>
+  <div class="rep-panel" id="repPanel" style="display:none">
+    <div class="cnt" id="repCnt">🔁 반복 1 / 3</div>
+    <div class="rep-dots" id="repDots"></div>
+    <div class="jp" id="repJp"></div>
+    <div class="y" id="repY"></div>
+    <div class="m" id="repM"></div>
+    <button class="skip" onclick="repSkip()">건너뛰기 →</button>
+  </div>
     <div class="opts" id="opts"></div>
   </div>
   <div class="ctrl">
@@ -611,6 +645,7 @@
     <div class="wr-box" id="wrBox">
       <div class="wr-grid"></div>
       <div class="wr-tpl" id="wrTpl">あ</div>
+      <div class="wr-svg off" id="wrSvg"></div>
       <canvas class="wr-cv" id="wrCv"></canvas>
     </div>
     <div class="wr-meta">
@@ -622,6 +657,8 @@
     <button onclick="wrUndo()">↩ 되돌리기</button>
     <button onclick="wrClear()">🧽 지우기</button>
     <button id="wrTplBtn" onclick="wrTplCycle()">본보기: 보통</button>
+    <button id="wrOrderBtn" onclick="wrOrderCycle()">획순: 끄기</button>
+    <button id="wrPlayBtn" onclick="wrPlayStrokes()">▶ 획순 재생</button>
     <label class="wr-pen"><i id="wrPenDot" style="width:6px;height:6px"></i>
       <input type="range" id="wrPen" min="4" max="22" value="10" oninput="wrPenChg()"></label>
   </div>
@@ -631,6 +668,7 @@
     <button onclick="wrGo(1)" id="wrNext">다음 ›</button>
   </div>
   <div class="wr-done" id="wrDone"></div>
+  <div class="wr-done" style="padding-top:0;font-size:10.5px;opacity:.7">획순 데이터: KanjiVG (CC BY-SA 3.0)</div>
 </div>
 
 
@@ -919,7 +957,7 @@ const DATA = {
 
 const $=id=>document.getElementById(id);
 let curTab="kana", curCat=null;
-let CONF=(()=>{ try{ const s=JSON.parse(localStorage.getItem("conf")); if(s&&s.count!==undefined) return s; }catch(e){} return {count:20,time:5,mode:"meaning"}; })();
+let CONF=(()=>{ try{ const s=JSON.parse(localStorage.getItem("conf")); if(s&&s.count!==undefined) return s; }catch(e){} return {count:20,time:5,mode:"meaning",rep:0}; })();
 function saveConf(){ try{ localStorage.setItem("conf",JSON.stringify(CONF)); }catch(e){} }
 let deck=[],qi=0,correct=0,misses=[],answered=false,paused=false,timerId=null,reviewRound=0;
 let results=[],dailyMode=false,combo=0;
@@ -1106,12 +1144,16 @@ async function pickCat(it){
     pv.style.display = previewMode ? "block" : "none";
     if(previewMode) pv.innerHTML=`🎁 미리보기 <b>10장 무료 체험</b> 중 · 전체 ${it.n}장 잠금해제 <b>${priceOf(it)}</b> <button class="buy-mini" onclick="openBuy(curCat)">구매</button>`;
   }
+  const sr=$("segRep"); if(sr) [...sr.children].forEach(b=>b.classList.toggle("on", +b.dataset.r===(CONF.rep|0)));
+  const sc=$("segCount"); if(sc) [...sc.children].forEach(b=>b.classList.toggle("on", +b.dataset.n===(CONF.count|0)));
+  const st=$("segTime"); if(st) [...st.children].forEach(b=>b.classList.toggle("on", +b.dataset.t===(CONF.time|0)));
   show("setup");
 }
 
 // ── 설정 세그 ──
 $("segCount").addEventListener("click",e=>{ if(e.target.dataset.n!==undefined){[...$("segCount").children].forEach(b=>b.classList.remove("on")); e.target.classList.add("on"); CONF.count=+e.target.dataset.n;}});
 $("segTime").addEventListener("click",e=>{ if(e.target.dataset.t!==undefined){[...$("segTime").children].forEach(b=>b.classList.remove("on")); e.target.classList.add("on"); CONF.time=+e.target.dataset.t;}});
+$("segRep").addEventListener("click",e=>{ if(e.target.dataset.r!==undefined){[...$("segRep").children].forEach(b=>b.classList.remove("on")); e.target.classList.add("on"); CONF.rep=+e.target.dataset.r;}});
 $("segType").addEventListener("click",e=>{ if(e.target.dataset.m){[...$("segType").children].forEach(b=>b.classList.remove("on")); e.target.classList.add("on"); CONF.mode=e.target.dataset.m;}});
 
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -1132,6 +1174,7 @@ function startQuiz(){
 }
 
 function loadQ(){
+  repToken++; repRunning=false; { const P=$("repPanel"); if(P) P.style.display="none"; }
   answered=false;paused=false;
   const q=deck[qi]; const g=$("glyph");
   const m=qMode();
@@ -1204,6 +1247,7 @@ function choose(btn,o,q){
   }
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
+  if(!ok && (CONF.rep|0)>0){ sched(()=>runRepeat(q), 420); return; }   // 틀린 문장 N회 반복 학습
   sched(()=>speak(showEx ? q.exy : q.speak), ok ? 550 : 500); // 효과음 후 발음 (예문 우선)
   sched(nextQ, showEx ? 3200 : 1300);                         // 예문 재생이 잘리지 않게 여유
 }
@@ -1217,6 +1261,7 @@ function timeUp(){
   sfx("fail");
   const showEx = isKanjiCat() && q.ex;
   if(showEx) showExample(q);
+  if((CONF.rep|0)>0){ sched(()=>runRepeat(q), 380); return; }
   sched(()=>speak(showEx ? q.exy : q.speak), 450);
   sched(nextQ, showEx ? 3200 : 1400);
 }
@@ -1231,6 +1276,67 @@ function showExample(q){
   e.classList.add("show");
 }
 function skip(){ if(taMode&&!answered){ combo=0; updateComboBadge(); taCount++; results.push(false); misses.push(deck[qi]); answered=true; nextQ(); return; } if(!answered)timeUp(); else nextQ(); }
+
+// ── 반복 학습용: 재생 완료를 기다리는 발음 ──
+function speakWSP(t){
+  return new Promise(res=>{
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(String(t).split("/")[0]);
+      u.lang="ja-JP"; u.rate=0.9;
+      if(!_jaVoice)_jaVoice=pickJaVoice(); if(_jaVoice)u.voice=_jaVoice;
+      u.onend=res; u.onerror=res;
+      speechSynthesis.speak(u);
+      setTimeout(res,9000);
+    }catch(e){ res(); }
+  });
+}
+function speakP(t){
+  return new Promise(res=>{
+    t=String(t||""); if(!t||MUTED) return res();
+    let fired=false; const fin=()=>{ if(!fired){ fired=true; res(); } };
+    if(AUDIO_MANIFEST){
+      const h=AUDIO_MANIFEST[t]||AUDIO_MANIFEST[t.split("/")[0]];
+      if(h){
+        try{
+          const a=_getAudioEl(); const src="audio/"+h+".mp3";
+          if(!a.src || a.src.indexOf(src)===-1){ a.src=src; a.load(); }
+          a.onended=fin; a.currentTime=0;
+          const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>speakWSP(t).then(fin));
+          setTimeout(fin,9000);
+          return;
+        }catch(e){}
+      }
+    }
+    speakWSP(t).then(fin); setTimeout(fin,9000);
+  });
+}
+// ── 오답 반복 학습 ──
+let repToken=0, repRunning=false;
+function repSkip(){ repToken++; repRunning=false; $("repPanel").style.display="none"; sched(nextQ,120); }
+async function runRepeat(q){
+  const n=CONF.rep|0; if(n<=0){ return false; }
+  const say = (q.ex && q.exy) ? q.exy : q.speak;      // 문장이 있으면 문장을, 없으면 단어를
+  const my=++repToken; repRunning=true;
+  const P=$("repPanel");
+  $("repJp").textContent = q.ex || q.front;
+  $("repY").textContent  = (q.ex ? q.exy : q.romaji) || "";
+  $("repM").textContent  = (q.ex ? q.exk : q.ko) || "";
+  $("repDots").innerHTML = Array.from({length:n},()=>"<i></i>").join("");
+  P.style.display="block";
+  for(let i=1;i<=n;i++){
+    if(my!==repToken) return true;
+    $("repCnt").textContent=`🔁 반복 ${i} / ${n}`;
+    const dots=$("repDots").children; if(dots[i-1]) dots[i-1].classList.add("on");
+    await speakP(say);
+    if(my!==repToken) return true;
+    await new Promise(r=>setTimeout(r,300));
+  }
+  if(my!==repToken) return true;
+  repRunning=false; P.style.display="none";
+  sched(nextQ,250);
+  return true;
+}
 function nextQ(){
   if(taMode){ qi++; if(qi>=deck.length){ deck=shuffle(DAILY_POOL.slice()); qi=0; } loadQ(); return; }
   if(qi<deck.length-1){qi++;loadQ();}else finish();
@@ -1424,11 +1530,10 @@ function collStats(){
   return {tot,sr,ssr,poolTot};
 }
 function renderCollBar(){
-  const el=$("collBar"); if(!el) return;
-  const s=collStats(); if(!s.poolTot){ el.style.display="none"; return; }
-  el.style.display="flex";
-  $("collPct").textContent=(s.tot/s.poolTot*100).toFixed(1)+"% ("+s.tot+"장)";
-  $("collSSRBadge").textContent = s.ssr>0 ? "SSR ×"+s.ssr : "";
+  const t=$("tColl"); if(!t) return;
+  const s=collStats();
+  t.textContent = s.poolTot ? (s.tot/s.poolTot*100).toFixed(1)+"%" : "0%";
+  const tile=t.closest(".tile"); if(tile) tile.classList.toggle("new", s.ssr>0);
 }
 let _collCat=null;
 function openColl(){
@@ -1580,10 +1685,10 @@ function wbRemove(q){
   renderWbBar();
 }
 function renderWbBar(){
-  const el=$("wbBar"); if(!el) return;
+  const t=$("tWb"), tile=$("tileWb"); if(!t) return;
   const n=Object.keys(getWB()).length;
-  if(!n){ el.style.display="none"; return; }
-  el.style.display="flex"; $("wbCount").textContent=n;
+  t.textContent = n ? n+"개" : "없음";
+  if(tile) tile.classList.toggle("hot", n>0);
 }
 function startWrongbook(){
   const w=getWB();
@@ -1632,11 +1737,9 @@ const TA_SECS=60;
 function taBestGet(){ try{ return JSON.parse(localStorage.getItem("ta_best")||"null"); }catch(e){ return null; } }
 function taBestSet(v){ try{ localStorage.setItem("ta_best",JSON.stringify(v)); }catch(e){} }
 function renderTaBar(){
-  const el=$("taBar"); if(!el) return;
-  if(DAILY_POOL.length<20){ el.style.display="none"; return; }
-  el.style.display="flex";
+  const t=$("tTa"); if(!t) return;
   const b=taBestGet();
-  $("taBest").textContent = b ? `🏆 ${b.score.toLocaleString()}점` : "첫 도전!";
+  t.textContent = (b&&b.score) ? b.score.toLocaleString()+"점" : "60초";
 }
 function startTimeAttack(){
   if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
@@ -1872,7 +1975,7 @@ function reviewMiss(){
 
 // override show() for done screen properly
 function show(id){
-  if(id!=="quizScreen") stopQuiz();   // 퀴즈 이탈 시 타이머·발음·예약 콜백 전부 정지
+  if(id!=="quizScreen"){ stopQuiz(); repToken++; repRunning=false; const P=$("repPanel"); if(P) P.style.display="none"; }   // 퀴즈 이탈 시 타이머·발음·예약 콜백 전부 정지
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
   $("done").classList.remove("on");
   if(id==="done"){$("done").classList.add("on");}
@@ -2033,7 +2136,7 @@ let wrCat="hiragana", wrIdx=0, wrStrokes=[], wrCur=null, wrDrawing=false, wrTplM
 function wrLog(){ try{ return JSON.parse(localStorage.getItem("writing")||"{}"); }catch(e){ return {}; } }
 function wrSave(o){ try{ localStorage.setItem("writing",JSON.stringify(o)); }catch(e){} }
 function wrTotal(){ const o=wrLog(); return Object.values(o).reduce((a,b)=>a+(b|0),0); }
-function renderWrBar(){ const el=$("wrCount"); if(!el) return; const t=wrTotal(); el.textContent = t? `${t}자 씀` : ""; }
+function renderWrBar(){ const el=$("tWr"); if(!el) return; const t=wrTotal(); el.textContent = t? `${t}자` : "따라쓰기"; }
 
 function wrChars(){
   const rows=(DATA[wrCat]||[]);
@@ -2093,6 +2196,66 @@ function wrTplCycle(){
   const t=$("wrTpl"); t.className="wr-tpl"+(wrTplMode===2?" hi":wrTplMode===0?" off":"");
   $("wrTplBtn").textContent="본보기: "+(wrTplMode===2?"진하게":wrTplMode===0?"끄기":"보통");
 }
+
+// ── 획순(KanjiVG, CC BY-SA 3.0) ──
+const KVG_BASE="https://cdn.jsdelivr.net/gh/KanjiVG/kanjivg@master/kanji/";
+const _kvgCache=new Map();
+let wrOrderMode=0;              // 0 끄기 · 1 번호 · 2 번호+선
+async function kvgFetch(ch){
+  if(_kvgCache.has(ch)) return _kvgCache.get(ch);
+  const hex=ch.codePointAt(0).toString(16).padStart(5,"0");
+  try{
+    const r=await fetch(KVG_BASE+hex+".svg");
+    if(!r.ok) throw 0;
+    const txt=await r.text();
+    const doc=new DOMParser().parseFromString(txt,"image/svg+xml");
+    const svg=doc.documentElement;
+    if(!svg||svg.nodeName!=="svg") throw 0;
+    svg.removeAttribute("width"); svg.removeAttribute("height");
+    svg.setAttribute("viewBox","0 0 109 109");
+    _kvgCache.set(ch,svg); return svg;
+  }catch(e){ _kvgCache.set(ch,null); return null; }
+}
+async function wrRenderOrder(){
+  const box=$("wrSvg"); if(!box) return;
+  box.innerHTML=""; box.classList.add("off");
+  if(!wrCur || wrOrderMode===0) return;
+  const svg=await kvgFetch(wrCur.front);
+  if(!svg){ $("wrDone").textContent="이 글자는 획순 데이터가 없어요"; return; }
+  box.appendChild(document.importNode(svg,true));
+  box.classList.remove("off");
+  box.classList.toggle("hideNum", false);
+}
+function wrOrderCycle(){
+  wrOrderMode=(wrOrderMode+1)%3;
+  $("wrOrderBtn").textContent="획순: "+(wrOrderMode===0?"끄기":wrOrderMode===1?"번호":"번호+선");
+  const box=$("wrSvg");
+  if(wrOrderMode===0){ box.classList.add("off"); box.innerHTML=""; return; }
+  wrRenderOrder().then(()=>{
+    if(wrOrderMode===1){ [...$("wrSvg").querySelectorAll("path")].forEach(p=>p.style.opacity=".12"); }
+  });
+}
+let _wrAnim=0;
+async function wrPlayStrokes(){
+  const box=$("wrSvg"); if(!box||!wrCur) return;
+  if(wrOrderMode===0){ wrOrderMode=1; $("wrOrderBtn").textContent="획순: 번호"; }
+  await wrRenderOrder();
+  const paths=[...box.querySelectorAll("path")];
+  if(!paths.length) return;
+  const token=++_wrAnim;
+  const texts=[...box.querySelectorAll("text")];
+  texts.forEach(t=>t.style.opacity="0");
+  paths.forEach(p=>{ const L=p.getTotalLength(); p.style.transition="none";
+    p.style.strokeDasharray=L; p.style.strokeDashoffset=L; p.style.opacity="1"; });
+  for(let i=0;i<paths.length;i++){
+    if(token!==_wrAnim) return;
+    const p=paths[i], L=p.getTotalLength(), dur=Math.max(280,Math.min(900,L*9));
+    p.style.transition=`stroke-dashoffset ${dur}ms ease-in-out`;
+    p.style.strokeDashoffset=0;
+    if(texts[i]) texts[i].style.opacity="1";
+    await new Promise(r=>setTimeout(r,dur+110));
+  }
+}
 function wrSpeak(){ if(wrCur) speak(wrCur.speak||wrCur.front); }
 function wrLoad(){
   const list=wrChars();
@@ -2103,6 +2266,7 @@ function wrLoad(){
   $("wrRd").innerHTML=(wrCur.romaji||wrCur.front)+' <span class="sp" onclick="wrSpeak()">🔊</span>';
   $("wrKo").textContent=wrCur.ko||"";
   $("wrPos").textContent=`${wrIdx+1} / ${list.length}`;
+  if(wrOrderMode!==0) wrRenderOrder(); else { const b=$("wrSvg"); if(b){b.innerHTML="";b.classList.add("off");} }
   const n=(wrLog()[wrCat+"|"+wrCur.front]|0);
   $("wrDone").innerHTML = n? `이 글자 <b>${n}번</b> 썼어요` : "본보기를 따라 손가락으로 써보세요";
   wrClear();
@@ -2265,7 +2429,7 @@ function cjPick(i){
 }
 function cjBest(){ return parseInt(localStorage.getItem("cj_best")||"0",10)||0; }
 function cjBestSet(v){ try{ localStorage.setItem("cj_best",String(v)); }catch(e){} }
-function renderCjBar(){ const el=$("cjBest"); if(!el) return; const b=cjBest(); el.textContent=b?`최고 연속 ${b}`:""; }
+function renderCjBar(){ const t=$("tCj"); if(!t) return; const b=cjBest(); t.textContent = b? `연속 ${b}` : "ます·て"; }
 function openConj(){ show("cjScreen"); cjTot=0; cjOk=0; cjStreak=0;
   $("cjCount").textContent="0문항"; $("cjStreak").textContent="0"; $("cjRate").textContent="-";
   renderCjForms(); cjNext(); }
