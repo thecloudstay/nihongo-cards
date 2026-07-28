@@ -2743,12 +2743,36 @@ async function rdPlayAll(){
 function rdStopPlay(){ _rdPlayTok++; const b=$("rrPlay"); if(b) b.textContent="🔊 이어 듣기"; }
 // ── 단어 팝업 ──
 let _wpW="";
-function openWordPop(w,r){
+function rdLookup(w,r){
+  // 1) 현재 챕터 단어장
   const c=rdBookCur&&rdBookCur.chapters[rdChapCur];
-  const hit=c&&c.words.find(x=>x.w===w);
+  let hit=c&&c.words.find(x=>x.w===w);
+  if(hit) return hit.ko;
+  // 2) 같은 책 다른 챕터
+  if(rdBookCur){ for(const ch of rdBookCur.chapters){ const h=ch.words.find(x=>x.w===w); if(h) return h.ko; } }
+  // 3) 다른 책 전체
+  if(BOOKS){ for(const b of BOOKS){ for(const ch of b.chapters){ const h=ch.words.find(x=>x.w===w); if(h) return h.ko; } } }
+  // 4) 앱 전체 카드 데이터 (한자·어휘 팩)
+  for(const k in DATA){
+    const arr=DATA[k]||[];
+    for(const card of arr){
+      if(card.front===w && card.ko) return card.ko;
+    }
+  }
+  // 5) 한자 1글자면 그 글자가 든 카드에서 힌트
+  if(w.length===1){
+    for(const k in DATA){ for(const card of (DATA[k]||[])){
+      if(card.front && card.front.length===1 && card.front===w && card.ko) return card.ko;
+    } }
+  }
+  return null;
+}
+function openWordPop(w,r){
   _wpW=r||w;
   $("wpW").textContent=w; $("wpR").textContent=r||"";
-  $("wpK").textContent=hit?hit.ko:"(이 챕터 단어장에 없는 단어)";
+  const ko=rdLookup(w,r);
+  $("wpK").textContent = ko || "뜻 정보 없음 — 읽기만 확인하세요";
+  $("wpK").style.color = ko ? "" : "var(--sub)";
   $("wordPop").classList.add("on");
   speak(r||w);
 }
