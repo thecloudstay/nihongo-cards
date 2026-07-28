@@ -569,6 +569,33 @@
 .mt-item.bad{animation:shk .35s;border-color:var(--miss);background:var(--miss-bg)}
 .mt-top{padding:12px 16px 2px;display:flex;justify-content:center;gap:14px;font-size:12.5px;font-weight:800;color:var(--sub)}
 .mt-top b{color:var(--ok)}
+
+/* ══ 오답노트 ══ */
+.wb-sum{padding:12px 16px 2px;text-align:center;font-size:13px;color:var(--sub);font-weight:700}
+.wb-sum b{color:var(--miss);font-size:17px}
+.wb-set{padding:8px 16px 0}
+.wb-set .row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.wb-set .lab{flex:0 0 76px;font-size:12px;font-weight:800;color:var(--sub)}
+.wb-set .seg{flex:1;display:flex;gap:5px;flex-wrap:wrap}
+.wb-set .seg button{flex:1 1 auto;min-width:46px;padding:7px 4px;border:1px solid var(--line);background:var(--card);
+  border-radius:9px;font-size:12px;font-weight:700;color:var(--sub);cursor:pointer}
+.wb-set .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.wb-list{padding:6px 16px 10px;display:flex;flex-direction:column;gap:7px}
+.wb-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);
+  background:var(--card);border-radius:12px}
+.wb-row .fr{flex:0 0 auto;max-width:42%;font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.wb-row .mn{flex:1;min-width:0;font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wb-row .cnt{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--miss);background:var(--miss-bg);
+  padding:3px 7px;border-radius:9px}
+.wb-row .sp,.wb-row .del{flex:0 0 auto;background:none;border:none;cursor:pointer;font-size:15px;padding:2px 4px}
+.wb-row .del{color:var(--sub)}
+.wb-empty{text-align:center;color:var(--sub);padding:46px 20px;font-size:14px;line-height:1.7}
+.wb-foot{padding:6px 16px 24px;display:flex;gap:9px}
+.wb-foot button{flex:1;padding:14px 0;border:none;border-radius:13px;font-size:14.5px;font-weight:800;cursor:pointer;
+  background:var(--soft);color:var(--ink);font-family:inherit}
+.wb-foot button.pri{flex:2;background:var(--miss);color:#fff}
+.wb-foot button:disabled{opacity:.4}
 </style>
 </head>
 <body>
@@ -587,17 +614,13 @@
     <div><div class="dc-tt" id="dcTitle">오늘의 10문제</div><div class="dc-sub" id="dcSub">전국 동일 문제 · 매일 0시 갱신</div></div>
     <div class="dc-streak" id="dcStreak"></div>
   </div>
-  <div class="wr-bar" id="rdBar" onclick="openRead()" style="margin-bottom:2px">
-    📖 일본 명작 읽기 <small style="font-weight:600;font-size:12px;color:var(--sub)">— 5세부터 단계별 · 무료</small>
-    <span class="cnt" id="rdProg"></span>
-  </div>
   <div class="tiles" id="homeTiles">
     <button class="tile" onclick="openColl()"><span class="dot"></span><i>📚</i><b>카드 도감</b><s id="tColl">0%</s></button>
     <button class="tile" onclick="openGames()"><span class="dot"></span><i>🎮</i><b>게임</b><s id="tTa">4가지</s></button>
     <button class="tile" onclick="openConj()"><i>🔁</i><b>동사 활용</b><s id="tCj">ます·て</s></button>
     <button class="tile" onclick="openWriting()"><i>✍️</i><b>손글씨</b><s id="tWr">따라쓰기</s></button>
-    <button class="tile" id="tileWb" onclick="startWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
-    <button class="tile" id="tileRw" onclick="openReward()"><span class="dot"></span><i>🎁</i><b>학습 보상</b><s id="tRw">팩 선물</s></button>
+    <button class="tile" id="tileWb" onclick="openWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
+    <button class="tile" id="tileRd" onclick="openRead()"><span class="dot"></span><i>📖</i><b>명작 읽기</b><s id="tRd">5세부터</s></button>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">기초<span class="s">基礎</span></button>
@@ -952,6 +975,36 @@
   </div>
 </div>
 
+
+<!-- ═══ 오답노트 ═══ -->
+<div class="screen" id="wbScreen">
+  <div class="top">
+    <button class="back" onclick="show('home')">‹</button>
+    <span class="title">📕 오답노트</span>
+    <span class="count" id="wbTot"></span>
+  </div>
+  <div class="wb-sum" id="wbSum"></div>
+  <div class="wb-set" id="wbSet">
+    <div class="row"><div class="lab">문제 수</div>
+      <div class="seg" id="wbSegN">
+        <button data-n="10">10</button><button data-n="20" class="on">20</button>
+        <button data-n="30">30</button><button data-n="0">전체</button></div></div>
+    <div class="row"><div class="lab">제한 시간</div>
+      <div class="seg" id="wbSegT">
+        <button data-t="3">3초</button><button data-t="5" class="on">5초</button>
+        <button data-t="8">8초</button><button data-t="0">없음</button></div></div>
+    <div class="row"><div class="lab">틀리면 반복</div>
+      <div class="seg" id="wbSegR">
+        <button data-r="0" class="on">안 함</button><button data-r="1">1회</button>
+        <button data-r="2">2회</button><button data-r="3">3회</button><button data-r="5">5회</button></div></div>
+  </div>
+  <div class="wb-list" id="wbList"></div>
+  <div class="wb-foot">
+    <button onclick="wbClearAll()">🗑 전체 비우기</button>
+    <button class="pri" id="wbGo" onclick="startWrongbook()">복습 시작 →</button>
+  </div>
+</div>
+
 <div class="screen" id="account">
   <div class="top">
     <button class="back" onclick="show('home')">‹</button>
@@ -970,7 +1023,8 @@
       <div id="accPacks"></div>
       <button class="acc-out" onclick="accLogout()">이 기기에서 로그아웃</button>
     </div>
-    <div class="acc-tools">
+    <button class="start" id="accRw" style="display:none;background:var(--ok);margin-bottom:12px" onclick="openReward()">🎖 학습 보상 받기</button>
+<div class="acc-tools">
       <h4>📦 학습 데이터 백업 · 기기 이전</h4>
       <div class="row2">
         <button onclick="exportProgress()">내보내기 (복사)</button>
@@ -1940,6 +1994,7 @@ function wbAdd(q){
   saveWB(w); renderWbBar();
 }
 function wbRemove(q){
+  if($("wbScreen")&&$("wbScreen").classList.contains("on")) sched(renderWbList,50);
   const w=getWB(); const k=(q._cat||"")+"|"+q.front;
   if(w[k]){ delete w[k]; saveWB(w); }
   renderWbBar();
@@ -1949,6 +2004,69 @@ function renderWbBar(){
   const n=Object.keys(getWB()).length;
   t.textContent = n ? n+"개" : "없음";
   if(tile) tile.classList.toggle("hot", n>0);
+}
+
+// ── 오답노트 화면 ──
+let wbConf={n:20,t:5,r:0};
+function wbItems(){
+  const w=getWB(); const out=[];
+  Object.keys(w).forEach(k=>{
+    const i=k.indexOf("|"); const cat=k.slice(0,i), front=k.slice(i+1);
+    const card=(DATA[cat]||[]).find(x=>x.front===front);
+    out.push({key:k, cat, front, card, n:(w[k]||{}).n||1, t:(w[k]||{}).t||0});
+  });
+  out.sort((a,b)=> b.n-a.n || b.t-a.t);
+  return out;
+}
+function openWrongbook(){
+  show("wbScreen");
+  try{ wbConf.t=CONF.time|0; wbConf.r=CONF.rep|0; }catch(e){}
+  [["wbSegN","n"],["wbSegT","t"],["wbSegR","r"]].forEach(([id,key])=>{
+    const el=$(id); if(!el) return;
+    [...el.children].forEach(b=>{
+      const v=+(b.dataset.n??b.dataset.t??b.dataset.r);
+      b.classList.toggle("on", v===wbConf[key]);
+      b.onclick=()=>{ wbConf[key]=v; [...el.children].forEach(x=>x.classList.remove("on")); b.classList.add("on"); };
+    });
+  });
+  renderWbList();
+}
+function renderWbList(){
+  const items=wbItems();
+  const ready=items.filter(x=>x.card).length;
+  $("wbTot").textContent=items.length+"개";
+  $("wbSum").innerHTML = items.length
+    ? `틀린 문항 <b>${items.length}</b>개 · 맞히면 자동으로 지워져요`
+    : "";
+  $("wbGo").disabled = ready<1;
+  const list=$("wbList");
+  if(!items.length){
+    list.innerHTML=`<div class="wb-empty">아직 오답이 없어요 🎉<br><span style="font-size:12.5px">퀴즈에서 틀린 문제가 여기에 자동으로 쌓입니다</span></div>`;
+    $("wbSet").style.display="none"; return;
+  }
+  $("wbSet").style.display="block";
+  list.innerHTML=items.map(x=>{
+    const c=x.card;
+    const mean = c ? (c.sent? (c.exk||c.ko||"") : (c.ko||"")) : "잠긴 팩 — 구매 후 복습 가능";
+    const say  = c ? (c.speak||c.front) : "";
+    return `<div class="wb-row">
+      <span class="fr">${x.front}</span>
+      <span class="mn">${mean}</span>
+      <span class="cnt">${x.n}번</span>
+      ${c?`<button class="sp" onclick="speak('${String(say).replace(/'/g,"\\'")}')">🔊</button>`:""}
+      <button class="del" onclick="wbDel('${x.key.replace(/'/g,"\\'")}')">✕</button>
+    </div>`;
+  }).join("");
+}
+function wbDel(key){
+  const w=getWB(); delete w[key]; saveWB(w);
+  renderWbBar(); renderWbList();
+}
+function wbClearAll(){
+  const n=Object.keys(getWB()).length;
+  if(!n){ toast("비어 있어요"); return; }
+  if(!confirm(`오답노트 ${n}개를 모두 지울까요?\n(되돌릴 수 없습니다)`)) return;
+  saveWB({}); renderWbBar(); renderWbList(); toast("오답노트를 비웠어요");
 }
 function startWrongbook(){
   const w=getWB();
@@ -1962,7 +2080,9 @@ function startWrongbook(){
   wbMode=true; dailyMode=false; taMode=false; reviewRound=0;
   results=[]; misses=[]; correct=0; combo=0; qi=0;
   curCat={code:"__wb",ko:"오답노트",jp:"苦手ノート",sent:false}; previewMode=false;
-  deck=shuffle(items).slice(0,20);
+  CONF.time=wbConf.t; CONF.rep=wbConf.r; saveConf();          // 오답노트 화면에서 고른 설정 적용
+  const take = wbConf.n===0 ? items.length : Math.min(wbConf.n, items.length);
+  deck=shuffle(items).slice(0,take);
   $("qtitle").textContent=`📕 오답노트 (${deck.length}개)`;
   $("scoreTot").textContent=deck.length;
   show("quizScreen"); loadQ();
@@ -2348,7 +2468,8 @@ function renderChart(kind){
 }
 
 // ── 내 구매 · 로그인 (이메일+라이선스 키) ──
-function openAccount(){ renderAccount(); show("account"); }
+function openAccount(){
+  try{ renderRwTile(); }catch(e){} renderAccount(); show("account"); }
 function renderAccount(){
   const out=$("accLoggedOut"), inn=$("accLoggedIn");
   if(LIC){ out.style.display="none"; inn.style.display="block"; $("accWho").textContent=LIC.email; accFill(); }
@@ -2740,6 +2861,11 @@ function openConj(){ show("cjScreen"); cjTot=0; cjOk=0; cjStreak=0;
   renderCjForms(); cjNext(); }
 
 function renderRwTile(){
+  const b=$("accRw");
+  if(b){ const r=pendingReward();
+    b.style.display = r ? "block" : "none";
+    if(r) b.textContent = `🎖 학습 보상 받기 — ${r.label}`;
+  }
   const t=$("tRw"), tile=$("tileRw"); if(!t) return;
   try{
     const st=dailyState(), done=(st&&st.total)|0, got=(st&&st.rw)||[];
@@ -2761,9 +2887,10 @@ function rdMark(bid,n){ const st=rdState(); const b=st[bid]=st[bid]||{done:[]};
   if(!b.done.includes(n)) b.done.push(n); rdSave(st); renderRdBar(); }
 function rdBookProg(b){ const st=rdState(); const d=((st[b.id]||{}).done||[]).length; return {d, t:b.chapters.length}; }
 function renderRdBar(){
-  const el=$("rdProg"); if(!el||!BOOKS) return;
+  const el=$("tRd"); if(!el||!BOOKS) return;
   let d=0,t=0; BOOKS.forEach(b=>{ const p=rdBookProg(b); d+=p.d; t+=p.t; });
-  el.textContent = d ? `${d}/${t}장` : "";
+  el.textContent = d ? `${d}/${t}장` : "5세부터";
+  const tile=$("tileRd"); if(tile) tile.classList.toggle("new", d>0 && d<t);
 }
 async function loadBooks(){
   if(BOOKS) return BOOKS;
