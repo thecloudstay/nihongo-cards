@@ -520,6 +520,55 @@
   display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--ok);
   animation:stampIn .45s cubic-bezier(.2,1.4,.4,1)}
 @keyframes stampIn{0%{transform:scale(2.2) rotate(-18deg);opacity:0}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+
+/* ══ 게임 허브 ══ */
+.gh{padding:12px 16px 24px;display:flex;flex-direction:column;gap:10px}
+.gh-card{display:flex;gap:13px;align-items:center;padding:15px 15px;border:1px solid var(--line);
+  background:var(--card);border-radius:16px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink)}
+.gh-card:active{transform:scale(.99);background:var(--soft)}
+.gh-card .ic{flex:0 0 46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:23px}
+.gh-card .tt{font-size:15.5px;font-weight:800}
+.gh-card .ds{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
+.gh-card .bs{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--ok);white-space:nowrap}
+.gh-card.soon{opacity:.5}
+.gh-h{font-size:12px;font-weight:800;color:var(--sub);padding:8px 2px 0}
+/* ══ 문장 만들기 ══ */
+.sb-hint{padding:14px 16px 6px;text-align:center}
+.sb-hint .ko{font-size:15.5px;font-weight:700;line-height:1.5}
+.sb-hint .sub{font-size:11.5px;color:var(--sub);margin-top:5px}
+.sb-slot{min-height:104px;margin:12px 16px 0;padding:12px;border:2px dashed var(--line);border-radius:15px;
+  display:flex;flex-wrap:wrap;gap:7px;align-content:flex-start;background:var(--card)}
+.sb-slot.ok{border-color:var(--ok);border-style:solid;background:var(--ok-bg)}
+.sb-slot.no{border-color:var(--miss);border-style:solid;background:var(--miss-bg);animation:shk .35s}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.sb-pool{margin:14px 16px 0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:50px}
+.chip{padding:11px 14px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;
+  font-size:17px;font-weight:700;cursor:pointer;color:var(--ink);
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;transition:transform .1s}
+.chip:active{transform:scale(.94)}
+.chip.used{opacity:.25;pointer-events:none}
+.chip.inslot{border-color:var(--accent);background:var(--soft)}
+.sb-ans{margin:12px 16px 0;padding:12px;border-radius:13px;background:var(--ok-bg);border:1px solid var(--ok-bd);
+  font-size:15px;line-height:1.7;display:none;text-align:center}
+.sb-ans.show{display:block}
+.sb-ans .y{color:var(--accent);font-size:13px;display:block;margin-top:4px}
+.sb-bar{display:flex;gap:10px;justify-content:center;font-size:12px;color:var(--sub);font-weight:700;padding:6px 16px 0}
+.sb-bar b{color:var(--ok)}
+/* ══ 짝 연결 ══ */
+.mt-wrap{position:relative;margin:14px 16px 0}
+.mt-svg{position:absolute;inset:0;pointer-events:none;width:100%;height:100%;overflow:visible}
+.mt-svg line{stroke-width:3;stroke-linecap:round}
+.mt-cols{display:grid;grid-template-columns:1fr 1fr;gap:26px;position:relative}
+.mt-col{display:flex;flex-direction:column;gap:9px}
+.mt-item{padding:13px 10px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;
+  font-size:15px;font-weight:700;cursor:pointer;color:var(--ink);text-align:center;min-height:48px;
+  display:flex;align-items:center;justify-content:center;line-height:1.3;transition:all .13s}
+.mt-item.jp{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;font-size:17px}
+.mt-item.sel{border-color:var(--accent);background:var(--soft);transform:scale(1.03)}
+.mt-item.done{border-color:var(--ok);background:var(--ok-bg);color:var(--ok);pointer-events:none}
+.mt-item.bad{animation:shk .35s;border-color:var(--miss);background:var(--miss-bg)}
+.mt-top{padding:12px 16px 2px;display:flex;justify-content:center;gap:14px;font-size:12.5px;font-weight:800;color:var(--sub)}
+.mt-top b{color:var(--ok)}
 </style>
 </head>
 <body>
@@ -544,7 +593,7 @@
   </div>
   <div class="tiles" id="homeTiles">
     <button class="tile" onclick="openColl()"><span class="dot"></span><i>📚</i><b>카드 도감</b><s id="tColl">0%</s></button>
-    <button class="tile" onclick="startTimeAttack()"><i>⚡</i><b>타임어택</b><s id="tTa">60초</s></button>
+    <button class="tile" onclick="openGames()"><span class="dot"></span><i>🎮</i><b>게임</b><s id="tTa">4가지</s></button>
     <button class="tile" onclick="openConj()"><i>🔁</i><b>동사 활용</b><s id="tCj">ます·て</s></button>
     <button class="tile" onclick="openWriting()"><i>✍️</i><b>손글씨</b><s id="tWr">따라쓰기</s></button>
     <button class="tile" id="tileWb" onclick="startWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
@@ -848,6 +897,59 @@
   <div class="r" id="wpR"></div>
   <div class="k" id="wpK"></div>
   <button class="sp" onclick="wpSpeak()">🔊 발음 듣기</button>
+</div>
+
+
+<!-- ═══ 게임 허브 ═══ -->
+<div class="screen" id="ghScreen">
+  <div class="top">
+    <button class="back" onclick="show('home')">‹</button>
+    <span class="title">🎮 게임</span>
+  </div>
+  <div class="gh" id="ghList"></div>
+</div>
+
+<!-- ═══ 문장 만들기 ═══ -->
+<div class="screen" id="sbScreen">
+  <div class="top">
+    <button class="back" onclick="openGames()">‹</button>
+    <span class="title">🧩 문장 만들기</span>
+    <span class="count" id="sbCount">0문항</span>
+  </div>
+  <div class="cj-forms" id="sbLv"></div>
+  <div class="sb-bar"><span>연속 <b id="sbStreak">0</b></span><span>정답률 <b id="sbRate">-</b></span><span>최고 <b id="sbBest">0</b></span></div>
+  <div class="sb-hint">
+    <div class="ko" id="sbKo">한국어 뜻</div>
+    <div class="sub">아래 조각을 순서대로 눌러 문장을 완성하세요</div>
+  </div>
+  <div class="sb-slot" id="sbSlot"></div>
+  <div class="sb-pool" id="sbPool"></div>
+  <div class="sb-ans" id="sbAns"></div>
+  <div class="rd-foot">
+    <button onclick="sbUndo()">↩ 되돌리기</button>
+    <button class="pri" id="sbAct" onclick="sbCheck()">확인</button>
+  </div>
+</div>
+
+<!-- ═══ 짝 연결 ═══ -->
+<div class="screen" id="mtScreen">
+  <div class="top">
+    <button class="back" onclick="openGames()">‹</button>
+    <span class="title">🔗 짝 연결</span>
+    <span class="count" id="mtRound">1라운드</span>
+  </div>
+  <div class="mt-top"><span>맞춘 짝 <b id="mtOk">0</b></span><span>실수 <b id="mtMiss">0</b></span><span>최고 <b id="mtBest">0</b></span></div>
+  <div class="sb-hint"><div class="sub" id="mtHint">왼쪽 단어를 누르고, 맞는 뜻을 누르세요</div></div>
+  <div class="mt-wrap" id="mtWrap">
+    <svg class="mt-svg" id="mtSvg"></svg>
+    <div class="mt-cols">
+      <div class="mt-col" id="mtL"></div>
+      <div class="mt-col" id="mtR"></div>
+    </div>
+  </div>
+  <div class="rd-foot">
+    <button onclick="mtNewRound()">🔄 새 라운드</button>
+  </div>
 </div>
 
 <div class="screen" id="account">
@@ -1866,7 +1968,7 @@ function startWrongbook(){
   show("quizScreen"); loadQ();
 }
 // ═══════════ 백업/복원 (기기 이전) ═══════════
-const BK_KEYS=["owned_packs","collection","daily_state","ta_best","wrongbook","pack_last","pity","conf","license"];
+const BK_KEYS=["owned_packs","collection","daily_state","ta_best","sb_best","mt_best","cj_best","writing","reading","wrongbook","pack_last","pity","conf","license"];
 async function exportProgress(){
   const data={_app:"nihongocards",_v:1,_d:new Date().toISOString().slice(0,10)};
   BK_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!==null) data[k]=v; });
@@ -1897,7 +1999,7 @@ function taBestSet(v){ try{ localStorage.setItem("ta_best",JSON.stringify(v)); }
 function renderTaBar(){
   const t=$("tTa"); if(!t) return;
   const b=taBestGet();
-  t.textContent = (b&&b.score) ? b.score.toLocaleString()+"점" : "60초";
+  t.textContent = (b&&b.score) ? "최고 "+b.score.toLocaleString() : "4가지";
 }
 function startTimeAttack(){
   if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
@@ -2845,6 +2947,223 @@ function rdNextChapter(){
 }
 function rdBackToBook(){ rdStopPlay(); closeWordPop(); openBook(BOOKS.indexOf(rdBookCur)); }
 function rdBackToRead(){ rdStopPlay(); show("rdRead"); }
+
+// ══════════ 게임 허브 ══════════
+const GAMES=[
+  {id:"ta",  ic:"⚡", bg:"var(--rg-bg)",  tt:"타임어택 60초",  ds:"60초 안에 몇 점? 콤보가 붙을수록 점수 배수", go:"startTimeAttack", best:()=>{const b=taBestGet(); return b&&b.score? b.score.toLocaleString()+"점":"";}},
+  {id:"sb",  ic:"🧩", bg:"var(--rr-bg)",  tt:"문장 만들기",    ds:"뒤섞인 조각을 순서대로 눌러 문장 완성 · JLPT 문장조립 유형", go:"openSb", best:()=>{const b=sbBest(); return b?`최고 연속 ${b}`:"";}},
+  {id:"mt",  ic:"🔗", bg:"var(--rs-bg)",  tt:"짝 연결",        ds:"단어와 뜻을 선으로 이어 맞추기 · 실수 없이 몇 라운드까지?", go:"openMt", best:()=>{const b=mtBest(); return b?`최고 ${b}라운드`:"";}},
+  {id:"cj",  ic:"🔁", bg:"var(--ok-bg)",  tt:"동사 활용",      ds:"ます·て·ない·た형 4지선다 · 틀리면 즉시 규칙 해설", go:"openConj", best:()=>{const b=cjBest(); return b?`최고 연속 ${b}`:"";}},
+];
+function openGames(){
+  show("ghScreen");
+  $("ghList").innerHTML =
+    `<div class="gh-h">지금 플레이</div>` +
+    GAMES.map(g=>`<button class="gh-card" onclick="${g.go}()">
+      <span class="ic" style="background:${g.bg}">${g.ic}</span>
+      <span><span class="tt">${g.tt}</span><span class="ds">${g.ds}</span></span>
+      <span class="bs">${g.best()||""}</span></button>`).join("") +
+    `<div class="gh-h">준비 중</div>
+     <button class="gh-card soon"><span class="ic" style="background:var(--soft)">🃏</span>
+       <span><span class="tt">카르타 (짝 맞추기)</span><span class="ds">카드를 뒤집어 같은 짝 찾기 · 일본 전통 카드게임</span></span></button>
+     <button class="gh-card soon"><span class="ic" style="background:var(--soft)">❤️</span>
+       <span><span class="tt">서바이벌</span><span class="ds">목숨 3개 · 난이도가 계속 올라가는 무한 모드</span></span></button>`;
+}
+
+// ══════════ 일본어 문절 분할기 ══════════
+const JA_PART2=["までは","からは","にとって","として","について","のために","ながら","けれど"];
+const JA_PART1=["を","に","が","は","で","と","も","へ","や","の","から","まで","より","ば"];
+const _KJ=/[一-鿿々゠-ヿ]/;      // 한자·가타카나 = 새 문절 시작 신호
+// 일본어 문절(어절) 분할 — 형태소분석기 없이 보수적으로:
+//  ① 、。！？ 뒤에서는 항상 끊는다
+//  ② 조사 뒤는 "다음 글자가 한자/가타카나일 때만" 끊는다 (まいにち·ながら 오분할 방지)
+function jaChunks(t){
+  const s=String(t).replace(/\s+/g,"");
+  const out=[]; let cur="";
+  for(let i=0;i<s.length;i++){
+    cur+=s[i];
+    const ch=s[i], nx=s[i+1]||"";
+    if("、。！？".includes(ch)){ if(nx) { out.push(cur); cur=""; } continue; }
+    if(cur.length<2 || !nx) continue;
+    if(!_KJ.test(nx)) continue;                        // 다음이 히라가나면 단어 중간일 가능성 ↑
+    let hit=false;
+    for(const q of ["から","まで","より"]) if(s.slice(i-q.length+1,i+1)===q && cur.length>q.length){ hit=true; break; }
+    if(!hit && "をにがはでともへやの".includes(ch) && cur.length>=2) hit=true;
+    if(hit){ out.push(cur); cur=""; }
+  }
+  if(cur) out.push(cur);
+  // 1글자 조각 병합
+  let m=[];
+  for(const c of out){
+    if(m.length && (c.length<=1 || m[m.length-1].length<=1)) m[m.length-1]+=c;
+    else m.push(c);
+  }
+  // 8조각 이상이면 가장 짧은 이웃끼리 합쳐 7조각 이하로
+  while(m.length>7){
+    let bi=0, bs=1e9;
+    for(let i=0;i<m.length-1;i++){ const v=m[i].length+m[i+1].length; if(v<bs){bs=v;bi=i;} }
+    m.splice(bi,2,m[bi]+m[bi+1]);
+  }
+  return m;
+}
+// ══════════ 🧩 문장 만들기 ══════════
+let sbLv=1, sbQ=null, sbPlaced=[], sbTot=0, sbOk=0, sbStreak=0, sbLocked=false;
+const SB_LV=[{k:1,ko:"쉬움",min:10,max:20},{k:2,ko:"보통",min:20,max:35},{k:3,ko:"어려움",min:35,max:70}];
+function sbBest(){ return parseInt(localStorage.getItem("sb_best")||"0",10)||0; }
+function sbBestSet(v){ try{ localStorage.setItem("sb_best",String(v)); }catch(e){} }
+let _sbCache={};
+function sbPool(){
+  const L=SB_LV.find(x=>x.k===sbLv);
+  if(_sbCache[sbLv]) return _sbCache[sbLv];
+  const out=[];
+  // ① 카드 예문
+  for(const k in DATA) for(const c of (DATA[k]||[])){
+    if(!c.ex||!c.exk||!c.exy) continue;
+    const n=c.ex.length;
+    if(n<L.min||n>L.max) continue;
+    out.push({ex:c.ex, exk:c.exk, exy:c.exy});
+  }
+  // ② 명작 읽기 문장 (긴 문장 확보)
+  if(BOOKS) for(const b of BOOKS) for(const ch of b.chapters) for(const x of ch.s){
+    const plain=rdPlain(x.jp), read=rdReading(x.jp);
+    const n=plain.length;
+    if(n<L.min||n>L.max) continue;
+    if(/[「」『』]/.test(plain)) continue;              // 대사는 조각내기 애매
+    out.push({ex:plain, exk:x.ko, exy:read, src:b.title_ko});
+  }
+  _sbCache[sbLv]=out;
+  return out;
+}
+function renderSbLv(){
+  $("sbLv").innerHTML=SB_LV.map(l=>`<button class="${l.k===sbLv?'on':''}" onclick="sbPick(${l.k})">${l.ko}</button>`).join("");
+}
+function sbPick(k){ sbLv=k; renderSbLv(); sbNext(); }
+async function openSb(){
+  show("sbScreen"); await loadBooks(); _sbCache={}; sbTot=0; sbOk=0; sbStreak=0;
+  $("sbCount").textContent="0문항"; $("sbStreak").textContent="0"; $("sbRate").textContent="-";
+  $("sbBest").textContent=sbBest();
+  renderSbLv(); sbNext();
+}
+function sbNext(){
+  const pool=sbPool();
+  if(!pool.length){ $("sbKo").textContent="이 난이도의 문장이 없어요"; $("sbPool").innerHTML=""; $("sbSlot").innerHTML=""; return; }
+  let tries=0, c, ch;
+  do{ c=pool[Math.floor(Math.random()*pool.length)]; ch=jaChunks(c.ex); tries++; }
+  while((ch.length<3||ch.length>7)&&tries<40);
+  if(ch.length<3||ch.length>7){ ch=jaChunks(c.ex); if(ch.length<2) return sbNext(); }
+  sbQ={c, ans:ch, shuf:shuffle(ch.map((t,i)=>({t,i})))};
+  sbPlaced=[]; sbLocked=false;
+  $("sbKo").textContent=c.exk;
+  $("sbKo").nextElementSibling.textContent = c.src ? `『${c.src}』에서 · 조각을 순서대로 누르세요` : "아래 조각을 순서대로 눌러 문장을 완성하세요";
+  $("sbAns").classList.remove("show"); $("sbAns").innerHTML="";
+  $("sbSlot").className="sb-slot";
+  $("sbAct").textContent="확인"; $("sbAct").onclick=sbCheck;
+  sbRenderChips();
+}
+function sbRenderChips(){
+  $("sbPool").innerHTML=sbQ.shuf.map((x,i)=>
+    `<button class="chip ${sbPlaced.includes(i)?'used':''}" onclick="sbPlace(${i})">${x.t}</button>`).join("");
+  $("sbSlot").innerHTML=sbPlaced.map((i,k)=>
+    `<button class="chip inslot" onclick="sbRemove(${k})">${sbQ.shuf[i].t}</button>`).join("");
+}
+function sbPlace(i){ if(sbLocked||sbPlaced.includes(i)) return; sbPlaced.push(i); sbRenderChips();
+  if(sbPlaced.length===sbQ.shuf.length) sbCheck(); }
+function sbRemove(k){ if(sbLocked) return; sbPlaced.splice(k,1); sbRenderChips(); }
+function sbUndo(){ if(sbLocked) return; sbPlaced.pop(); sbRenderChips(); }
+function sbCheck(){
+  if(sbLocked||!sbQ) return;
+  if(sbPlaced.length<sbQ.shuf.length){ toast("조각을 전부 놓아주세요"); return; }
+  sbLocked=true; sbTot++;
+  const got=sbPlaced.map(i=>sbQ.shuf[i].t).join("");
+  const want=sbQ.ans.join("");
+  const ok=(got===want);
+  $("sbSlot").className="sb-slot "+(ok?"ok":"no");
+  if(ok){ sbOk++; sbStreak++; try{sfx("ok");}catch(e){} if(sbStreak>sbBest()){ sbBestSet(sbStreak); $("sbBest").textContent=sbStreak; } }
+  else{ sbStreak=0; try{sfx("no");}catch(e){} }
+  $("sbAns").innerHTML=(ok?"⭕ 정답!":"❌ 정답은")+`<br><b style="font-size:17px">${sbQ.c.ex}</b><span class="y">${sbQ.c.exy}</span>`;
+  $("sbAns").classList.add("show");
+  $("sbCount").textContent=sbTot+"문항";
+  $("sbStreak").textContent=sbStreak;
+  $("sbRate").textContent=Math.round(sbOk/sbTot*100)+"%";
+  speak(sbQ.c.exy);
+  $("sbAct").textContent="다음 문장 →"; $("sbAct").onclick=sbNext;
+}
+// ══════════ 🔗 짝 연결 ══════════
+let mtPairs=[], mtSel=null, mtRound=1, mtOkN=0, mtMissN=0, mtDone=0;
+function mtBest(){ return parseInt(localStorage.getItem("mt_best")||"0",10)||0; }
+function mtBestSet(v){ try{ localStorage.setItem("mt_best",String(v)); }catch(e){} }
+function mtSrc(){
+  const out=[];
+  for(const k in DATA) for(const c of (DATA[k]||[])){
+    if(!c.front||!c.ko) continue;
+    if(c.front.length>8) continue;
+    out.push({w:c.front, ko:c.ko.split(/[,;·]/)[0].trim(), say:c.speak||c.front});
+  }
+  return out;
+}
+function openMt(){
+  show("mtScreen"); mtRound=1; mtOkN=0; mtMissN=0;
+  $("mtBest").textContent=mtBest();
+  mtNewRound();
+}
+function mtNewRound(){
+  const src=mtSrc();
+  if(src.length<5){ $("mtHint").textContent="데이터를 불러오는 중이에요"; return; }
+  const seen=new Set(); const pick=[];
+  let guard=0;
+  while(pick.length<5 && guard++<400){
+    const x=src[Math.floor(Math.random()*src.length)];
+    if(seen.has(x.ko)||seen.has(x.w)) continue;
+    seen.add(x.ko); seen.add(x.w); pick.push(x);
+  }
+  mtPairs=pick; mtSel=null; mtDone=0;
+  $("mtRound").textContent=mtRound+"라운드";
+  $("mtOk").textContent=mtOkN; $("mtMiss").textContent=mtMissN;
+  $("mtHint").textContent="왼쪽 단어를 누르고, 맞는 뜻을 누르세요";
+  $("mtL").innerHTML=pick.map((x,i)=>`<button class="mt-item jp" id="mtL${i}" onclick="mtTapL(${i})">${x.w}</button>`).join("");
+  const right=shuffle(pick.map((x,i)=>({ko:x.ko,i})));
+  $("mtR").innerHTML=right.map((x,j)=>`<button class="mt-item" id="mtR${j}" data-i="${x.i}" onclick="mtTapR(${j})">${x.ko}</button>`).join("");
+  $("mtSvg").innerHTML="";
+}
+function mtTapL(i){
+  if(mtSel!==null){ const p=$("mtL"+mtSel); if(p) p.classList.remove("sel"); }
+  mtSel=i; $("mtL"+i).classList.add("sel");
+  const x=mtPairs[i]; speak(x.say);
+}
+function mtLine(a,b,color){
+  const wrap=$("mtWrap").getBoundingClientRect();
+  const ra=a.getBoundingClientRect(), rb=b.getBoundingClientRect();
+  const svg=$("mtSvg");
+  const ln=document.createElementNS("http://www.w3.org/2000/svg","line");
+  ln.setAttribute("x1", ra.right-wrap.left); ln.setAttribute("y1", ra.top+ra.height/2-wrap.top);
+  ln.setAttribute("x2", rb.left-wrap.left);  ln.setAttribute("y2", rb.top+rb.height/2-wrap.top);
+  ln.setAttribute("stroke", color);
+  svg.appendChild(ln);
+  return ln;
+}
+function mtTapR(j){
+  if(mtSel===null){ toast("왼쪽 단어를 먼저 눌러주세요"); return; }
+  const rEl=$("mtR"+j), lEl=$("mtL"+mtSel);
+  const want=+rEl.dataset.i;
+  const ok=(want===mtSel);
+  if(ok){
+    const c=getComputedStyle(document.documentElement).getPropertyValue("--ok").trim()||"#2fae72";
+    mtLine(lEl,rEl,c);
+    lEl.classList.remove("sel"); lEl.classList.add("done"); rEl.classList.add("done");
+    mtOkN++; mtDone++; mtSel=null; try{sfx("ok");}catch(e){}
+    $("mtOk").textContent=mtOkN;
+    if(mtDone>=5){
+      $("mtHint").textContent="🎉 라운드 클리어! 다음 라운드로";
+      if(mtRound>mtBest()){ mtBestSet(mtRound); $("mtBest").textContent=mtRound; }
+      mtRound++;
+      sched(()=>{ if($("mtScreen").classList.contains("on")) mtNewRound(); },900);
+    }
+  }else{
+    rEl.classList.add("bad"); lEl.classList.add("bad");
+    mtMissN++; $("mtMiss").textContent=mtMissN; try{sfx("no");}catch(e){}
+    setTimeout(()=>{ rEl.classList.remove("bad"); lEl.classList.remove("bad"); },380);
+  }
+}
 
 async function initApp(){
   const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 끔";
