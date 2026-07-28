@@ -2053,12 +2053,19 @@ function renderWrSrc(){
 function wrPick(code){ wrCat=code; wrIdx=0; renderWrSrc(); wrLoad(); }
 
 function wrFit(){
-  const cv=$("wrCv"), box=$("wrBox"); if(!cv||!box) return;
-  const r=box.getBoundingClientRect(); wrDPR=window.devicePixelRatio||1;
+  const cv=$("wrCv"), box=$("wrBox"); if(!cv||!box) return false;
+  const r=box.getBoundingClientRect();
+  if(!r.width||!r.height) return false;                 // 레이아웃 전이면 재시도
+  wrDPR=window.devicePixelRatio||1;
   cv.width=Math.round(r.width*wrDPR); cv.height=Math.round(r.height*wrDPR);
   wrCtx=cv.getContext("2d"); wrCtx.scale(wrDPR,wrDPR);
   wrCtx.lineCap="round"; wrCtx.lineJoin="round";
   wrRedraw();
+  return true;
+}
+function wrFitSoon(){                                    // 즉시 → rAF → 지연, 되는 시점에 1회만
+  if(wrFit()) return;
+  requestAnimationFrame(()=>{ if(!wrFit()) setTimeout(wrFit,120); });
 }
 function wrRedraw(){
   if(!wrCtx) return;
@@ -2074,7 +2081,8 @@ function wrRedraw(){
   });
 }
 function wrPt(e){ const r=$("wrCv").getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; }
-function wrDown(e){ e.preventDefault(); wrDrawing=true; wrStrokes.push({w:wrPenW,p:[wrPt(e)]}); wrRedraw(); }
+function wrDown(e){ e.preventDefault(); if(!wrCtx) wrFit();  /* 지연 초기화 방어 */
+  wrDrawing=true; wrStrokes.push({w:wrPenW,p:[wrPt(e)]}); wrRedraw(); }
 function wrMove(e){ if(!wrDrawing) return; e.preventDefault(); wrStrokes[wrStrokes.length-1].p.push(wrPt(e)); wrRedraw(); }
 function wrUp(){ wrDrawing=false; }
 function wrUndo(){ wrStrokes.pop(); wrRedraw(); }
@@ -2112,7 +2120,7 @@ function openWriting(){
   show("wrScreen"); renderWrSrc();
   if(!(DATA[wrCat]||[]).length){ const f=WR_SRC.find(s=>(DATA[s.code]||[]).length); if(f) wrCat=f.code; renderWrSrc(); }
   wrLoad();
-  requestAnimationFrame(()=>{ wrFit(); });
+  wrFitSoon();
   const cv=$("wrCv");
   if(cv && !cv._wired){
     cv._wired=true;
@@ -2121,7 +2129,8 @@ function openWriting(){
     cv.addEventListener("pointerup",wrUp);
     cv.addEventListener("pointercancel",wrUp);
     cv.addEventListener("pointerleave",wrUp);
-    window.addEventListener("resize",()=>{ if($("wrScreen").classList.contains("on")) wrFit(); });
+    window.addEventListener("resize",()=>{ if($("wrScreen").classList.contains("on")) wrFitSoon(); });
+    window.addEventListener("orientationchange",()=>setTimeout(wrFitSoon,200));
   }
   wrPenChg();
 }
