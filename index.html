@@ -471,6 +471,7 @@
     <button class="tile" onclick="openConj()"><i>🔁</i><b>동사 활용</b><s id="tCj">ます·て</s></button>
     <button class="tile" onclick="openWriting()"><i>✍️</i><b>손글씨</b><s id="tWr">따라쓰기</s></button>
     <button class="tile" id="tileWb" onclick="startWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
+    <button class="tile" id="tileRw" onclick="openReward()"><span class="dot"></span><i>🎁</i><b>학습 보상</b><s id="tRw">팩 선물</s></button>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">기초<span class="s">基礎</span></button>
@@ -1610,6 +1611,7 @@ function openReward(){
 }
 async function claimReward(r,it){
   $("rwOv").classList.remove("on");
+  sched(renderRwTile,50);
   const st=dailyState(); (st.rw=st.rw||[]).push(r.d); saveDailyState(st);
   OWNED.add(it.code); saveOwned();
   toast("🎉 "+it.ko+" 팩이 열렸어요! 데이터 로딩 중…");
@@ -2434,6 +2436,18 @@ function openConj(){ show("cjScreen"); cjTot=0; cjOk=0; cjStreak=0;
   $("cjCount").textContent="0문항"; $("cjStreak").textContent="0"; $("cjRate").textContent="-";
   renderCjForms(); cjNext(); }
 
+function renderRwTile(){
+  const t=$("tRw"), tile=$("tileRw"); if(!t) return;
+  try{
+    const st=dailyState(), done=(st&&st.total)|0, got=(st&&st.rw)||[];
+    const ready=!!pendingReward();
+    if(ready){ t.textContent="받기 가능!"; if(tile) tile.classList.add("new"); return; }
+    if(tile) tile.classList.remove("new");
+    const next=REWARD_TABLE.find(r=>!got.includes(r.d) && done < r.d);
+    t.textContent = next ? `${next.d-done}회 남음` : "모두 달성";
+  }catch(e){ t.textContent="팩 선물"; }
+}
+
 async function initApp(){
   const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 끔";
   initPaddle();
@@ -2445,6 +2459,7 @@ async function initApp(){
   renderWbBar();
   renderWrBar();
   renderCjBar();
+  renderRwTile();
 }
 initApp();
 </script>
