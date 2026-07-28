@@ -343,9 +343,9 @@
   display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:var(--ink);cursor:pointer}
 .wr-bar .cnt{margin-left:auto;font-size:12px;font-weight:700;color:var(--sub)}
 .wr-bar:active{transform:scale(.985)}
-.wr-src{display:flex;gap:6px;overflow-x:auto;padding:10px 16px 4px;-webkit-overflow-scrolling:touch}
+.wr-src{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:10px 16px 4px}
 .wr-src::-webkit-scrollbar{display:none}
-.wr-src button{flex:0 0 auto;padding:7px 13px;border:1px solid var(--line);background:var(--card);
+.wr-src button{flex:0 0 auto;padding:7px 12px;border:1px solid var(--line);background:var(--card);
   border-radius:18px;font-size:13px;font-weight:700;color:var(--sub);cursor:pointer}
 .wr-src button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .wr-stage{display:flex;flex-direction:column;align-items:center;padding:6px 16px 0}
@@ -389,7 +389,7 @@
   display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:var(--rs-d);cursor:pointer}
 .cj-bar .cnt{margin-left:auto;font-size:12px;font-weight:700;opacity:.8}
 .cj-bar:active{transform:scale(.985)}
-.cj-forms{display:flex;gap:6px;overflow-x:auto;padding:10px 16px 2px}
+.cj-forms{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:10px 16px 2px}
 .cj-forms::-webkit-scrollbar{display:none}
 .cj-forms button{flex:0 0 auto;padding:7px 14px;border:1px solid var(--line);background:var(--card);
   border-radius:18px;font-size:13px;font-weight:800;color:var(--sub);cursor:pointer}
@@ -2022,7 +2022,14 @@ function startTimeAttack(){
   },100);
   loadQ();
 }
-function taPop(txt){ const el=$("taPop"); el.textContent=txt; el.classList.remove("go"); void el.offsetWidth; el.classList.add("go"); }
+let _taPopT=null;
+function taPop(txt){
+  const el=$("taPop"); if(!el) return;
+  el.textContent=txt; el.classList.remove("go"); void el.offsetWidth; el.classList.add("go");
+  clearTimeout(_taPopT);
+  _taPopT=setTimeout(()=>{ el.classList.remove("go"); el.textContent=""; }, 900);   // 자동 소거
+}
+function taPopClear(){ clearTimeout(_taPopT); const el=$("taPop"); if(el){ el.classList.remove("go"); el.textContent=""; } }
 function taFinish(){
   clearInterval(taTimer); clearInterval(timerId); _pend.forEach(clearTimeout); _pend=[];
   document.querySelector(".timer").classList.remove("tbar-hot");
@@ -2235,6 +2242,7 @@ function reviewMiss(){
 
 // override show() for done screen properly
 function show(id){
+  if(typeof taPopClear==="function") taPopClear();
   if(typeof rdStopPlay==="function" && id!=="rdRead") rdStopPlay();
   if(typeof closeWordPop==="function" && id!=="rdRead") closeWordPop();
   if(id!=="quizScreen"){ stopQuiz(); repToken++; repRunning=false; const P=$("repPanel"); if(P) P.style.display="none"; }   // 퀴즈 이탈 시 타이머·발음·예약 콜백 전부 정지
