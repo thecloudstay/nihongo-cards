@@ -491,6 +491,8 @@
 .rd-s .jp{font-size:17.5px;line-height:2.15;
   font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
 .rd-s .ko{font-size:13px;color:var(--sub);margin-top:5px;line-height:1.5;display:none}
+.rd-s .ro{font-size:12px;color:var(--accent);margin-top:4px;line-height:1.45;display:none;letter-spacing:.2px}
+.rd-s.ropen .ro{display:block}
 .rd-s.open .ko{display:block}
 .rd-s.cur{background:var(--soft);border-radius:9px}
 .rd-s ruby rt{font-size:.5em;color:var(--accent);font-weight:600}
@@ -596,6 +598,45 @@
   background:var(--soft);color:var(--ink);font-family:inherit}
 .wb-foot button.pri{flex:2;background:var(--miss);color:#fff}
 .wb-foot button:disabled{opacity:.4}
+
+/* ══ 말하기 ══ */
+.sp-top{padding:12px 16px 2px;display:flex;justify-content:center;gap:14px;font-size:12.5px;font-weight:800;color:var(--sub)}
+.sp-top b{color:var(--ok)}
+.sp-card{margin:12px 16px 0;padding:20px 16px;border:1px solid var(--line);background:var(--card);border-radius:16px;text-align:center}
+.sp-jp{font-size:21px;font-weight:700;line-height:1.75;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.sp-jp ruby rt{font-size:.5em;color:var(--accent);font-weight:600}
+.sp-ro{font-size:13px;color:var(--sub);margin-top:8px;letter-spacing:.2px}
+.sp-ko{font-size:14px;color:var(--ink);margin-top:8px;opacity:.75}
+.sp-mic{margin:18px auto 0;width:96px;height:96px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--accent);color:#fff;font-size:38px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 18px rgba(255,122,89,.35);transition:transform .12s}
+.sp-mic:active{transform:scale(.94)}
+.sp-mic.rec{background:var(--miss);animation:pulse 1.1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,90,67,.5)}70%{box-shadow:0 0 0 20px rgba(224,90,67,0)}}
+.sp-mic:disabled{opacity:.45}
+.sp-hint{text-align:center;font-size:12.5px;color:var(--sub);font-weight:700;padding:10px 16px 0;min-height:22px}
+.sp-res{margin:12px 16px 0;padding:14px;border-radius:14px;display:none;text-align:center}
+.sp-res.show{display:block}
+.sp-res.good{background:var(--ok-bg);border:1px solid var(--ok-bd)}
+.sp-res.soso{background:var(--rg-bg);border:1px solid var(--rg2)}
+.sp-res.bad{background:var(--miss-bg);border:1px solid var(--miss-bd)}
+.sp-score{font-size:30px;font-weight:900}
+.sp-res.good .sp-score{color:var(--ok)} .sp-res.soso .sp-score{color:var(--rg-d)} .sp-res.bad .sp-score{color:var(--miss)}
+.sp-heard{font-size:13.5px;margin-top:6px;color:var(--ink)}
+.sp-heard b{font-weight:800}
+.sp-diff{margin-top:8px;font-size:17px;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;line-height:1.7}
+.sp-diff .hit{color:var(--ok)} .sp-diff .miss{color:var(--miss);text-decoration:underline wavy}
+.sp-tools{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;padding:14px 16px 0}
+.sp-tools button{padding:9px 14px;border:1px solid var(--line);background:var(--card);border-radius:11px;
+  font-size:13px;font-weight:700;color:var(--ink);cursor:pointer}
+.sp-tools button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sp-nosr{margin:12px 16px 0;padding:12px 14px;border-radius:12px;background:var(--soft);
+  font-size:12.5px;color:var(--sub);line-height:1.6;display:none}
+/* 읽기 목록 섹션 헤더 */
+.rd-sec{font-size:12px;font-weight:800;color:var(--sub);padding:10px 2px 2px}
+.rd-book .kd{display:inline-block;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:7px;
+  background:var(--rs-bg);color:var(--rs-d);margin-left:5px;vertical-align:middle}
 </style>
 </head>
 <body>
@@ -615,12 +656,12 @@
     <div class="dc-streak" id="dcStreak"></div>
   </div>
   <div class="tiles" id="homeTiles">
-    <button class="tile" onclick="openColl()"><span class="dot"></span><i>📚</i><b>카드 도감</b><s id="tColl">0%</s></button>
-    <button class="tile" onclick="openGames()"><span class="dot"></span><i>🎮</i><b>게임</b><s id="tTa">4가지</s></button>
+    <button class="tile" onclick="openWriting()"><i>✍️</i><b>쓰기</b><s id="tWr">따라쓰기</s></button>
+    <button class="tile" id="tileRd" onclick="openRead()"><span class="dot"></span><i>📖</i><b>책읽기</b><s id="tRd">5세부터</s></button>
+    <button class="tile" onclick="openSpeak()"><span class="dot"></span><i>🗣</i><b>말하기</b><s id="tSp">따라 말하기</s></button>
+    <button class="tile" onclick="openGames()"><i>🎮</i><b>게임</b><s id="tTa">4가지</s></button>
     <button class="tile" onclick="openConj()"><i>🔁</i><b>동사 활용</b><s id="tCj">ます·て</s></button>
-    <button class="tile" onclick="openWriting()"><i>✍️</i><b>손글씨</b><s id="tWr">따라쓰기</s></button>
     <button class="tile" id="tileWb" onclick="openWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
-    <button class="tile" id="tileRd" onclick="openRead()"><span class="dot"></span><i>📖</i><b>명작 읽기</b><s id="tRd">5세부터</s></button>
   </div>
   <div class="tabs">
     <button class="on" data-sec="kana" onclick="switchTab('kana',this)">기초<span class="s">基礎</span></button>
@@ -881,6 +922,7 @@
   <div class="rd-tools">
     <button id="rrRuby" onclick="rdToggleRuby()">ふりがな</button>
     <button id="rrKo" onclick="rdToggleKo()">한국어</button>
+    <button id="rrRo" onclick="rdToggleRo()" style="display:none">ローマ字</button>
     <button onclick="rdPlayAll()" id="rrPlay">🔊 이어 듣기</button>
   </div>
   <div class="rd-body" id="rrBody"></div>
@@ -1005,6 +1047,44 @@
   </div>
 </div>
 
+
+<!-- ═══ 말하기 (따라 말하기 · 발음 채점) ═══ -->
+<div class="screen" id="spScreen">
+  <div class="top">
+    <button class="back" onclick="show('home')">‹</button>
+    <span class="title">🗣 말하기</span>
+    <span class="count" id="spCount">0문장</span>
+  </div>
+  <div class="cj-forms" id="spSrc"></div>
+  <div class="sp-top"><span>평균 <b id="spAvg">-</b></span><span>연속 통과 <b id="spStreak">0</b></span><span>최고 <b id="spBest">0</b></span></div>
+  <div class="sp-card">
+    <div class="sp-jp" id="spJp">こんにちは。</div>
+    <div class="sp-ro" id="spRo"></div>
+    <div class="sp-ko" id="spKo"></div>
+  </div>
+  <div class="sp-tools">
+    <button onclick="spPlay()">🔊 원어민 듣기</button>
+    <button onclick="spPlaySlow()">🐢 천천히</button>
+    <button id="spRubyBtn" onclick="spToggleRuby()">ふりがな</button>
+    <button id="spKoBtn" onclick="spToggleKo()">한국어</button>
+  </div>
+  <button class="sp-mic" id="spMic" onclick="spToggleRec()">🎤</button>
+  <div class="sp-hint" id="spHint">🎤 를 누르고 따라 말해보세요</div>
+  <div class="sp-res" id="spRes">
+    <div class="sp-score" id="spScore">0점</div>
+    <div class="sp-heard" id="spHeard"></div>
+    <div class="sp-diff" id="spDiff"></div>
+  </div>
+  <div class="sp-nosr" id="spNoSR">
+    ⚠ 이 브라우저는 음성 인식을 지원하지 않아요. 크롬(안드로이드·PC)이나 사파리에서 열면 발음 점수를 받을 수 있습니다.
+    지금은 <b>듣고 따라 말한 뒤 직접 체크</b>하는 방식으로 연습하세요.
+  </div>
+  <div class="rd-foot">
+    <button onclick="spSelfOK()">✓ 따라 말했어요</button>
+    <button class="pri" onclick="spNext()">다음 문장 →</button>
+  </div>
+</div>
+
 <div class="screen" id="account">
   <div class="top">
     <button class="back" onclick="show('home')">‹</button>
@@ -1023,6 +1103,7 @@
       <div id="accPacks"></div>
       <button class="acc-out" onclick="accLogout()">이 기기에서 로그아웃</button>
     </div>
+    <button class="start" style="background:var(--rs);margin-bottom:12px" onclick="openColl()">📚 카드 도감 보기</button>
     <button class="start" id="accRw" style="display:none;background:var(--ok);margin-bottom:12px" onclick="openReward()">🎖 학습 보상 받기</button>
 <div class="acc-tools">
       <h4>📦 학습 데이터 백업 · 기기 이전</h4>
@@ -1843,7 +1924,7 @@ function collStats(){
   return {tot,sr,ssr,poolTot};
 }
 function renderCollBar(){
-  const t=$("tColl"); if(!t) return;
+  const t=$("tColl"); if(!t) return;   // 도감 타일 제거됨 → 내 구매 화면에서 접근
   const s=collStats();
   t.textContent = s.poolTot ? (s.tot/s.poolTot*100).toFixed(1)+"%" : "0%";
   const tile=t.closest(".tile"); if(tile) tile.classList.toggle("new", s.ssr>0);
@@ -2088,7 +2169,7 @@ function startWrongbook(){
   show("quizScreen"); loadQ();
 }
 // ═══════════ 백업/복원 (기기 이전) ═══════════
-const BK_KEYS=["owned_packs","collection","daily_state","ta_best","sb_best","mt_best","cj_best","writing","reading","wrongbook","pack_last","pity","conf","license"];
+const BK_KEYS=["owned_packs","collection","daily_state","ta_best","sb_best","mt_best","cj_best","sp_best","writing","reading","wrongbook","pack_last","pity","conf","license"];
 async function exportProgress(){
   const data={_app:"nihongocards",_v:1,_d:new Date().toISOString().slice(0,10)};
   BK_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!==null) data[k]=v; });
@@ -2363,6 +2444,7 @@ function reviewMiss(){
 // override show() for done screen properly
 function show(id){
   if(typeof taPopClear==="function") taPopClear();
+  if(id!=="spScreen" && typeof spRec!=="undefined" && spRec && spRecOn){ try{spRec.stop();}catch(e){} spRecOn=false; }
   if(typeof rdStopPlay==="function" && id!=="rdRead") rdStopPlay();
   if(typeof closeWordPop==="function" && id!=="rdRead") closeWordPop();
   if(id!=="quizScreen"){ stopQuiz(); repToken++; repRunning=false; const P=$("repPanel"); if(P) P.style.display="none"; }   // 퀴즈 이탈 시 타이머·발음·예약 콜백 전부 정지
@@ -2878,7 +2960,7 @@ function renderRwTile(){
 }
 
 // ══════════ 일본 명작 읽기 (青空文庫 저작권 만료작 · 전부 클라이언트) ══════════
-let BOOKS=null, rdBookCur=null, rdChapCur=0, rdRuby=true, rdKo=false;
+let BOOKS=null, rdBookCur=null, rdChapCur=0, rdRuby=true, rdKo=false, rdRo=false;
 let rqList=[], rqI=0, rqOk=0, rqLock=false;
 function rdState(){ try{ return JSON.parse(localStorage.getItem("reading")||"{}"); }catch(e){ return {}; } }
 function rdSave(o){ try{ localStorage.setItem("reading",JSON.stringify(o)); }catch(e){} }
@@ -2910,16 +2992,21 @@ async function openRead(){
   const bs=await loadBooks();
   const wrap=$("rdList");
   if(!bs||!bs.length){ wrap.innerHTML='<div style="text-align:center;color:var(--sub);padding:40px 0">읽기 자료를 불러오는 중…</div>'; return; }
-  wrap.innerHTML = bs.map((b,i)=>{
-    const p=rdBookProg(b); const pct=Math.round(p.d/p.t*100);
-    return `<button class="rd-book" onclick="openBook(${i})">
-      <span class="lvb">${b.lv}<small>단계</small></span>
-      <span class="bi"><span class="bt">${b.title_ko}</span>
-        <span class="ba">${b.title} · ${b.author_ko} · ${b.lvName}</span>
-        <span class="bd">${b.intro_ko}</span>
-        <span class="rd-prog"><i style="width:${pct}%"></i></span></span>
-      <span class="bp">${p.d?p.d+"/"+p.t:""}</span></button>`;
-  }).join("");
+  const sec=(list,label)=> list.length? `<div class="rd-sec">${label}</div>`+list.map(([b,i])=>{
+      const p=rdBookProg(b); const pct=Math.round(p.d/p.t*100);
+      const kd=b.kind==="original"?'<span class="kd">창작</span>':"";
+      return `<button class="rd-book" onclick="openBook(${i})">
+        <span class="lvb">${b.lv}<small>단계</small></span>
+        <span class="bi"><span class="bt">${b.title_ko}${kd}</span>
+          <span class="ba">${b.title} · ${b.author_ko} · ${b.lvName}</span>
+          <span class="bd">${b.intro_ko}</span>
+          <span class="rd-prog"><i style="width:${pct}%"></i></span></span>
+        <span class="bp">${p.d?p.d+"/"+p.t:""}</span></button>`;
+    }).join("") : "";
+  const idx=bs.map((b,i)=>[b,i]);
+  wrap.innerHTML =
+    sec(idx.filter(([b])=>b.kind!=="original"), "📚 일본 명작 (저작권 만료작)") +
+    sec(idx.filter(([b])=>b.kind==="original"), "✒️ 창작 소설");
   renderRdBar();
 }
 function openBook(i){
@@ -2945,9 +3032,13 @@ function openChapter(k){
   body.className="rd-body"+(rdRuby?"":" rd-noruby");
   body.innerHTML=c.s.map((x,i)=>
     `<div class="rd-s ${rdKo?'open':''}" data-i="${i}" onclick="rdTapSentence(event,${i})">
-       <div class="jp">${rdRubyHtml(x.jp)}</div><div class="ko">${x.ko}</div></div>`).join("");
+       <div class="jp">${rdRubyHtml(x.jp)}</div>${x.ro?`<div class="ro">${x.ro}</div>`:""}<div class="ko">${x.ko}</div></div>`).join("");
   $("rrRuby").classList.toggle("on",rdRuby);
   $("rrKo").classList.toggle("on",rdKo);
+  const hasRo=c.s.some(x=>x.ro);
+  $("rrRo").style.display = hasRo ? "" : "none";
+  $("rrRo").classList.toggle("on",rdRo);
+  if(hasRo && rdRo) body.querySelectorAll(".rd-s").forEach(e=>e.classList.add("ropen"));
   show("rdRead");
 }
 function rdTapSentence(e,i){
@@ -2957,6 +3048,8 @@ function rdTapSentence(e,i){
   const c=rdBookCur.chapters[rdChapCur];
   speak(rdReading(c.s[i].jp));
 }
+function rdToggleRo(){ rdRo=!rdRo; $("rrRo").classList.toggle("on",rdRo);
+  $("rrBody").querySelectorAll(".rd-s").forEach(e=>e.classList.toggle("ropen",rdRo)); }
 function rdToggleRuby(){ rdRuby=!rdRuby; $("rrBody").classList.toggle("rd-noruby",!rdRuby); $("rrRuby").classList.toggle("on",rdRuby); }
 function rdToggleKo(){ rdKo=!rdKo; $("rrKo").classList.toggle("on",rdKo);
   $("rrBody").querySelectorAll(".rd-s").forEach(e=>e.classList.toggle("open",rdKo)); }
@@ -3311,6 +3404,163 @@ function mtTapR(j){
   }
 }
 
+// ══════════ 🗣 말하기 — 따라 말하기 + 발음 채점 (Web Speech API, 클라이언트 전용) ══════════
+const SP_SRC=[
+  {k:"greet", ko:"인사·기본",  pick:()=>spFromCats(["greet","ask","num","week","time"])},
+  {k:"travel",ko:"여행·상황",  pick:()=>spFromCats(["ST","B1","B2","B3","B4","B5","B6"])},
+  {k:"daily", ko:"일상 회화",  pick:()=>spFromCats(["SD","SB"])},
+  {k:"jlpt",  ko:"JLPT 문장",  pick:()=>spFromCats(["S1","S2","S3","S4","S5"])},
+  {k:"book",  ko:"책 문장",    pick:()=>spFromBooks()},
+];
+let spSrcK="greet", spQ=null, spTot=0, spSum=0, spStreak=0, spRuby=true, spKoOn=true, spRec=null, spRecOn=false;
+function spBest(){ return parseInt(localStorage.getItem("sp_best")||"0",10)||0; }
+function spBestSet(v){ try{ localStorage.setItem("sp_best",String(v)); }catch(e){} }
+function spFromCats(cats){
+  const out=[];
+  cats.forEach(c=>(DATA[c]||[]).forEach(x=>{
+    if(x.ex && x.exy && x.ex.length<=42) out.push({jp:x.ex, read:x.exy, ko:x.exk||"", ro:""});
+    else if(!x.sent && x.front && x.speak && x.front.length<=12) out.push({jp:x.front, read:x.speak, ko:x.ko||"", ro:""});
+  }));
+  return out;
+}
+function spFromBooks(){
+  const out=[];
+  if(!BOOKS) return out;
+  BOOKS.forEach(b=>b.chapters.forEach(c=>c.s.forEach(x=>{
+    const plain=rdPlain(x.jp), read=rdReading(x.jp);
+    if(plain.length>=8 && plain.length<=46) out.push({jp:x.jp, read, ko:x.ko||"", ro:x.ro||""});
+  })));
+  return out;
+}
+function renderSpSrc(){
+  $("spSrc").innerHTML=SP_SRC.map(x=>`<button class="${x.k===spSrcK?'on':''}" onclick="spPick('${x.k}')">${x.ko}</button>`).join("");
+}
+function spPick(k){ spSrcK=k; renderSpSrc(); spNext(); }
+// ── 음성 인식 ──
+function spSRSupported(){ return !!(window.SpeechRecognition||window.webkitSpeechRecognition); }
+function spInitRec(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return null;
+  const r=new SR();
+  r.lang="ja-JP"; r.interimResults=false; r.maxAlternatives=3; r.continuous=false;
+  r.onresult=e=>{
+    const alts=[]; 
+    for(let i=0;i<e.results[0].length;i++) alts.push(e.results[0][i].transcript);
+    spGrade(alts);
+  };
+  r.onerror=e=>{ spRecOn=false; spMicUI();
+    $("spHint").textContent = e.error==="not-allowed" ? "마이크 권한을 허용해주세요" : "잘 들리지 않았어요. 다시 한 번!"; };
+  r.onend=()=>{ spRecOn=false; spMicUI(); };
+  return r;
+}
+function spMicUI(){
+  const m=$("spMic"); if(!m) return;
+  m.classList.toggle("rec", spRecOn);
+  m.textContent = spRecOn ? "⏹" : "🎤";
+  if(spRecOn) $("spHint").textContent="🔴 듣고 있어요… 말해보세요";
+}
+function spToggleRec(){
+  if(!spSRSupported()){ $("spNoSR").style.display="block"; toast("이 브라우저는 음성 인식 미지원"); return; }
+  if(spRecOn){ try{ spRec && spRec.stop(); }catch(e){} spRecOn=false; spMicUI(); return; }
+  if(!spRec) spRec=spInitRec();
+  try{ speechSynthesis.cancel(); }catch(e){}
+  $("spRes").className="sp-res";
+  try{ spRec.start(); spRecOn=true; spMicUI(); }
+  catch(e){ $("spHint").textContent="다시 눌러주세요"; }
+}
+// ── 채점: 가나 정규화 후 유사도 ──
+function spNorm(t){
+  let x=String(t||"").replace(/[\s、。「」『』・！？!?,.]/g,"");
+  // 가타카나 → 히라가나
+  x=x.replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+  // 장음·촉음 통일(인식기가 흔히 흘림)
+  x=x.replace(/ー/g,"").replace(/っ/g,"");
+  return x;
+}
+function spSim(a,b){
+  a=spNorm(a); b=spNorm(b);
+  if(!a||!b) return 0;
+  const m=a.length, n=b.length;
+  const d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    d[i][j]=Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return Math.max(0, 1 - d[m][n]/Math.max(m,n));
+}
+function spGrade(alts){
+  if(!spQ) return;
+  const targets=[spQ.read, rdPlain(spQ.jp)];
+  let best=0, heard=alts[0]||"";
+  alts.forEach(a=>targets.forEach(t=>{ const v=spSim(a,t); if(v>best){ best=v; heard=a; } }));
+  const score=Math.round(best*100);
+  spTot++; spSum+=score;
+  const pass=score>=70;
+  if(pass){ spStreak++; if(spStreak>spBest()){ spBestSet(spStreak); $("spBest").textContent=spStreak; } try{sfx("ok");}catch(e){} }
+  else { spStreak=0; try{sfx("no");}catch(e){} }
+  $("spCount").textContent=spTot+"문장";
+  $("spAvg").textContent=Math.round(spSum/spTot)+"점";
+  $("spStreak").textContent=spStreak;
+  const res=$("spRes");
+  res.className="sp-res show "+(score>=85?"good":score>=60?"soso":"bad");
+  $("spScore").textContent=score+"점";
+  $("spHeard").innerHTML=`들린 말: <b>${heard}</b>`;
+  $("spDiff").innerHTML=spDiffHtml(heard, spQ.read);
+  $("spHint").textContent = score>=85?"👏 아주 좋아요!" : score>=60?"거의 맞아요 — 한 번 더!" : "🔊 원어민 발음을 다시 듣고 따라해보세요";
+}
+function spDiffHtml(heard, target){
+  const h=spNorm(heard), t=spNorm(target);
+  let out="", hi=0;
+  for(const ch of t){
+    if(hi<h.length && h[hi]===ch){ out+=`<span class="hit">${ch}</span>`; hi++; }
+    else out+=`<span class="miss">${ch}</span>`;
+  }
+  return out;
+}
+function spPlay(){ if(spQ) speak(spQ.read); }
+function spPlaySlow(){
+  if(!spQ) return;
+  try{ speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(spQ.read); u.lang="ja-JP"; u.rate=0.55;
+    if(!_jaVoice)_jaVoice=pickJaVoice(); if(_jaVoice)u.voice=_jaVoice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function spToggleRuby(){ spRuby=!spRuby; $("spRubyBtn").classList.toggle("on",spRuby); spRender(); }
+function spToggleKo(){ spKoOn=!spKoOn; $("spKoBtn").classList.toggle("on",spKoOn); $("spKo").style.display=spKoOn?"block":"none"; }
+function spRender(){
+  if(!spQ) return;
+  $("spJp").innerHTML = spRuby ? rdRubyHtml(spQ.jp) : rdPlain(spQ.jp);
+  $("spRo").textContent = spQ.ro || "";
+  $("spKo").textContent = spQ.ko || "";
+  $("spKo").style.display = spKoOn?"block":"none";
+}
+function spNext(){
+  const src=SP_SRC.find(x=>x.k===spSrcK);
+  const pool=src?src.pick():[];
+  if(!pool.length){ $("spJp").textContent="—"; $("spHint").textContent="이 묶음의 문장이 없어요 (다른 묶음을 골라주세요)"; spQ=null; return; }
+  spQ=pool[Math.floor(Math.random()*pool.length)];
+  $("spRes").className="sp-res";
+  $("spHint").textContent = spSRSupported() ? "🎤 를 누르고 따라 말해보세요" : "🔊 듣고 따라 말한 뒤 ✓ 를 눌러주세요";
+  spRender();
+  sched(()=>speak(spQ.read), 250);
+}
+function spSelfOK(){
+  if(!spQ) return;
+  spStreak++; if(spStreak>spBest()){ spBestSet(spStreak); $("spBest").textContent=spStreak; }
+  $("spStreak").textContent=spStreak;
+  try{sfx("ok");}catch(e){}
+  spNext();
+}
+async function openSpeak(){
+  show("spScreen"); await loadBooks();
+  spTot=0; spSum=0; spStreak=0;
+  $("spCount").textContent="0문장"; $("spAvg").textContent="-"; $("spStreak").textContent="0"; $("spBest").textContent=spBest();
+  $("spRubyBtn").classList.toggle("on",spRuby); $("spKoBtn").classList.toggle("on",spKoOn);
+  $("spNoSR").style.display = spSRSupported() ? "none" : "block";
+  renderSpSrc(); spNext();
+}
+function renderSpTile(){ const t=$("tSp"); if(!t) return; const b=spBest(); t.textContent = b?`최고 ${b}연속`:"따라 말하기"; }
+
 async function initApp(){
   const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 끔";
   initPaddle();
@@ -3324,6 +3574,7 @@ async function initApp(){
   renderCjBar();
   renderRwTile();
   loadBooks().then(renderRdBar);
+  renderSpTile();
 }
 initApp();
 </script>
