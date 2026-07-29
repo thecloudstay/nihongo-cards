@@ -3416,10 +3416,16 @@ let spSrcK="greet", spQ=null, spTot=0, spSum=0, spStreak=0, spRuby=true, spKoOn=
 function spBest(){ return parseInt(localStorage.getItem("sp_best")||"0",10)||0; }
 function spBestSet(v){ try{ localStorage.setItem("sp_best",String(v)); }catch(e){} }
 function spFromCats(cats){
-  const out=[];
+  // 말하기는 "문장" 위주 — 예문이 있으면 예문, 없으면 말할 가치 있는 표현만
+  const out=[]; const seen=new Set();
+  const push=o=>{ if(o.jp && o.read && !seen.has(o.jp)){ seen.add(o.jp); out.push(o); } };
   cats.forEach(c=>(DATA[c]||[]).forEach(x=>{
-    if(x.ex && x.exy && x.ex.length<=42) out.push({jp:x.ex, read:x.exy, ko:x.exk||"", ro:""});
-    else if(!x.sent && x.front && x.speak && x.front.length<=12) out.push({jp:x.front, read:x.speak, ko:x.ko||"", ro:""});
+    if(x.ex && x.exy && x.ex.length>=6 && x.ex.length<=42){ push({jp:x.ex, read:x.exy, ko:x.exk||"", ro:""}); return; }
+    // 예문이 없는 단어카드: 숫자·날짜 단독은 제외, 인사/표현만
+    if(!x.sent && x.front && x.speak && x.front.length>=3 && x.front.length<=14
+       && !/^[一二三四五六七八九十百千万\d]+[日月年時分秒人枚本個回]?$/.test(x.front)){
+      push({jp:x.front, read:x.speak, ko:x.ko||"", ro:""});
+    }
   }));
   return out;
 }
