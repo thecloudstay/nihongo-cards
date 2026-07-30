@@ -734,6 +734,14 @@
 .sv-over .em{font-size:52px}
 .sv-over .sc{font-size:34px;font-weight:900;margin-top:6px}
 .sv-over .ms{font-size:14px;color:var(--sub);margin-top:6px}
+
+/* ══ 공통 JLPT 레벨 선택 바 ══ */
+.lvbar{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;padding:9px 16px 2px}
+.lvbar button{padding:6px 12px;border:1px solid var(--line);background:var(--card);border-radius:16px;
+  font-size:12px;font-weight:800;color:var(--sub);cursor:pointer}
+.lvbar button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.lvbar .lb{font-size:11px;font-weight:800;color:var(--sub);align-self:center;margin-right:2px}
+.lvbar button.thin{padding:6px 10px}
 </style>
 </head>
 <body>
@@ -973,6 +981,7 @@
     <span class="title">🔁 동사 활용</span>
     <span class="count" id="cjCount">0문항</span>
   </div>
+  <div class="lvbar" id="cjLvB"></div>
   <div class="cj-forms" id="cjForms"></div>
   <div class="cj-hd"><span>연속 <b id="cjStreak">0</b></span><span>정답률 <b id="cjRate">-</b></span></div>
   <div class="cj-stage">
@@ -1072,6 +1081,8 @@
     <button class="back" onclick="show('home')">‹</button>
     <span class="title">🎮 게임</span>
   </div>
+  <div class="lvbar" id="ghLv"></div>
+  <div class="wr-done" style="padding:2px 16px 0;font-size:10.5px;opacity:.75">고른 레벨이 모든 게임에 적용돼요</div>
   <div class="gh" id="ghList"></div>
 </div>
 
@@ -1082,6 +1093,7 @@
     <span class="title">🧩 문장 만들기</span>
     <span class="count" id="sbCount">0문항</span>
   </div>
+  <div class="lvbar" id="sbLvB"></div>
   <div class="cj-forms" id="sbLv"></div>
   <div class="sb-bar"><span>연속 <b id="sbStreak">0</b></span><span>정답률 <b id="sbRate">-</b></span><span>최고 <b id="sbBest">0</b></span></div>
   <div class="sb-hint">
@@ -1104,6 +1116,7 @@
     <span class="title">🔗 짝 연결</span>
     <span class="count" id="mtRound">1라운드</span>
   </div>
+  <div class="lvbar" id="mtLv"></div>
   <div class="mt-top"><span>맞춘 짝 <b id="mtOk">0</b></span><span>실수 <b id="mtMiss">0</b></span><span>최고 <b id="mtBest">0</b></span></div>
   <div class="sb-hint"><div class="sub" id="mtHint">왼쪽 단어를 누르고, 맞는 뜻을 누르세요</div></div>
   <div class="mt-wrap" id="mtWrap">
@@ -1156,6 +1169,7 @@
     <span class="title">🗣 말하기</span>
     <span class="count" id="spCount">0문장</span>
   </div>
+  <div class="lvbar" id="spLvB"></div>
   <div class="cj-forms" id="spSrc"></div>
   <div class="sp-top"><span>평균 <b id="spAvg">-</b></span><span>연속 통과 <b id="spStreak">0</b></span><span>최고 <b id="spBest">0</b></span></div>
   <div class="sp-card">
@@ -1257,6 +1271,7 @@
     <span class="count" id="ktTime">0초</span>
   </div>
   <div class="cj-forms" id="ktLv"></div>
+  <div class="lvbar" id="ktLvB"></div>
   <div class="kt-top"><span>맞춘 짝 <b id="ktPair">0</b></span><span>뒤집기 <b id="ktTry">0</b></span><span>최고 <b id="ktBest">-</b></span></div>
   <div class="kt-grid" id="ktGrid"></div>
   <div class="kd-cheer" id="ktCheer"></div>
@@ -1273,6 +1288,7 @@
   <div class="sv-top"><span class="sv-life" id="svLife">❤️❤️❤️</span>
     <span class="sv-stat">점수 <b id="svScoreN">0</b></span>
     <span class="sv-stat">최고 <b id="svBest">0</b></span></div>
+  <div class="lvbar" id="svLvB"></div>
   <div class="sv-lv" id="svLv">1단계 · 기초</div>
   <div class="sv-bar"><i id="svBar" style="width:100%"></i></div>
   <div id="svPlay">
@@ -1938,7 +1954,7 @@ async function runRepeat(q){
   return true;
 }
 function nextQ(){
-  if(taMode){ qi++; if(qi>=deck.length){ deck=shuffle(DAILY_POOL.slice()); qi=0; } loadQ(); return; }
+  if(taMode){ qi++; if(qi>=deck.length){ deck=shuffle(taPoolLv()); qi=0; } loadQ(); return; }
   if(qi<deck.length-1){qi++;loadQ();}else finish();
 }
 function togglePause(){ paused=!paused;
@@ -2409,12 +2425,13 @@ function renderTaBar(){
   t.textContent = (b&&b.score) ? "최고 "+b.score.toLocaleString() : "7가지";
 }
 function startTimeAttack(){
+  _taLvPool=null;
   if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
   taMode=true; dailyMode=false; wbMode=false; reviewRound=0;
   results=[]; misses=[]; correct=0; combo=0; qi=0;
   taScore=0; taMax=0; taCount=0;
   curCat={code:"__ta",ko:"타임어택",jp:"タイムアタック",sent:false}; previewMode=false;
-  deck=shuffle(DAILY_POOL.slice());
+  deck=shuffle(taPoolLv());
   $("qtitle").textContent="⚡ 타임어택";
   $("scoreTot").textContent="";
   show("quizScreen");
@@ -2676,6 +2693,7 @@ function rowToCard(r){
   const card = {front:String(r.front||"").trim(), romaji, ko, speak, label:`${ko} [${romaji}]`};
   if(!isKana){ card.ex=String(r.example||"").trim(); card.exy=String(r.example_reading||"").trim(); card.exk=String(r.example_ko||"").trim(); }
   card.tags = String(r.tags||"").trim();
+  card.level = String(r.level||"").trim();
   card.sent = String(r.type||"").trim()==="sentence";
   card._order = parseInt(r.order_in_cat,10)||0;
   return card;
@@ -3074,7 +3092,8 @@ function cjWrong(fr, rd, grp, form, correct){
 }
 let cjForm="te", cjQ=null, cjTot=0, cjOk=0, cjStreak=0, cjLocked=false;
 function cjPool(){
-  return (DATA["VERB"]||[]).filter(c=>c.front&&c.romaji);
+  const all=(DATA["VERB"]||[]).filter(c=>c.front&&c.romaji);
+  return lvFilter(all, 8);
 }
 function cjGrpOf(c){
   const t=String(c.tags||c.grp||"");
@@ -3148,7 +3167,7 @@ function cjBestSet(v){ try{ localStorage.setItem("cj_best",String(v)); }catch(e)
 function renderCjBar(){ const t=$("tCj"); if(!t) return; const b=cjBest(); t.textContent = b? `연속 ${b}` : "ます·て"; }
 function openConj(){ show("cjScreen"); cjTot=0; cjOk=0; cjStreak=0;
   $("cjCount").textContent="0문항"; $("cjStreak").textContent="0"; $("cjRate").textContent="-";
-  renderCjForms(); cjNext(); }
+  $("cjLvB").innerHTML=lvBarHtml("cjNext"); renderCjForms(); cjNext(); }
 
 function renderRwTile(){
   const b=$("accRw");
@@ -3384,6 +3403,38 @@ function rdNextChapter(){
 function rdBackToBook(){ rdStopPlay(); closeWordPop(); openBook(BOOKS.indexOf(rdBookCur)); }
 function rdBackToRead(){ rdStopPlay(); show("rdRead"); }
 
+let _taLvPool=null;
+function taPoolLv(){
+  if(gLv==="all") return DAILY_POOL.slice();
+  if(_taLvPool) return _taLvPool.slice();
+  const out=[];
+  for(const k in DATA) for(const c of (DATA[k]||[])) if(c.level===gLv) out.push(c);
+  _taLvPool = out.length>=8 ? out : DAILY_POOL.slice();
+  return _taLvPool.slice();
+}
+
+// ══════════ 공통 JLPT 레벨 선택 (게임·말하기 공용) ══════════
+const G_LVS=[{k:"all",ko:"전체"},{k:"N5",ko:"N5"},{k:"N4",ko:"N4"},{k:"N3",ko:"N3"},{k:"N2",ko:"N2"},{k:"N1",ko:"N1"}];
+let gLv=(()=>{ try{ return localStorage.getItem("g_lv")||"all"; }catch(e){ return "all"; } })();
+function setGLv(k,cb){
+  gLv=k; try{ localStorage.setItem("g_lv",k); }catch(e){}
+  document.querySelectorAll(".lvbar").forEach(bar=>{
+    [...bar.querySelectorAll("button")].forEach(b=>b.classList.toggle("on", b.dataset.lv===k));
+  });
+  if(typeof cb==="function") cb();
+}
+function lvBarHtml(cb){
+  return `<span class="lb">레벨</span>`+G_LVS.map(l=>
+    `<button class="thin ${l.k===gLv?'on':''}" data-lv="${l.k}" onclick="setGLv('${l.k}',${cb})">${l.ko}</button>`).join("");
+}
+// 카드 배열을 현재 레벨로 필터 (해당 레벨이 4개 미만이면 전체 반환 → 게임이 멈추지 않게)
+function lvFilter(arr, minN){
+  if(gLv==="all") return arr;
+  const f=arr.filter(x=>x.level===gLv || x._lv===gLv);
+  return f.length>=(minN||4) ? f : arr;
+}
+// 레벨 정보를 카드에 심어두기 (rowToCard가 level을 안 넘기므로 ingest 시 주입)
+
 // ══════════ 게임 허브 ══════════
 const GAMES=[
   {id:"ta",  ic:"⚡", bg:"var(--rg-bg)",  tt:"타임어택 60초",  ds:"60초 안에 몇 점? 콤보가 붙을수록 점수 배수", go:"startTimeAttack", best:()=>{const b=taBestGet(); return b&&b.score? b.score.toLocaleString()+"점":"";}},
@@ -3396,6 +3447,7 @@ const GAMES=[
 ];
 function openGames(){
   show("ghScreen");
+  $("ghLv").innerHTML = lvBarHtml("null");
   $("ghList").innerHTML =
     `<div class="gh-h">지금 플레이</div>` +
     GAMES.map(g=>`<button class="gh-card" onclick="${g.go}()">
@@ -3456,6 +3508,7 @@ function sbPool(){
     if(!c.ex||!c.exk||!c.exy) continue;
     const n=c.ex.length;
     if(n<L.min||n>L.max) continue;
+    if(gLv!=="all" && c.level && c.level!==gLv) continue;
     out.push({ex:c.ex, exk:c.exk, exy:c.exy});
   }
   // ② 명작 읽기 문장 (긴 문장 확보)
@@ -3477,7 +3530,7 @@ async function openSb(){
   show("sbScreen"); await loadBooks(); _sbCache={}; sbTot=0; sbOk=0; sbStreak=0;
   $("sbCount").textContent="0문항"; $("sbStreak").textContent="0"; $("sbRate").textContent="-";
   $("sbBest").textContent=sbBest();
-  renderSbLv(); sbNext();
+  $("sbLvB").innerHTML=lvBarHtml("()=>{_sbCache={};sbNext();}"); renderSbLv(); sbNext();
 }
 function sbNext(){
   const pool=sbPool();
@@ -3542,13 +3595,15 @@ function mtSrc(){
     if(c.front.length>7) continue;
     const ko=mtClean(c.ko);
     if(!ko || ko.length>9) continue;          // 짧고 명확한 뜻만 → 좌우 줄 높이 균일
+    if(gLv!=="all" && c.level && c.level!==gLv) continue;
     if(seen.has(ko)) continue; seen.add(ko);
     out.push({w:c.front, ko, say:c.speak||c.front});
   }
   _mtCache=out; return out;
 }
 function openMt(){
-  show("mtScreen"); _mtCache=null; mtRound=1; mtOkN=0; mtMissN=0;
+  show("mtScreen"); _mtCache=null;
+  $("mtLv").innerHTML=lvBarHtml("()=>{_mtCache=null;mtNewRound();}"); mtRound=1; mtOkN=0; mtMissN=0;
   $("mtBest").textContent=mtBest();
   mtNewRound();
 }
@@ -3627,6 +3682,7 @@ function spFromCats(cats){
   const out=[]; const seen=new Set();
   const push=o=>{ if(o.jp && o.read && !seen.has(o.jp)){ seen.add(o.jp); out.push(o); } };
   cats.forEach(c=>(DATA[c]||[]).forEach(x=>{
+    if(gLv!=="all" && x.level && x.level!==gLv) return;
     if(x.ex && x.exy && x.ex.length>=6 && x.ex.length<=42){ push({jp:x.ex, read:x.exy, ko:x.exk||"", ro:""}); return; }
     // 예문이 없는 단어카드: 숫자·날짜 단독은 제외, 인사/표현만
     if(!x.sent && x.front && x.speak && x.front.length>=3 && x.front.length<=14
@@ -3770,7 +3826,7 @@ async function openSpeak(){
   $("spCount").textContent="0문장"; $("spAvg").textContent="-"; $("spStreak").textContent="0"; $("spBest").textContent=spBest();
   $("spRubyBtn").classList.toggle("on",spRuby); $("spKoBtn").classList.toggle("on",spKoOn);
   $("spNoSR").style.display = spSRSupported() ? "none" : "block";
-  renderSpSrc(); spNext();
+  $("spLvB").innerHTML=lvBarHtml("spNext"); renderSpSrc(); spNext();
 }
 function renderSpTile(){ const t=$("tSp"); if(!t) return; const b=spBest(); t.textContent = b?`최고 ${b}연속`:"따라 말하기"; }
 
@@ -3925,6 +3981,7 @@ function ktSrc(){
   const out=[]; const seen=new Set();
   for(const k in DATA) for(const c of (DATA[k]||[])){
     if(!c.front||!c.ko||c.front.length>6) continue;
+    if(gLv!=="all" && c.level && c.level!==gLv) continue;
     const ko=mtClean(c.ko); if(!ko||ko.length>7||seen.has(ko)) continue;
     seen.add(ko); out.push({w:c.front,ko,say:c.speak||c.front});
   }
@@ -3972,7 +4029,7 @@ function ktTap(i){
     sched(()=>{ $("kt"+a).classList.remove("open"); $("kt"+b).classList.remove("open"); ktOpen=[]; ktLock=false; },760);
   }
 }
-function openKarta(){ show("ktScreen"); renderKtLv(); ktNew(); }
+function openKarta(){ show("ktScreen"); $("ktLvB").innerHTML=lvBarHtml("ktNew"); renderKtLv(); ktNew(); }
 
 // ══════════ ❤️ 서바이벌 ══════════
 const SV_STAGE=[
@@ -3993,8 +4050,11 @@ function svPool(st){
   }));
   return out;
 }
+const SV_LV2STAGE={all:0,N5:1,N4:2,N3:3,N2:4,N1:5};
+let svStage0=0;
 function svStart(){
-  svLife=3; svScore=0; svStage=0;
+  svStage0=SV_LV2STAGE[gLv]||0;
+  svLife=3; svScore=0; svStage=svStage0;
   $("svOver").style.display="none"; $("svPlay").style.display="block";
   $("svBest").textContent=svBest();
   svNext();
@@ -4002,7 +4062,7 @@ function svStart(){
 function svRenderLife(){ $("svLife").textContent="❤️".repeat(svLife)+"🖤".repeat(3-svLife); }
 function svNext(){
   clearInterval(svTimer);
-  svStage=Math.min(SV_STAGE.length-1, Math.floor(svScore/5));
+  svStage=Math.min(SV_STAGE.length-1, svStage0+Math.floor(svScore/5));
   const st=SV_STAGE[svStage];
   let pool=svPool(svStage);
   if(pool.length<4){ for(let i=0;i<=svStage&&pool.length<4;i++) pool=pool.concat(svPool(i)); }
@@ -4054,7 +4114,7 @@ function svOver(){
   $("svMs").textContent = nr ? `신기록! 이전 최고 ${best}문제` : `최고 기록 ${best}문제`;
   $("svBest").textContent=svBest();
 }
-function openSurvival(){ show("svScreen"); svStart(); }
+function openSurvival(){ show("svScreen"); $("svLvB").innerHTML=lvBarHtml("svStart"); svStart(); }
 
 function renderKdTile(){
   const t=$("tKd"); if(!t) return;
