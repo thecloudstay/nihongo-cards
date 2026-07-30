@@ -677,6 +677,63 @@
 .kd-opts button.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
 .kd-opts button.no{background:var(--miss-bg);border-color:var(--miss);color:var(--miss)}
 .kd-cheer{text-align:center;font-size:26px;min-height:36px;padding-top:10px}
+
+/* ══ 어린이: 카테고리·교시 ══ */
+.kc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px 16px 24px}
+.kc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px 13px;
+  border:1px solid var(--line);background:var(--card);border-radius:18px;cursor:pointer;font-family:inherit;color:var(--ink)}
+.kc:active{transform:scale(.97);background:var(--soft)}
+.kc i{font-style:normal;font-size:34px;line-height:1}
+.kc b{font-size:14.5px;font-weight:800;margin-top:3px}
+.kc s{text-decoration:none;font-size:11px;font-weight:700;color:var(--sub)}
+.kc .bar{width:100%;height:5px;border-radius:3px;background:var(--line);margin-top:7px;overflow:hidden}
+.kc .bar i{display:block;height:100%;background:var(--ok);font-size:0}
+.kl-list{padding:10px 16px 24px;display:flex;flex-direction:column;gap:8px}
+.kl{display:flex;align-items:center;gap:11px;padding:14px 14px;border:1px solid var(--line);
+  background:var(--card);border-radius:15px;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left}
+.kl .no{flex:0 0 34px;height:34px;border-radius:50%;background:var(--soft);color:var(--sub);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900}
+.kl.done .no{background:var(--ok);color:#fff}
+.kl .ti{flex:1}
+.kl .ti b{display:block;font-size:15px;font-weight:800}
+.kl .ti s{text-decoration:none;font-size:11.5px;color:var(--sub);font-weight:700}
+.kl .ar{font-size:17px;color:var(--sub)}
+.kd-head{padding:12px 16px 0;text-align:center}
+.kd-head .t{font-size:17px;font-weight:800}
+.kd-head .s{font-size:12px;color:var(--sub);margin-top:2px}
+/* ══ 🃏 카르타 (짝 맞추기) ══ */
+.kt-top{padding:12px 16px 2px;display:flex;justify-content:center;gap:14px;font-size:12.5px;font-weight:800;color:var(--sub)}
+.kt-top b{color:var(--ok)}
+.kt-grid{display:grid;gap:8px;padding:12px 16px 0}
+.kt-c{position:relative;aspect-ratio:3/4;cursor:pointer;perspective:900px}
+.kt-in{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .38s}
+.kt-c.open .kt-in{transform:rotateY(180deg)}
+.kt-f,.kt-b{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px}
+.kt-f{background:linear-gradient(150deg,var(--ink) 0%,#4a423b 100%);color:#fff;font-size:20px}
+.kt-b{background:var(--card);border:2px solid var(--line);transform:rotateY(180deg);
+  font-size:14px;font-weight:800;line-height:1.25;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.kt-c.hit .kt-b{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.kt-c.gone{opacity:.35;pointer-events:none}
+/* ══ ❤️ 서바이벌 ══ */
+.sv-top{padding:12px 16px 0;display:flex;align-items:center;justify-content:center;gap:16px}
+.sv-life{font-size:22px;letter-spacing:2px}
+.sv-stat{font-size:12.5px;font-weight:800;color:var(--sub)}
+.sv-stat b{color:var(--ok)}
+.sv-lv{margin:8px 16px 0;padding:7px 12px;border-radius:12px;background:var(--soft);text-align:center;
+  font-size:12px;font-weight:800;color:var(--sub)}
+.sv-q{padding:20px 16px 0;text-align:center}
+.sv-q .g{font-size:40px;font-weight:800;line-height:1.2;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.sv-q .g.sm{font-size:26px}
+.sv-q .sub{font-size:12.5px;color:var(--sub);font-weight:700;margin-top:8px}
+.sv-bar{height:5px;margin:12px 16px 0;border-radius:3px;background:var(--line);overflow:hidden}
+.sv-bar i{display:block;height:100%;background:var(--accent);transition:width .1s linear}
+.sv-over{padding:30px 20px;text-align:center;display:none}
+.sv-over .em{font-size:52px}
+.sv-over .sc{font-size:34px;font-weight:900;margin-top:6px}
+.sv-over .ms{font-size:14px;color:var(--sub);margin-top:6px}
 </style>
 </head>
 <body>
@@ -699,7 +756,7 @@
     <button class="tile" onclick="openWriting()"><i>✍️</i><b>쓰기</b><s id="tWr">따라쓰기</s></button>
     <button class="tile" id="tileRd" onclick="openRead()"><span class="dot"></span><i>📖</i><b>책읽기</b><s id="tRd">5세부터</s></button>
     <button class="tile" onclick="openSpeak()"><span class="dot"></span><i>🗣</i><b>말하기</b><s id="tSp">따라 말하기</s></button>
-    <button class="tile" onclick="openGames()"><i>🎮</i><b>게임</b><s id="tTa">4가지</s></button>
+    <button class="tile" onclick="openGames()"><i>🎮</i><b>게임</b><s id="tTa">7가지</s></button>
     <button class="tile" onclick="openConj()"><i>🔁</i><b>동사 활용</b><s id="tCj">ます·て</s></button>
     <button class="tile" id="tileWb" onclick="openWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
   </div>
@@ -1130,30 +1187,49 @@
 </div>
 
 
-<!-- ═══ 어린이 그림 낱말카드 ═══ -->
-<div class="screen" id="kdScreen">
+<!-- ═══ 어린이: 카테고리 ═══ -->
+<div class="screen" id="kcScreen">
   <div class="top">
     <button class="back" onclick="show('home')">‹</button>
     <span class="title">🧸 그림 낱말카드</span>
-    <span class="count" id="kdPos">1 / 140</span>
+    <span class="count" id="kcTot"></span>
+  </div>
+  <div class="kd-head"><div class="s">배우고 싶은 것을 골라보세요 · 한 교시는 10분~30분 분량</div></div>
+  <div class="kc-grid" id="kcGrid"></div>
+</div>
+
+<!-- ═══ 어린이: 교시 목록 ═══ -->
+<div class="screen" id="klScreen">
+  <div class="top">
+    <button class="back" onclick="openKids()">‹</button>
+    <span class="title" id="klTitle">동물</span>
+  </div>
+  <div class="kd-head"><div class="t" id="klT">🐼 동물 친구들</div><div class="s" id="klS"></div></div>
+  <div class="kl-list" id="klList"></div>
+</div>
+
+<!-- ═══ 어린이: 카드 ═══ -->
+<div class="screen" id="kdScreen">
+  <div class="top">
+    <button class="back" onclick="kdBack()">‹</button>
+    <span class="title" id="kdTitle">1교시</span>
+    <span class="count" id="kdPos">1 / 10</span>
   </div>
   <div class="kd-modes" id="kdModes"></div>
   <div class="kd-top"><span>배운 카드 <b id="kdLearned">0</b></span><span>맞춘 개수 <b id="kdOk">0</b></span></div>
-
-  <!-- 뒤집기 모드 -->
   <div id="kdFlipWrap">
     <div class="kd-stage">
       <div class="kd-card" id="kdCard" onclick="kdFlip()">
         <div class="kd-in">
           <div class="kd-f">
-            <div class="kd-emoji" id="kdEmoji">🐶</div>
+            <div class="kd-emoji" id="kdEmoji">🐼</div>
             <div class="kd-tapme">👆 눌러서 뒤집기</div>
           </div>
           <div class="kd-b">
-            <div class="em2" id="kdEmoji2">🐶</div>
-            <div class="jp" id="kdJp">犬</div>
-            <div class="rd" id="kdRd">いぬ</div>
-            <div class="ko" id="kdKo">개</div>
+            <div class="em2" id="kdEmoji2">🐼</div>
+            <div class="jp" id="kdJp">パンダ</div>
+            <div class="rd" id="kdRd">パンダ</div>
+            <div class="ko" id="kdKo">판다</div>
             <div class="sm" id="kdSm" style="display:none"></div>
           </div>
         </div>
@@ -1165,15 +1241,52 @@
       </div>
     </div>
   </div>
-
-  <!-- 맞추기 모드 -->
   <div id="kdQuizWrap" style="display:none">
-    <div class="kd-stage">
-      <div class="kd-emoji" id="kdQEmoji" style="font-size:min(28vw,104px)">🐶</div>
-    </div>
+    <div class="kd-stage"><div class="kd-emoji" id="kdQEmoji" style="font-size:min(28vw,104px)">🐼</div></div>
     <div class="kd-q" id="kdQAsk">이 그림은 일본어로?</div>
     <div class="kd-opts" id="kdQOpts"></div>
     <div class="kd-cheer" id="kdCheer"></div>
+  </div>
+</div>
+
+<!-- ═══ 🃏 카르타 (짝 맞추기) ═══ -->
+<div class="screen" id="ktScreen">
+  <div class="top">
+    <button class="back" onclick="openGames()">‹</button>
+    <span class="title">🃏 카르타</span>
+    <span class="count" id="ktTime">0초</span>
+  </div>
+  <div class="cj-forms" id="ktLv"></div>
+  <div class="kt-top"><span>맞춘 짝 <b id="ktPair">0</b></span><span>뒤집기 <b id="ktTry">0</b></span><span>최고 <b id="ktBest">-</b></span></div>
+  <div class="kt-grid" id="ktGrid"></div>
+  <div class="kd-cheer" id="ktCheer"></div>
+  <div class="rd-foot"><button class="pri" onclick="ktNew()">🔄 새 판</button></div>
+</div>
+
+<!-- ═══ ❤️ 서바이벌 ═══ -->
+<div class="screen" id="svScreen">
+  <div class="top">
+    <button class="back" onclick="openGames()">‹</button>
+    <span class="title">❤️ 서바이벌</span>
+    <span class="count" id="svCount">0문제</span>
+  </div>
+  <div class="sv-top"><span class="sv-life" id="svLife">❤️❤️❤️</span>
+    <span class="sv-stat">점수 <b id="svScoreN">0</b></span>
+    <span class="sv-stat">최고 <b id="svBest">0</b></span></div>
+  <div class="sv-lv" id="svLv">1단계 · 기초</div>
+  <div class="sv-bar"><i id="svBar" style="width:100%"></i></div>
+  <div id="svPlay">
+    <div class="sv-q"><div class="g" id="svGlyph">あ</div><div class="sub" id="svSub">뜻을 고르세요</div></div>
+    <div class="cj-opts" id="svOpts"></div>
+  </div>
+  <div class="sv-over" id="svOver">
+    <div class="em" id="svEm">💀</div>
+    <div class="sc" id="svSc">0</div>
+    <div class="ms" id="svMs"></div>
+    <div class="rd-foot" style="padding:22px 0 0">
+      <button onclick="openGames()">게임 목록</button>
+      <button class="pri" onclick="svStart()">다시 도전 →</button>
+    </div>
   </div>
 </div>
 
@@ -2262,7 +2375,7 @@ function startWrongbook(){
   show("quizScreen"); loadQ();
 }
 // ═══════════ 백업/복원 (기기 이전) ═══════════
-const BK_KEYS=["owned_packs","collection","daily_state","ta_best","sb_best","mt_best","cj_best","sp_best","kids","writing","reading","wrongbook","pack_last","pity","conf","license"];
+const BK_KEYS=["owned_packs","collection","daily_state","ta_best","sb_best","mt_best","cj_best","sp_best","kids","kt_best","sv_best","writing","reading","wrongbook","pack_last","pity","conf","license"];
 async function exportProgress(){
   const data={_app:"nihongocards",_v:1,_d:new Date().toISOString().slice(0,10)};
   BK_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!==null) data[k]=v; });
@@ -2293,7 +2406,7 @@ function taBestSet(v){ try{ localStorage.setItem("ta_best",JSON.stringify(v)); }
 function renderTaBar(){
   const t=$("tTa"); if(!t) return;
   const b=taBestGet();
-  t.textContent = (b&&b.score) ? "최고 "+b.score.toLocaleString() : "4가지";
+  t.textContent = (b&&b.score) ? "최고 "+b.score.toLocaleString() : "7가지";
 }
 function startTimeAttack(){
   if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
@@ -2537,6 +2650,8 @@ function reviewMiss(){
 // override show() for done screen properly
 function show(id){
   if(typeof taPopClear==="function") taPopClear();
+  if(typeof ktTimer!=="undefined" && id!=="ktScreen") clearInterval(ktTimer);
+  if(typeof svTimer!=="undefined" && id!=="svScreen") clearInterval(svTimer);
   if(id!=="spScreen" && typeof spRec!=="undefined" && spRec && spRecOn){ try{spRec.stop();}catch(e){} spRecOn=false; }
   if(typeof rdStopPlay==="function" && id!=="rdRead") rdStopPlay();
   if(typeof closeWordPop==="function" && id!=="rdRead") closeWordPop();
@@ -3274,7 +3389,9 @@ const GAMES=[
   {id:"ta",  ic:"⚡", bg:"var(--rg-bg)",  tt:"타임어택 60초",  ds:"60초 안에 몇 점? 콤보가 붙을수록 점수 배수", go:"startTimeAttack", best:()=>{const b=taBestGet(); return b&&b.score? b.score.toLocaleString()+"점":"";}},
   {id:"sb",  ic:"🧩", bg:"var(--rr-bg)",  tt:"문장 만들기",    ds:"뒤섞인 조각을 순서대로 눌러 문장 완성 · JLPT 문장조립 유형", go:"openSb", best:()=>{const b=sbBest(); return b?`최고 연속 ${b}`:"";}},
   {id:"mt",  ic:"🔗", bg:"var(--rs-bg)",  tt:"짝 연결",        ds:"단어와 뜻을 선으로 이어 맞추기 · 실수 없이 몇 라운드까지?", go:"openMt", best:()=>{const b=mtBest(); return b?`최고 ${b}라운드`:"";}},
-  {id:"kd",  ic:"🧸", bg:"var(--miss-bg)", tt:"그림 낱말카드 (어린이)", ds:"그림 카드를 뒤집어 맞추기 · 한국어와 소리가 닮은 말부터", go:"openKids", best:()=>{const n=Object.keys(kdLog()).length; return n?`${n}장 배움`:"";}},
+  {id:"kt",  ic:"🃏", bg:"var(--rg-bg)",  tt:"카르타 (짝 맞추기)", ds:"카드를 뒤집어 일본어와 뜻의 짝 찾기 · 몇 초에 끝낼까?", go:"openKarta", best:()=>{const b=ktBest()[8]; return b?`8쌍 ${b}초`:"";}},
+  {id:"sv",  ic:"❤️", bg:"var(--miss-bg)", tt:"서바이벌", ds:"목숨 3개 · 5문제마다 난이도 상승 · 몇 문제까지 버틸까?", go:"openSurvival", best:()=>{const b=svBest(); return b?`최고 ${b}문제`:"";}},
+  {id:"kd",  ic:"🧸", bg:"var(--soft)", tt:"그림 낱말카드 (어린이)", ds:"그림 카드를 뒤집어 맞추기 · 한국어와 소리가 닮은 말부터", go:"openKids", best:()=>{const n=Object.keys(kdLog()).length; return n?`${n}장 배움`:"";}},
   {id:"cj",  ic:"🔁", bg:"var(--ok-bg)",  tt:"동사 활용",      ds:"ます·て·ない·た형 4지선다 · 틀리면 즉시 규칙 해설", go:"openConj", best:()=>{const b=cjBest(); return b?`최고 연속 ${b}`:"";}},
 ];
 function openGames(){
@@ -3285,11 +3402,7 @@ function openGames(){
       <span class="ic" style="background:${g.bg}">${g.ic}</span>
       <span><span class="tt">${g.tt}</span><span class="ds">${g.ds}</span></span>
       <span class="bs">${g.best()||""}</span></button>`).join("") +
-    `<div class="gh-h">준비 중</div>
-     <button class="gh-card soon"><span class="ic" style="background:var(--soft)">🃏</span>
-       <span><span class="tt">카르타 (짝 맞추기)</span><span class="ds">카드를 뒤집어 같은 짝 찾기 · 일본 전통 카드게임</span></span></button>
-     <button class="gh-card soon"><span class="ic" style="background:var(--soft)">❤️</span>
-       <span><span class="tt">서바이벌</span><span class="ds">목숨 3개 · 난이도가 계속 올라가는 무한 모드</span></span></button>`;
+    "";
 }
 
 // ══════════ 일본어 문절 분할기 ══════════
@@ -3507,8 +3620,8 @@ const SP_SRC=[
   {k:"book",  ko:"책 문장",    pick:()=>spFromBooks()},
 ];
 let spSrcK="greet", spQ=null, spTot=0, spSum=0, spStreak=0, spRuby=true, spKoOn=true, spRec=null, spRecOn=false;
-function spBest(){ return parseInt(localStorage.getItem("sp_best","kids")||"0",10)||0; }
-function spBestSet(v){ try{ localStorage.setItem("sp_best","kids",String(v)); }catch(e){} }
+function spBest(){ return parseInt(localStorage.getItem("sp_best","kids","kt_best","sv_best")||"0",10)||0; }
+function spBestSet(v){ try{ localStorage.setItem("sp_best","kids","kt_best","sv_best",String(v)); }catch(e){} }
 function spFromCats(cats){
   // 말하기는 "문장" 위주 — 예문이 있으면 예문, 없으면 말할 가치 있는 표현만
   const out=[]; const seen=new Set();
@@ -3661,25 +3774,81 @@ async function openSpeak(){
 }
 function renderSpTile(){ const t=$("tSp"); if(!t) return; const b=spBest(); t.textContent = b?`최고 ${b}연속`:"따라 말하기"; }
 
-// ══════════ 🧸 어린이 그림 낱말카드 (한국어와 닮은 말 우선) ══════════
-let KIDS=null, kdI=0, kdMode="flip", kdFlipped=false, kdOkN=0, kdLock=false;
+// ══════════ 🧸 어린이 그림 낱말카드 — 카테고리 → 교시 → 카드 ══════════
+let KIDS=null, KCATS=null, kdCat=null, kdLes=1, kdList=[], kdI=0, kdMode="flip", kdFlipped=false, kdOkN=0, kdLock=false;
 const KD_CHEER=["🎉 좋아요!","👏 잘했어요!","⭐ 정답!","🌟 최고!","🎊 딩동댕!"];
-function kdLog(){ try{ return JSON.parse(localStorage.getItem("kids")||"{}"); }catch(e){ return {}; } }
-function kdSaveLog(o){ try{ localStorage.setItem("kids",JSON.stringify(o)); }catch(e){} }
+function kdLog(){ try{ return JSON.parse(localStorage.getItem("kids","kt_best","sv_best")||"{}"); }catch(e){ return {}; } }
+function kdSaveLog(o){ try{ localStorage.setItem("kids","kt_best","sv_best",JSON.stringify(o)); }catch(e){} }
 async function loadKids(){
   if(KIDS) return KIDS;
-  try{ const r=await fetch("kids.json",{cache:"no-store"}); if(r.ok) KIDS=await r.json(); }catch(e){}
+  try{ const r=await fetch("kids.json",{cache:"no-store"});
+    if(r.ok){ const j=await r.json();
+      if(Array.isArray(j)){ KIDS=j; KCATS=null; } else { KIDS=j.cards; KCATS=j.cats; } } }catch(e){}
   return KIDS;
 }
-const KD_MODES=[{k:"flip",ko:"🃏 뒤집기"},{k:"quizJp",ko:"🇯🇵 일본어 맞추기"},{k:"quizKo",ko:"🇰🇷 뜻 맞추기"},{k:"sim",ko:"✨ 닮은 말만"}];
+function kdCards(cat,les){ return (KIDS||[]).filter(x=>x.cat===cat && (!les || x.lesson===les)); }
+function kdLesDone(cat,les){
+  const lg=kdLog(), c=kdCards(cat,les);
+  if(!c.length) return false;
+  return c.filter(x=>lg[x.id]).length >= Math.ceil(c.length*0.8);   // 80% 이상 보면 완료
+}
+function kdCatProg(cat){
+  const lg=kdLog(), c=kdCards(cat);
+  return {seen:c.filter(x=>lg[x.id]).length, tot:c.length};
+}
+async function openKids(){
+  show("kcScreen"); await loadKids();
+  if(!KIDS){ toast("카드를 불러오지 못했어요"); return; }
+  if(!KCATS){ kdCat=null; kdList=KIDS.slice(); kdOpenCards("전체",0); return; }   // 구버전 폴백
+  $("kcTot").textContent=KIDS.length+"장";
+  $("kcGrid").innerHTML=KCATS.map(c=>{
+    const p=kdCatProg(c.tag); const pct=p.tot?Math.round(p.seen/p.tot*100):0;
+    return `<button class="kc" onclick="kdOpenCat('${c.tag}')">
+      <i>${c.emoji}</i><b>${c.label}</b>
+      <s>${c.lessons.length}교시 · ${c.total}장</s>
+      <span class="bar"><i style="width:${pct}%">.</i></span></button>`;
+  }).join("");
+}
+function kdOpenCat(tag){
+  const c=KCATS.find(x=>x.tag===tag); if(!c) return;
+  kdCat=tag;
+  $("klTitle").textContent=c.label;
+  $("klT").textContent=`${c.emoji} ${c.label}`;
+  const p=kdCatProg(tag);
+  $("klS").textContent=`${c.total}장 · ${c.lessons.length}교시 · 지금까지 ${p.seen}장 봤어요`;
+  $("klList").innerHTML=c.lessons.map(l=>{
+    const dn=kdLesDone(tag,l.n);
+    return `<button class="kl ${dn?'done':''}" onclick="kdOpenLesson('${tag}',${l.n})">
+      <span class="no">${dn?'✓':l.n}</span>
+      <span class="ti"><b>${l.n}교시</b><s>카드 ${l.count}장${l.sim?` · ✨닮은 말 ${l.sim}개`:""}</s></span>
+      <span class="ar">${dn?'🏅':'›'}</span></button>`;
+  }).join("");
+  show("klScreen");
+}
+function kdOpenLesson(tag,les){
+  kdCat=tag; kdLes=les;
+  const c=KCATS.find(x=>x.tag===tag);
+  kdOpenCards(`${c.emoji} ${c.label} ${les}교시`, les);
+}
+function kdOpenCards(title,les){
+  kdList = les ? kdCards(kdCat,les) : (kdList.length?kdList:KIDS.slice());
+  kdI=0; kdOkN=0; $("kdOk").textContent="0";
+  $("kdTitle").textContent=title;
+  kdMode="flip"; kdSetMode("flip");
+  show("kdScreen");
+}
+function kdBack(){ if(KCATS&&kdCat) kdOpenCat(kdCat); else show("home"); }
+const KD_MODES=[{k:"flip",ko:"🃏 뒤집기"},{k:"quizJp",ko:"🇯🇵 일본어"},{k:"quizKo",ko:"🇰🇷 뜻"},{k:"sim",ko:"✨ 닮은 말"}];
 function renderKdModes(){
   $("kdModes").innerHTML=KD_MODES.map(m=>`<button class="${m.k===kdMode?'on':''}" onclick="kdSetMode('${m.k}')">${m.ko}</button>`).join("");
 }
 function kdPool(){
-  if(!KIDS) return [];
-  return kdMode==="sim" ? KIDS.filter(x=>x.sim===1) : KIDS;
+  const base=kdList.length?kdList:(KIDS||[]);
+  return kdMode==="sim" ? base.filter(x=>x.sim===1) : base;
 }
 function kdSetMode(m){
+  const pool0 = m==="sim" ? (kdList.length?kdList:(KIDS||[])).filter(x=>x.sim===1) : null;
+  if(m==="sim" && pool0 && !pool0.length){ toast("이 교시엔 닮은 말이 없어요"); return; }
   kdMode=m; kdI=0; renderKdModes();
   const quiz=(m==="quizJp"||m==="quizKo");
   $("kdFlipWrap").style.display = quiz?"none":"block";
@@ -3698,33 +3867,32 @@ function kdRender(){
   else sm.style.display="none";
   $("kdSimBadge").innerHTML = c.sim ? '<span class="kd-sim">✨ 한국어랑 소리가 닮았어요</span>' : "";
   $("kdPos").textContent=`${kdI+1} / ${pool.length}`;
-  const lg=kdLog(); $("kdLearned").textContent=Object.keys(lg).length;
+  $("kdLearned").textContent=Object.keys(kdLog()).length;
 }
 function kdFlip(){
   const pool=kdPool(); if(!pool.length) return;
   kdFlipped=!kdFlipped;
   $("kdCard").classList.toggle("flip",kdFlipped);
   if(kdFlipped){
-    const c=pool[kdI];
-    speak(c.r);
+    const c=pool[kdI]; speak(c.r);
     const lg=kdLog(); lg[c.id]=(lg[c.id]|0)+1; kdSaveLog(lg);
     $("kdLearned").textContent=Object.keys(lg).length;
   }
 }
 function kdGo(d){ kdI+=d; kdRender(); }
-// ── 맞추기 ──
 let kdQ=null;
 function kdQuizNext(){
-  const pool=kdPool(); if(pool.length<4) return;
-  const c=pool[Math.floor(Math.random()*pool.length)];
+  let pool=kdPool();
+  if(pool.length<4) pool=(KIDS||[]);                       // 보기 4개 확보용
+  if(pool.length<4) return;
+  const base=kdPool(); const c=(base.length?base:pool)[Math.floor(Math.random()*(base.length||pool.length))];
   const useJp=(kdMode==="quizJp");
   const others=shuffle(pool.filter(x=>x.id!==c.id)).slice(0,3);
   const opts=shuffle([c,...others]);
   kdQ={c,opts,useJp}; kdLock=false;
   $("kdQEmoji").textContent=c.emoji;
   $("kdQAsk").textContent = useJp ? "이 그림은 일본어로?" : "이 그림의 뜻은?";
-  $("kdQOpts").innerHTML=opts.map((o,i)=>
-    `<button onclick="kdPick(${i})">${useJp?o.jp:o.ko}</button>`).join("");
+  $("kdQOpts").innerHTML=opts.map((o,i)=>`<button onclick="kdPick(${i})">${useJp?o.jp:o.ko}</button>`).join("");
   $("kdCheer").textContent="";
   speak(c.r);
 }
@@ -3732,28 +3900,162 @@ function kdPick(i){
   if(kdLock||!kdQ) return; kdLock=true;
   const btns=[...$("kdQOpts").querySelectorAll("button")];
   const ci=kdQ.opts.findIndex(o=>o.id===kdQ.c.id);
-  btns.forEach(b=>b.disabled=true);
-  btns[ci].classList.add("ok");
+  btns.forEach(b=>b.disabled=true); btns[ci].classList.add("ok");
   if(i===ci){
     kdOkN++; $("kdOk").textContent=kdOkN;
     $("kdCheer").textContent=KD_CHEER[Math.floor(Math.random()*KD_CHEER.length)];
     const lg=kdLog(); lg[kdQ.c.id]=(lg[kdQ.c.id]|0)+1; kdSaveLog(lg);
     $("kdLearned").textContent=Object.keys(lg).length;
     try{sfx("ok");}catch(e){}
-  }else{
-    btns[i].classList.add("no");
-    $("kdCheer").textContent="🙂 다시 해볼까요?";
-    try{sfx("no");}catch(e){}
-  }
+  }else{ btns[i].classList.add("no"); $("kdCheer").textContent="🙂 다시 해볼까요?"; try{sfx("no");}catch(e){} }
   speak(kdQ.c.r);
   sched(kdQuizNext, 1500);
 }
-async function openKids(){
-  show("kdScreen"); await loadKids();
-  if(!KIDS){ toast("카드를 불러오지 못했어요"); return; }
-  kdOkN=0; $("kdOk").textContent="0";
-  kdMode="flip"; kdSetMode("flip");
+
+// ══════════ 🃏 카르타 (짝 맞추기 뒤집기) ══════════
+const KT_LV=[{k:6,ko:"쉬움 (6쌍)",col:3},{k:8,ko:"보통 (8쌍)",col:4},{k:10,ko:"어려움 (10쌍)",col:4}];
+let ktPairs=6, ktCards=[], ktOpen=[], ktHit=0, ktTry=0, ktLock=false, ktT0=0, ktTimer=null;
+function ktBest(){ try{ return JSON.parse(localStorage.getItem("kt_best")||"{}"); }catch(e){ return {}; } }
+function ktBestSet(o){ try{ localStorage.setItem("kt_best",JSON.stringify(o)); }catch(e){} }
+function renderKtLv(){
+  $("ktLv").innerHTML=KT_LV.map(l=>`<button class="${l.k===ktPairs?'on':''}" onclick="ktSetLv(${l.k})">${l.ko}</button>`).join("");
 }
+function ktSetLv(k){ ktPairs=k; renderKtLv(); ktNew(); }
+function ktSrc(){
+  const out=[]; const seen=new Set();
+  for(const k in DATA) for(const c of (DATA[k]||[])){
+    if(!c.front||!c.ko||c.front.length>6) continue;
+    const ko=mtClean(c.ko); if(!ko||ko.length>7||seen.has(ko)) continue;
+    seen.add(ko); out.push({w:c.front,ko,say:c.speak||c.front});
+  }
+  return out;
+}
+function ktNew(){
+  clearInterval(ktTimer);
+  const src=ktSrc();
+  if(src.length<ktPairs){ toast("데이터를 불러오는 중이에요"); return; }
+  const pick=shuffle(src).slice(0,ktPairs);
+  ktCards=shuffle(pick.flatMap((p,i)=>[{i,t:"jp",v:p.w,say:p.say},{i,t:"ko",v:p.ko,say:p.say}]));
+  ktOpen=[]; ktHit=0; ktTry=0; ktLock=false; ktT0=Date.now();
+  const col=KT_LV.find(l=>l.k===ktPairs).col;
+  const g=$("ktGrid"); g.style.gridTemplateColumns=`repeat(${col},1fr)`;
+  g.innerHTML=ktCards.map((c,i)=>`<div class="kt-c" id="kt${i}" onclick="ktTap(${i})">
+    <div class="kt-in"><div class="kt-f">🃏</div><div class="kt-b">${c.v}</div></div></div>`).join("");
+  $("ktPair").textContent="0"; $("ktTry").textContent="0"; $("ktCheer").textContent="";
+  const b=ktBest()[ktPairs]; $("ktBest").textContent = b? `${b}초` : "-";
+  ktTimer=setInterval(()=>{ $("ktTime").textContent=Math.floor((Date.now()-ktT0)/1000)+"초"; },250);
+}
+function ktTap(i){
+  if(ktLock) return;
+  const el=$("kt"+i);
+  if(el.classList.contains("open")||el.classList.contains("gone")) return;
+  el.classList.add("open"); ktOpen.push(i);
+  speak(ktCards[i].say);
+  if(ktOpen.length<2) return;
+  ktTry++; $("ktTry").textContent=ktTry; ktLock=true;
+  const [a,b]=ktOpen;
+  const ok = ktCards[a].i===ktCards[b].i && ktCards[a].t!==ktCards[b].t;
+  if(ok){
+    $("kt"+a).classList.add("hit"); $("kt"+b).classList.add("hit");
+    sched(()=>{ $("kt"+a).classList.add("gone"); $("kt"+b).classList.add("gone"); },420);
+    ktHit++; $("ktPair").textContent=ktHit; try{sfx("ok");}catch(e){}
+    ktOpen=[]; ktLock=false;
+    if(ktHit>=ktPairs){
+      clearInterval(ktTimer);
+      const sec=Math.floor((Date.now()-ktT0)/1000);
+      const bs=ktBest(); const prev=bs[ktPairs];
+      if(!prev||sec<prev){ bs[ktPairs]=sec; ktBestSet(bs); $("ktBest").textContent=sec+"초"; $("ktCheer").textContent=`🏆 신기록! ${sec}초`; }
+      else $("ktCheer").textContent=`🎉 완성! ${sec}초 · ${ktTry}번 뒤집기`;
+    }
+  }else{
+    try{sfx("no");}catch(e){}
+    sched(()=>{ $("kt"+a).classList.remove("open"); $("kt"+b).classList.remove("open"); ktOpen=[]; ktLock=false; },760);
+  }
+}
+function openKarta(){ show("ktScreen"); renderKtLv(); ktNew(); }
+
+// ══════════ ❤️ 서바이벌 ══════════
+const SV_STAGE=[
+  {n:1,ko:"기초",   cats:["hiragana","katakana","num","week","time","body","dir","color","family","greet","ask"], sec:8},
+  {n:2,ko:"N5",     cats:["N5","V5","S1","KIDS"], sec:7},
+  {n:3,ko:"N4",     cats:["N4","V4","S2"], sec:6},
+  {n:4,ko:"N3",     cats:["N3","V3","S3","VERB"], sec:5},
+  {n:5,ko:"N2",     cats:["N2","V2","S4","KATA2"], sec:5},
+  {n:6,ko:"N1",     cats:["N1","V1","S5","WASEI"], sec:4},
+];
+let svLife=3, svScore=0, svQ=null, svLock=false, svTimer=null, svLeft=0, svStage=0;
+function svBest(){ return parseInt(localStorage.getItem("sv_best")||"0",10)||0; }
+function svBestSet(v){ try{ localStorage.setItem("sv_best",String(v)); }catch(e){} }
+function svPool(st){
+  const out=[];
+  SV_STAGE[st].cats.forEach(c=>(DATA[c]||[]).forEach(x=>{
+    if(x.front&&x.ko&&x.front.length<=10) out.push(x);
+  }));
+  return out;
+}
+function svStart(){
+  svLife=3; svScore=0; svStage=0;
+  $("svOver").style.display="none"; $("svPlay").style.display="block";
+  $("svBest").textContent=svBest();
+  svNext();
+}
+function svRenderLife(){ $("svLife").textContent="❤️".repeat(svLife)+"🖤".repeat(3-svLife); }
+function svNext(){
+  clearInterval(svTimer);
+  svStage=Math.min(SV_STAGE.length-1, Math.floor(svScore/5));
+  const st=SV_STAGE[svStage];
+  let pool=svPool(svStage);
+  if(pool.length<4){ for(let i=0;i<=svStage&&pool.length<4;i++) pool=pool.concat(svPool(i)); }
+  if(pool.length<4){ toast("데이터를 불러오는 중이에요"); return; }
+  const c=pool[Math.floor(Math.random()*pool.length)];
+  const others=shuffle(pool.filter(x=>x.ko!==c.ko)).slice(0,3);
+  const opts=shuffle([c,...others]);
+  svQ={c,opts};
+  svRenderLife();
+  $("svCount").textContent=svScore+"문제";
+  $("svScoreN").textContent=svScore;
+  $("svLv").textContent=`${st.n}단계 · ${st.ko} · ${st.sec}초`;
+  const g=$("svGlyph"); g.textContent=c.front; g.classList.toggle("sm", c.front.length>3);
+  $("svSub").textContent = c.sent? "빈칸에 알맞은 말은?" : "뜻을 고르세요";
+  $("svOpts").innerHTML=opts.map((o,i)=>`<button onclick="svPick(${i})">${o.ko}</button>`).join("");
+  svLock=false;
+  svLeft=st.sec*1000;
+  const t0=Date.now();
+  svTimer=setInterval(()=>{
+    const el=st.sec*1000-(Date.now()-t0);
+    $("svBar").style.width=Math.max(0,el/(st.sec*1000)*100)+"%";
+    if(el<=0){ clearInterval(svTimer); svHit(false); }
+  },80);
+  speak(c.speak||c.front);
+}
+function svPick(i){
+  if(svLock) return; svLock=true; clearInterval(svTimer);
+  const btns=[...$("svOpts").querySelectorAll("button")];
+  const ci=svQ.opts.findIndex(o=>o.ko===svQ.c.ko);
+  btns.forEach(b=>b.disabled=true); btns[ci].classList.add("ok");
+  if(i!==ci) btns[i].classList.add("no");
+  svHit(i===ci);
+}
+function svHit(ok){
+  svLock=true;
+  if(ok){ svScore++; try{sfx("ok");}catch(e){} sched(svNext,420); }
+  else{
+    svLife--; try{sfx("no");}catch(e){} svRenderLife();
+    if(svLife<=0) sched(svOver,700); else sched(svNext,900);
+  }
+}
+function svOver(){
+  clearInterval(svTimer);
+  $("svPlay").style.display="none"; $("svOver").style.display="block";
+  const best=svBest(); const nr=svScore>best;
+  if(nr) svBestSet(svScore);
+  $("svEm").textContent = nr?"🏆":svScore>=20?"🎉":svScore>=10?"💪":"💀";
+  $("svSc").textContent=svScore+"문제";
+  $("svMs").textContent = nr ? `신기록! 이전 최고 ${best}문제` : `최고 기록 ${best}문제`;
+  $("svBest").textContent=svBest();
+}
+function openSurvival(){ show("svScreen"); svStart(); }
+
 function renderKdTile(){
   const t=$("tKd"); if(!t) return;
   const n=Object.keys(kdLog()).length;
