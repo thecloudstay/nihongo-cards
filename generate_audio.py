@@ -70,6 +70,22 @@ def collect_texts() -> list:
                         t = str(row.get("front") or "").strip()
                         if t and KANA_RE.search(t):
                             texts.add(t)
+    # 1-b) 책읽기 문장 (books.json) — 후리가나 마크업 {표기|읽기} → 읽기만 추출
+    if os.path.exists("books.json"):
+        import re as _re
+        _rd = lambda t: _re.sub(r"\{[^|{}]+\|([^|{}]+)\}", r"\1", str(t or ""))
+        with open("books.json", encoding="utf-8") as f:
+            for bk in json.load(f):
+                for ch in bk.get("chapters", []):
+                    for sen in ch.get("s", []):
+                        t = _rd(sen.get("jp")).strip()
+                        if t and KANA_RE.search(t):
+                            texts.add(t)
+                    for w in ch.get("words", []):
+                        t = str(w.get("r") or "").strip()
+                        if t and KANA_RE.search(t):
+                            texts.add(t)
+
     # 2) CSV도 병행 수집 (있을 때만)
     for path in sorted(glob.glob(CSV_GLOB)):
         with open(path, encoding="utf-8-sig", newline="") as f:
