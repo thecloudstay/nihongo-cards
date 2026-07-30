@@ -31,6 +31,7 @@ COLUMNS    = ("reading", "example_reading")
 API_KEY    = os.environ.get("GOOGLE_TTS_KEY", "")
 
 KANA_RE = re.compile(r'[ぁ-ゖァ-ヺー]')
+JP_RE   = re.compile(r'[ぁ-ゖァ-ヺー一-鿿々]')   # 가나 또는 한자 (한자 전용 문장도 TTS 가능)
 
 # 정답 칭찬 보이스 (앱 PRAISE 목록과 동일하게 유지할 것)
 EXTRA_TEXTS = ["すごい!", "かっこいい!", "完璧!", "いいね!", "天才!", "やったね!", "正解!"]
@@ -79,12 +80,23 @@ def collect_texts() -> list:
                 for ch in bk.get("chapters", []):
                     for sen in ch.get("s", []):
                         t = _rd(sen.get("jp")).strip()
-                        if t and KANA_RE.search(t):
+                        if t and JP_RE.search(t):
                             texts.add(t)
                     for w in ch.get("words", []):
                         t = str(w.get("r") or "").strip()
                         if t and KANA_RE.search(t):
                             texts.add(t)
+
+    # 1-c) 어린이 그림 낱말카드 (kids.json) — 읽기(r)가 발음 대상
+    if os.path.exists("kids.json"):
+        with open("kids.json", encoding="utf-8") as f:
+            kj = json.load(f)
+        kcards = kj.get("cards", kj) if isinstance(kj, dict) else kj
+        for c in kcards:
+            for col in ("r", "jp"):
+                t = str(c.get(col) or "").strip()
+                if t and JP_RE.search(t):
+                    texts.add(t)
 
     # 2) CSV도 병행 수집 (있을 때만)
     for path in sorted(glob.glob(CSV_GLOB)):
