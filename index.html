@@ -3091,7 +3091,7 @@ async function openRead(){
       return `<button class="rd-book" onclick="openBook(${i})">
         <span class="lvb">${b.lv}<small>단계</small></span>
         <span class="bi"><span class="bt">${b.title_ko}${kd}</span>
-          <span class="ba">${b.title} · ${b.author_ko} · ${b.lvName}</span>
+          <span class="ba">${[b.title,b.author_ko,b.lvName].filter(Boolean).join(" · ")}</span>
           <span class="bd">${b.intro_ko}</span>
           <span class="rd-prog"><i style="width:${pct}%"></i></span></span>
         <span class="bp">${p.d?p.d+"/"+p.t:""}</span></button>`;
@@ -3106,7 +3106,7 @@ function openBook(i){
   rdBookCur=BOOKS[i];
   const b=rdBookCur;
   $("rbTitle").textContent=b.title_ko; $("rbT").textContent=b.title;
-  $("rbA").textContent=`${b.author} (${b.author_ko}) · ${b.lvName}`;
+  $("rbA").textContent=[b.author, b.author_ko&&b.author?`(${b.author_ko})`:b.author_ko, b.lvName].filter(Boolean).join(" · ");
   $("rbD").textContent=b.intro_ko;
   $("rbChaps").innerHTML=b.chapters.map((c,k)=>{
     const dn=rdDone(b.id,c.n);
