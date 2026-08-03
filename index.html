@@ -771,6 +771,19 @@
 .sp-nosr{margin:12px 16px 0;padding:12px 14px;border-radius:12px;background:var(--soft);
   font-size:12.5px;color:var(--sub);line-height:1.6;display:none}
 /* 읽기 목록 섹션 헤더 */
+.rd-filter{display:flex;gap:6px;padding:12px 16px 2px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.rd-filter button{flex:0 0 auto;padding:7px 14px;border:1px solid var(--line);background:var(--card);
+  border-radius:16px;font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+.rd-filter button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rd-resume{display:flex;align-items:center;gap:12px;margin:12px 16px 2px;padding:14px 16px;
+  border-radius:16px;background:var(--ink);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.rd-resume:active{opacity:.88}
+.rd-resume .ic{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.16);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex:0 0 auto}
+.rd-resume .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rd-resume .tx b{font-size:14.5px;font-weight:800}
+.rd-resume .tx small{font-size:12px;opacity:.72;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rd-resume .go{font-size:20px;opacity:.6}
 .rd-sec{font-size:12px;font-weight:800;color:var(--sub);padding:10px 2px 2px}
 .rd-book .kd{display:inline-block;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:7px;
   background:var(--rs-bg);color:var(--rs-d);margin-left:5px;vertical-align:middle}
@@ -1148,6 +1161,8 @@
     <button class="back" onclick="show('home')">‹</button>
     <span class="title">📖 일본 명작 읽기</span>
   </div>
+  <div class="rd-resume" id="rdResume" style="display:none"></div>
+  <div class="rd-filter" id="rdFilter"></div>
   <div class="rd-lv" id="rdList"></div>
   <div class="wr-done" style="padding:0 16px 24px;font-size:10.5px;opacity:.7">
     저작권 만료 작품 · 원문 출처: 青空文庫(Aozora Bunko)</div>
@@ -3571,6 +3586,23 @@ function rdDone(bid,n){ const st=rdState(); return ((st[bid]||{}).done||[]).incl
 function rdMark(bid,n){ const st=rdState(); const b=st[bid]=st[bid]||{done:[]};
   if(!b.done.includes(n)) b.done.push(n); rdSave(st); renderRdBar(); }
 function rdBookProg(b){ const st=rdState(); const d=((st[b.id]||{}).done||[]).length; return {d, t:b.chapters.length}; }
+// ── 이어보기 — 마지막으로 펼친 책·장을 기억한다 (23편이 되니 "어디까지 읽었더라"가 생김) ──
+function rdTouch(bid,k){ const st=rdState(); st._last={b:bid,k,t:Date.now()}; rdSave(st); }
+function rdLast(){ const st=rdState(); const L=st._last;
+  if(!L||!BOOKS) return null;
+  const b=BOOKS.find(x=>x.id===L.b); if(!b||!b.chapters[L.k]) return null;
+  return {book:b, k:L.k, ch:b.chapters[L.k]};
+}
+function renderRdResume(){
+  const el=$("rdResume"); if(!el) return;
+  const L=rdLast();
+  if(!L){ el.style.display="none"; return; }
+  el.style.display="flex";
+  el.innerHTML=`<span class="ic">▶</span>
+    <span class="tx"><b>이어서 읽기</b><small>${L.book.title_ko} · ${L.k+1}장 ${L.ch.title_ko}</small></span>
+    <span class="go">›</span>`;
+  el.onclick=()=>{ rdBookCur=L.book; openChapter(L.k); };
+}
 function renderRdBar(){
   const el=$("tRd"); if(!el||!BOOKS) return;
   let d=0,t=0; BOOKS.forEach(b=>{ const p=rdBookProg(b); d+=p.d; t+=p.t; });
@@ -3664,27 +3696,40 @@ function rdKaraRun(el){
 function rdPlain(t){ return String(t).replace(/\{([^|{}]+)\|[^|{}]+\}/g,'$1'); }
 function rdReading(t){ return String(t).replace(/\{[^|{}]+\|([^|{}]+)\}/g,'$1'); }
 
+let rdLvFilter=0;                       // 0=전체, 1~5=단계
 async function openRead(){
   show("rdScreen");
   const bs=await loadBooks();
-  const wrap=$("rdList");
-  if(!bs||!bs.length){ wrap.innerHTML='<div style="text-align:center;color:var(--sub);padding:40px 0">읽기 자료를 불러오는 중…</div>'; return; }
+  if(!bs||!bs.length){ $("rdList").innerHTML='<div style="text-align:center;color:var(--sub);padding:40px 0">읽기 자료를 불러오는 중…</div>'; return; }
+  $("rdFilter").innerHTML = [[0,"전체"],[1,"1단계"],[2,"2단계"],[3,"3단계"],[4,"4단계"],[5,"5단계"]]
+    .map(([v,t])=>`<button class="${v===rdLvFilter?'on':''}" onclick="rdSetLv(${v})">${t}</button>`).join("");
+  renderRdList();
+  renderRdBar(); renderRdResume();
+}
+function rdSetLv(v){
+  rdLvFilter=v;
+  document.querySelectorAll("#rdFilter button").forEach((b,i)=>b.classList.toggle("on", i===v));
+  renderRdList();
+}
+function renderRdList(){
+  const bs=BOOKS||[]; const wrap=$("rdList");
   const sec=(list,label)=> list.length? `<div class="rd-sec">${label}</div>`+list.map(([b,i])=>{
       const p=rdBookProg(b); const pct=Math.round(p.d/p.t*100);
       const kd=b.kind==="original"?'<span class="kd">창작</span>':"";
+      const dn=p.d>=p.t?'<span class="kd" style="background:var(--ok-bg);color:var(--ok)">완독</span>':"";
       return `<button class="rd-book" onclick="openBook(${i})">
         <span class="lvb">${b.lv}<small>단계</small></span>
-        <span class="bi"><span class="bt">${b.title_ko}${kd}</span>
+        <span class="bi"><span class="bt">${b.title_ko}${kd}${dn}</span>
           <span class="ba">${[b.title,b.author_ko,b.lvName].filter(Boolean).join(" · ")}</span>
           <span class="bd">${b.intro_ko}</span>
           <span class="rd-prog"><i style="width:${pct}%"></i></span></span>
         <span class="bp">${p.d?p.d+"/"+p.t:""}</span></button>`;
     }).join("") : "";
-  const idx=bs.map((b,i)=>[b,i]);
-  wrap.innerHTML =
+  const idx=bs.map((b,i)=>[b,i]).filter(([b])=> !rdLvFilter || b.lv===rdLvFilter);
+  const html =
     sec(idx.filter(([b])=>b.kind!=="original"), "📚 일본 명작 (저작권 만료작)") +
     sec(idx.filter(([b])=>b.kind==="original"), "✒️ 창작 소설");
-  renderRdBar();
+  wrap.innerHTML = html || '<div style="text-align:center;color:var(--sub);padding:34px 0;font-size:13.5px">이 단계에는 아직 작품이 없어요</div>';
 }
 function openBook(i){
   rdBookCur=BOOKS[i];
@@ -3720,7 +3765,7 @@ function openChapter(k){
   $("rrRo").style.display = hasRo ? "" : "none";
   $("rrRo").classList.toggle("on",rdRo);
   if(hasRo && rdRo) body.querySelectorAll(".rd-s").forEach(e=>e.classList.add("ropen"));
-  rdStopPlay(); rdSyncNextBtn(); rdApplyFont();
+  rdStopPlay(); rdSyncNextBtn(); rdApplyFont(); rdTouch(b.id,k);
   show("rdRead");
 }
 function rdTapSentence(e,i){
