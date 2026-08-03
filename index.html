@@ -488,8 +488,10 @@
 .rd-body{padding:10px 16px 4px}
 .rd-s{padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer}
 .rd-s:last-child{border-bottom:none}
-.rd-s .jp{font-size:17.5px;line-height:2.15;
+.rd-body{--rdfs:17.5px}
+.rd-s .jp{font-size:var(--rdfs);line-height:2.15;
   font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.rd-s .ko{font-size:calc(var(--rdfs) * .76)}
 .rd-s .ko{font-size:13px;color:var(--sub);margin-top:5px;line-height:1.5;display:none}
 .rd-s .ro{font-size:12px;color:var(--accent);margin-top:4px;line-height:1.45;display:none;letter-spacing:.2px}
 .rd-s.ropen .ro{display:block}
@@ -497,22 +499,34 @@
 .rd-s.cur{background:var(--soft);border-radius:9px}
 .rd-s ruby rt{font-size:.5em;color:var(--accent);font-weight:600}
 .rd-noruby ruby rt{visibility:hidden}
+.rd-noruby ruby.peek rt{visibility:visible}          /* 감춘 상태에서 탭한 단어만 보이기 */
 .rd-w{cursor:pointer;border-bottom:1px dotted transparent}
 .rd-w:active{background:var(--rg-bg)}
-.rd-foot{padding:16px;display:flex;gap:9px}
+.rd-noruby .rd-w{border-bottom:1px dotted var(--line)}
+.rd-foot{padding:16px;display:flex;gap:9px;flex-wrap:wrap}
+.rd-foot .nx{flex:1 0 100%;background:var(--ink);color:#fff}
 .rd-foot button{flex:1;padding:14px 0;border:none;border-radius:13px;font-size:14.5px;font-weight:800;cursor:pointer;
   background:var(--soft);color:var(--ink);font-family:inherit}
 .rd-foot button.pri{background:var(--ok);color:#fff}
-/* 단어 팝업 */
+/* 단어 팝업 — 확대(pinch-zoom) 중에도 화면 안에 뜨도록 visualViewport 기준으로 JS가 위치를 잡는다 */
+.wp-bd{position:fixed;inset:0;z-index:59;background:rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .18s}
+.wp-bd.on{opacity:1;pointer-events:auto}
 .wp{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--card);border-radius:20px 20px 0 0;
-  box-shadow:0 -8px 30px rgba(0,0,0,.14);padding:18px 20px 26px;transform:translateY(110%);transition:transform .22s}
+  box-shadow:0 -8px 30px rgba(0,0,0,.14);padding:18px 20px 26px;transform:translateY(110%);transition:transform .22s;
+  max-height:70vh;overflow-y:auto}
 .wp.on{transform:translateY(0)}
-.wp .w{font-size:30px;font-weight:800;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.wp.fx{border-radius:18px;transition:opacity .18s;transform:none;opacity:0}   /* 확대 중: 화면 중앙 카드 */
+.wp.fx.on{opacity:1}
+.wp .w{font-size:30px;font-weight:800;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;padding-right:44px}
 .wp .r{font-size:15px;color:var(--accent);font-weight:700;margin-top:4px}
 .wp .k{font-size:15px;margin-top:6px}
+.wp .cx{font-size:12.5px;color:var(--sub);margin-top:9px;padding-top:9px;border-top:1px solid var(--line);line-height:1.55}
+.wp .cx b{color:var(--ink)}
 .wp .sp{margin-top:12px;padding:9px 16px;border:1px solid var(--line);background:var(--soft);
   border-radius:11px;font-size:13px;font-weight:800;cursor:pointer;color:var(--ink)}
-.wp .cl{position:absolute;top:14px;right:18px;font-size:20px;color:var(--sub);cursor:pointer;background:none;border:none}
+.wp .cl{position:absolute;top:10px;right:12px;width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;color:var(--ink);cursor:pointer;background:var(--soft);border:1px solid var(--line);z-index:2}
 /* 챕터 결과 */
 .rd-res{padding:26px 20px;text-align:center}
 .rd-res .em{font-size:46px}
@@ -1034,11 +1048,14 @@
     <button id="rrKo" onclick="rdToggleKo()">한국어</button>
     <button id="rrRo" onclick="rdToggleRo()" style="display:none">ローマ字</button>
     <button onclick="rdPlayAll()" id="rrPlay">🔊 이어 듣기</button>
+    <button onclick="rdFont(-1)" title="글자 작게">가﹣</button>
+    <button onclick="rdFont(1)" id="rrFs" title="글자 크게">가﹢</button>
   </div>
   <div class="rd-body" id="rrBody"></div>
   <div class="rd-foot">
     <button onclick="rdWordCards()">📇 단어 카드</button>
     <button class="pri" onclick="rdStartQuiz()">✏️ 챕터 시험</button>
+    <button class="nx" id="rrNext" onclick="rdNextChapter()">다음 장 →</button>
   </div>
 </div>
 
@@ -1066,11 +1083,13 @@
 </div>
 
 <!-- 단어 팝업 -->
+<div class="wp-bd" id="wordBd" onclick="closeWordPop()"></div>
 <div class="wp" id="wordPop">
   <button class="cl" onclick="closeWordPop()">✕</button>
   <div class="w" id="wpW"></div>
   <div class="r" id="wpR"></div>
   <div class="k" id="wpK"></div>
+  <div class="cx" id="wpCx" style="display:none"></div>
   <button class="sp" onclick="wpSpeak()">🔊 발음 듣기</button>
 </div>
 
@@ -1910,21 +1929,32 @@ function speakWSP(t){
 function speakP(t){
   return new Promise(res=>{
     t=String(t||""); if(!t||MUTED) return res();
-    let fired=false; const fin=()=>{ if(!fired){ fired=true; res(); } };
+    let fired=false, guard=0;
+    const fin=()=>{ if(!fired){ fired=true; clearTimeout(guard); res(); } };
+    // ⚠ 안전장치는 "문장 길이에 비례"해야 한다. 예전엔 9초 고정이라
+    //    책의 긴 문장에서 재생 도중에 다음 문장으로 넘어가 "이어 듣기가 끊기는" 증상이 났음.
+    const fallbackMs = Math.max(9000, t.length*260 + 4000);
     if(AUDIO_MANIFEST){
       const h=AUDIO_MANIFEST[t]||AUDIO_MANIFEST[t.split("/")[0]];
       if(h){
         try{
           const a=_getAudioEl(); const src="audio/"+h+".mp3";
           if(!a.src || a.src.indexOf(src)===-1){ a.src=src; a.load(); }
-          a.onended=fin; a.currentTime=0;
-          const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>speakWSP(t).then(fin));
-          setTimeout(fin,9000);
+          a.onended=fin;
+          a.onerror=()=>{ if(!fired) speakWSP(t).then(fin); };
+          a.currentTime=0;
+          // 실제 길이를 알면 그걸 기준으로(＋여유 1.2초) 안전장치를 다시 건다
+          const arm=()=>{ if(fired) return; clearTimeout(guard);
+            const ms = (isFinite(a.duration)&&a.duration>0) ? a.duration*1000+1200 : fallbackMs;
+            guard=setTimeout(fin,ms); };
+          a.onloadedmetadata=arm; a.ondurationchange=arm;
+          guard=setTimeout(fin,fallbackMs); arm();
+          const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>{ if(!fired) speakWSP(t).then(fin); });
           return;
         }catch(e){}
       }
     }
-    speakWSP(t).then(fin); setTimeout(fin,9000);
+    speakWSP(t).then(fin); guard=setTimeout(fin,fallbackMs);
   });
 }
 // ── 오답 반복 학습 ──
@@ -3187,7 +3217,12 @@ function renderRwTile(){
 }
 
 // ══════════ 일본 명작 읽기 (青空文庫 저작권 만료작 · 전부 클라이언트) ══════════
-let BOOKS=null, rdBookCur=null, rdChapCur=0, rdRuby=true, rdKo=false, rdRo=false;
+let BOOKS=null, rdBookCur=null, rdChapCur=0, rdRo=false;
+// 후리가나·한국어 표시 여부는 기기에 기억해 둔다 (매번 다시 끄는 게 번거롭다는 지적 반영)
+const rdPref=(k,d)=>{ try{ const v=localStorage.getItem(k); return v===null?d:v; }catch(e){ return d; } };
+const rdPrefSet=(k,v)=>{ try{ localStorage.setItem(k,v?"1":"0"); }catch(e){} };
+let rdRuby = rdPref("rd_ruby","1")==="1";
+let rdKo   = rdPref("rd_ko","0")==="1";
 let rqList=[], rqI=0, rqOk=0, rqLock=false;
 function rdState(){ try{ return JSON.parse(localStorage.getItem("reading")||"{}"); }catch(e){ return {}; } }
 function rdSave(o){ try{ localStorage.setItem("reading",JSON.stringify(o)); }catch(e){} }
@@ -3266,24 +3301,56 @@ function openChapter(k){
   $("rrRo").style.display = hasRo ? "" : "none";
   $("rrRo").classList.toggle("on",rdRo);
   if(hasRo && rdRo) body.querySelectorAll(".rd-s").forEach(e=>e.classList.add("ropen"));
+  rdStopPlay(); rdSyncNextBtn(); rdApplyFont();
   show("rdRead");
 }
 function rdTapSentence(e,i){
   const t=e.target.closest(".rd-w");
-  if(t){ e.stopPropagation(); openWordPop(t.dataset.w, t.dataset.r); return; }
+  if(t){ e.stopPropagation();
+    t.classList.add("peek");                      // 후리가나를 감춘 상태여도 탭한 단어는 읽기가 보이게
+    openWordPop(t.dataset.w, t.dataset.r, i); return; }
   const el=e.currentTarget; el.classList.toggle("open");
   const c=rdBookCur.chapters[rdChapCur];
   speak(rdReading(c.s[i].jp));
 }
 function rdToggleRo(){ rdRo=!rdRo; $("rrRo").classList.toggle("on",rdRo);
   $("rrBody").querySelectorAll(".rd-s").forEach(e=>e.classList.toggle("ropen",rdRo)); }
-function rdToggleRuby(){ rdRuby=!rdRuby; $("rrBody").classList.toggle("rd-noruby",!rdRuby); $("rrRuby").classList.toggle("on",rdRuby); }
-function rdToggleKo(){ rdKo=!rdKo; $("rrKo").classList.toggle("on",rdKo);
+function rdToggleRuby(){ rdRuby=!rdRuby; rdPrefSet("rd_ruby",rdRuby);
+  const b=$("rrBody"); b.classList.toggle("rd-noruby",!rdRuby);
+  if(rdRuby) b.querySelectorAll("ruby.peek").forEach(e=>e.classList.remove("peek"));
+  $("rrRuby").classList.toggle("on",rdRuby);
+  toast(rdRuby?"ふりがな 표시":"ふりがな 감춤 — 단어를 탭하면 그 단어만 보여요"); }
+function rdToggleKo(){ rdKo=!rdKo; rdPrefSet("rd_ko",rdKo); $("rrKo").classList.toggle("on",rdKo);
   $("rrBody").querySelectorAll(".rd-s").forEach(e=>e.classList.toggle("open",rdKo)); }
-let _rdPlayTok=0;
+
+// ── 글자 크기 (핀치줌 없이도 크게 볼 수 있게) ──
+let rdFs = +(rdPref("rd_fs","17.5")) || 17.5;
+function rdApplyFont(){ const b=$("rrBody"); if(b) b.style.setProperty("--rdfs", rdFs+"px");
+  const t=$("rrFs"); if(t) t.title=`글자 크기 ${Math.round(rdFs)}px`; }
+function rdFont(d){
+  rdFs = Math.min(30, Math.max(14, rdFs + d*1.5));
+  try{ localStorage.setItem("rd_fs", String(rdFs)); }catch(e){}
+  rdApplyFont(); toast(`글자 크기 ${Math.round(rdFs)}`);
+}
+
+// ── 다음 장 (시험 없이 넘어가기) ──
+function rdNextChapter(){
+  const b=rdBookCur; if(!b) return;
+  rdStopPlay();
+  if(rdChapCur+1 < b.chapters.length){ openChapter(rdChapCur+1); window.scrollTo(0,0); }
+  else { toast("마지막 장이에요 🎊"); rdBackToBook(); }
+}
+function rdSyncNextBtn(){
+  const b=rdBookCur, el=$("rrNext"); if(!b||!el) return;
+  const last = rdChapCur+1 >= b.chapters.length;
+  el.textContent = last ? "📚 목록으로" : `다음 장 → (${rdChapCur+2}/${b.chapters.length})`;
+}
+
+let _rdPlayTok=0, _rdPlaying=false;
 async function rdPlayAll(){
+  if(_rdPlaying){ rdStopPlay(); return; }         // ⚠ 예전엔 다시 누르면 두 번째 재생이 겹쳐 소리가 끊겼음
   const c=rdBookCur.chapters[rdChapCur];
-  const my=++_rdPlayTok;
+  const my=++_rdPlayTok; _rdPlaying=true;
   const els=[...$("rrBody").querySelectorAll(".rd-s")];
   $("rrPlay").textContent="⏸ 멈춤";
   for(let i=0;i<c.s.length;i++){
@@ -3294,46 +3361,100 @@ async function rdPlayAll(){
     if(my!==_rdPlayTok) return;
     await new Promise(r=>setTimeout(r,180));
   }
-  els.forEach(e=>e.classList.remove("cur"));
-  $("rrPlay").textContent="🔊 이어 듣기";
+  rdStopPlay();
 }
-function rdStopPlay(){ _rdPlayTok++; const b=$("rrPlay"); if(b) b.textContent="🔊 이어 듣기"; }
+function rdStopPlay(){
+  _rdPlayTok++; _rdPlaying=false;
+  try{ const a=_getAudioEl(); if(a){ a.pause(); } }catch(e){}
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const b=$("rrPlay"); if(b) b.textContent="🔊 이어 듣기";
+  // 재생이 끊겼을 때 회색 하이라이트가 남아 "희미한 회색 박스"로 보이던 문제
+  const body=$("rrBody"); if(body) body.querySelectorAll(".rd-s.cur").forEach(e=>e.classList.remove("cur"));
+}
 // ── 단어 팝업 ──
-let _wpW="";
-function rdLookup(w,r){
-  // 1) 현재 챕터 단어장
-  const c=rdBookCur&&rdBookCur.chapters[rdChapCur];
-  let hit=c&&c.words.find(x=>x.w===w);
-  if(hit) return hit.ko;
-  // 2) 같은 책 다른 챕터
-  if(rdBookCur){ for(const ch of rdBookCur.chapters){ const h=ch.words.find(x=>x.w===w); if(h) return h.ko; } }
-  // 3) 다른 책 전체
-  if(BOOKS){ for(const b of BOOKS){ for(const ch of b.chapters){ const h=ch.words.find(x=>x.w===w); if(h) return h.ko; } } }
-  // 4) 앱 전체 카드 데이터 (한자·어휘 팩)
-  for(const k in DATA){
-    const arr=DATA[k]||[];
-    for(const card of arr){
-      if(card.front===w && card.ko) return card.ko;
-    }
+// ⚠ "뜻 정보 없음"이 너무 자주 뜨던 원인: 표기(w) 완전일치만 찾았기 때문.
+//    한 번만 색인(Map)을 만들어 두고 표기·읽기·한자 낱글자까지 단계적으로 훑는다.
+let _wpW="", _rdIdx=null;
+function rdBuildIndex(){
+  if(_rdIdx) return _rdIdx;
+  const byW=new Map(), byR=new Map(), byK=new Map();   // 표기 / 읽기 / 한자1글자
+  const put=(m,k,v)=>{ if(k&&v&&!m.has(k)) m.set(k,v); };
+  if(BOOKS) for(const b of BOOKS) for(const ch of b.chapters) for(const x of (ch.words||[])){
+    put(byW,x.w,x.ko); put(byR,x.r,x.ko);
   }
-  // 5) 한자 1글자면 그 글자가 든 카드에서 힌트
-  if(w.length===1){
-    for(const k in DATA){ for(const card of (DATA[k]||[])){
-      if(card.front && card.front.length===1 && card.front===w && card.ko) return card.ko;
-    } }
+  for(const k in DATA) for(const card of (DATA[k]||[])){
+    const ko=card.ko; if(!ko || card.sent) continue;      // 문장카드는 단어 뜻이 아니므로 제외
+    put(byW,card.front,ko);
+    // 비(非)카나 카드는 romaji 필드에 "읽기(가나)"가 들어 있다 (rowToCard 참고)
+    if(card.romaji && /[ぁ-ヿ]/.test(card.romaji)) String(card.romaji).split("/").forEach(x=>put(byR,x.trim(),ko));
+    if(card.front && card.front.length===1) put(byK,card.front,ko);
   }
-  return null;
+  return (_rdIdx={byW,byR,byK});
 }
-function openWordPop(w,r){
+const rdTrim = s => String(s||"").replace(/[はがをにへでとものやかなねよぞぜさこそあうえおっ]+$/,"");
+function rdLookup(w,r){
+  const I=rdBuildIndex();
+  // 1) 현재 챕터 단어장 (문맥상 가장 정확)
+  const c=rdBookCur&&rdBookCur.chapters[rdChapCur];
+  if(c&&c.words){
+    let h=c.words.find(x=>x.w===w) || c.words.find(x=>x.r===r)
+       || c.words.find(x=>x.w&&w&&(x.w.indexOf(w)>=0||w.indexOf(x.w)>=0));
+    if(h) return h.ko;
+  }
+  // 2) 표기 → 3) 읽기 → 4) 송가나 뗀 표기
+  return I.byW.get(w) || (r&&I.byR.get(r)) || I.byW.get(rdTrim(w)) || null;
+}
+// 뜻을 못 찾았을 때: 한자를 낱글자로 쪼개 뜻을 붙여 준다 (建築 → 建 세우다 · 築 쌓다)
+function rdKanjiHint(w){
+  const I=rdBuildIndex();
+  const out=[];
+  for(const ch of String(w||"")){
+    if(!/[一-鿿]/.test(ch)) continue;
+    const ko=I.byK.get(ch)||I.byW.get(ch);
+    if(ko) out.push(`${ch} ${String(ko).split(/[,，·]/)[0].trim()}`);
+  }
+  return out.length? out.join(" · ") : "";
+}
+function openWordPop(w,r,si){
   _wpW=r||w;
   $("wpW").textContent=w; $("wpR").textContent=r||"";
   const ko=rdLookup(w,r);
-  $("wpK").textContent = ko || "뜻 정보 없음 — 읽기만 확인하세요";
+  const hint=ko?"":rdKanjiHint(w);
+  $("wpK").textContent = ko || hint || "이 단어의 뜻은 아직 사전에 없어요";
   $("wpK").style.color = ko ? "" : "var(--sub)";
-  $("wordPop").classList.add("on");
+  // 문맥 — 그 단어가 들어있는 문장의 한국어 번역을 함께 보여 준다
+  const cx=$("wpCx"); const c=rdBookCur&&rdBookCur.chapters[rdChapCur];
+  const s = (c && si!=null) ? c.s[si] : null;
+  if(s && s.ko){
+    cx.innerHTML = `<b>이 문장에서</b><br>${s.ko}` + (!ko&&hint?`<br><span style="opacity:.75">한자 뜻: ${hint}</span>`:"");
+    cx.style.display="";
+  } else cx.style.display="none";
+  $("wordPop").classList.add("on"); $("wordBd").classList.add("on");
+  wpFit();
   speak(r||w);
 }
-function closeWordPop(){ $("wordPop").classList.remove("on"); }
+// 확대(pinch-zoom) 상태에서는 fixed 요소가 화면 밖으로 나가 ✕조차 안 보였음 →
+// visualViewport 기준으로 보이는 영역 안에 직접 좌표를 잡아 준다.
+function wpFit(){
+  const p=$("wordPop"); if(!p||!p.classList.contains("on")) return;
+  const vv=window.visualViewport;
+  if(!vv || vv.scale<=1.02){
+    p.classList.remove("fx"); p.style.cssText=""; return;
+  }
+  p.classList.add("fx");
+  const w=Math.min(vv.width*0.92, 420);
+  p.style.left = (vv.offsetLeft + (vv.width-w)/2) + "px";
+  p.style.width = w+"px";
+  p.style.right = "auto";
+  p.style.bottom = "auto";
+  p.style.top = (vv.offsetTop + Math.max(8, vv.height*0.10)) + "px";
+  p.style.maxHeight = (vv.height*0.8)+"px";
+}
+if(window.visualViewport){
+  visualViewport.addEventListener("resize",wpFit);
+  visualViewport.addEventListener("scroll",wpFit);
+}
+function closeWordPop(){ $("wordPop").classList.remove("on"); $("wordBd").classList.remove("on"); }
 function wpSpeak(){ speak(_wpW); }
 // ── 단어 카드: 그 챕터 단어로 4지선다 ──
 function rdWordCards(){
