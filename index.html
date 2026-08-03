@@ -82,6 +82,8 @@
     cursor:pointer;user-select:none}
   .grp-h .k{font-size:16px;font-weight:900;color:var(--ink);letter-spacing:-.3px}
   .grp-h .j{font-size:12px;color:var(--accent);font-weight:700}
+  .grp-h.plain{cursor:default}
+  .grp:first-child{margin-top:6px}
   .grp-arrow{margin-left:auto;color:var(--accent);font-size:13px;transition:transform .2s}
   .grp.collapsed .grp-arrow{transform:rotate(-90deg)}
   .grp.collapsed .grp-items{display:none}
@@ -1785,13 +1787,12 @@ function renderNav(){
   groups.forEach(g=>{
     const gd=document.createElement("div"); gd.className="grp";
     let wrap=gd;
-    if(g.ko){                                   // 대주제 = 아코디언(접기/펴기)
-      const st=navCollapsed();
-      const collapsed = (g.ko in st) ? st[g.ko] : true;   // 기본: 접힘
-      if(collapsed) gd.classList.add("collapsed");
-      const h=document.createElement("div"); h.className="grp-h";
-      h.innerHTML=`<span class="k">${g.ko}</span><span class="j jp">${g.jp}</span><span class="grp-arrow">▾</span>`;
-      h.onclick=()=>{ gd.classList.toggle("collapsed"); const s=navCollapsed(); s[g.ko]=gd.classList.contains("collapsed"); saveNavCollapsed(s); };
+    // ⚠ 아코디언은 없앴다. 격자 한 칸이 이미 "대주제"이므로, 안에서 또 접으면
+    //   들어오자마자 아무것도 안 보이고 스크롤도 어색해진다(박 대표 지적).
+    //   그룹이 2개 이상일 때만 접히지 않는 소제목을 얹는다.
+    if(g.ko && groups.length>1){
+      const h=document.createElement("div"); h.className="grp-h plain";
+      h.innerHTML=`<span class="k">${g.ko}</span><span class="j jp">${g.jp}</span>`;
       gd.appendChild(h);
       wrap=document.createElement("div"); wrap.className="grp-items"; gd.appendChild(wrap);
     }
