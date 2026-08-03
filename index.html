@@ -515,6 +515,12 @@
 .rd-s.ropen .ro{display:block}
 .rd-s.open .ko{display:block}
 .rd-s.cur{background:var(--soft);border-radius:9px}
+/* 따라읽기 — 소리 나는 부분만 밝게 (karaoke) */
+.rd-k{border-radius:6px;padding:1px 0;transition:background .12s,color .12s}
+.rd-s.cur .rd-k{color:#9b9184}
+.rd-s.cur .rd-k.said{color:var(--ink)}
+.rd-s.cur .rd-k.now{background:var(--accent);color:#fff;box-shadow:0 0 0 3px var(--accent)}
+.rd-s.cur .rd-k.now rt{color:#ffe7dd}
 .rd-s ruby rt{font-size:.5em;color:var(--accent);font-weight:600}
 .rd-noruby ruby rt{visibility:hidden}
 .rd-noruby ruby.peek rt{visibility:visible}          /* 감춘 상태에서 탭한 단어만 보이기 */
@@ -1137,6 +1143,7 @@
     <button onclick="rdPlayAll()" id="rrPlay">🔊 이어 듣기</button>
     <button onclick="rdFont(-1)" title="글자 작게">가﹣</button>
     <button onclick="rdFont(1)" id="rrFs" title="글자 크게">가﹢</button>
+    <button id="rrKa" onclick="rdToggleKara()">🎤 따라읽기</button>
   </div>
   <div class="rd-body" id="rrBody"></div>
   <div class="rd-foot">
@@ -3452,6 +3459,80 @@ function rdRubyHtml(t){
   return String(t).replace(/\{([^|{}]+)\|([^|{}]+)\}/g,
     (m,a,b)=>`<ruby class="rd-w" data-w="${a}" data-r="${b}"><rb>${a}</rb><rt>${b}</rt></ruby>`);
 }
+
+// ── 따라읽기(카라오케) ──
+// 방식 C: 실제 오디오 길이를 문절별 "모라 수"에 비례해 나눠 짚어 간다.
+//   TTS 타임포인트를 쓰지 않으므로 데이터·비용 0. 구두점 쉼은 가중치로 보정.
+let rdKara = rdPref("rd_kara","1")==="1";
+function rdToggleKara(){
+  rdKara=!rdKara; rdPrefSet("rd_kara",rdKara);
+  $("rrKa").classList.toggle("on",rdKara);
+  if(!rdKara) rdKaraClear();
+  toast(rdKara?"따라읽기 켬 — 읽는 곳을 짚어 줘요":"따라읽기 끔");
+}
+// 마크업을 깨지 않고 문절 단위로 자른다. 구두점 뒤 · 조사 뒤(다음이 한자/가타카나일 때)
+function rdChunks(t){
+  const parts=[]; let buf="", i=0;
+  const PART="はがをにへでとものやかなねよからまでよりこそさえしか";
+  while(i<t.length){
+    if(t[i]==="{"){ const j=t.indexOf("}",i); const seg=t.slice(i,(j<0?t.length:j+1)); buf+=seg; i+=seg.length; continue; }
+    const ch=t[i]; buf+=ch; i++;
+    if("、。！？「」』）".includes(ch)){ parts.push(buf); buf=""; continue; }
+    // 조사 뒤 + 다음 글자가 한자/가타카나면 단어 중간일 확률이 낮다
+    if(PART.includes(ch)){
+      const nx=t[i]==="{" ? t[i+1] : t[i];
+      if(nx && /[一-鿿ァ-ヺ]/.test(nx) && rdPlain(buf).length>=3){ parts.push(buf); buf=""; }
+    }
+  }
+  if(buf) parts.push(buf);
+  // 너무 짧은 조각은 앞과 합침
+  const out=[];
+  for(const p of parts){
+    const n=rdMora(p);
+    if(out.length && n<=2) out[out.length-1]+=p; else out.push(p);
+  }
+  return out;
+}
+// 모라 수 — 작은 ゃゅょ는 앞 글자와 한 몸, ー·っ은 1모라. 구두점은 쉼으로 가중.
+function rdMora(seg){
+  const r=rdReading(seg).replace(/\{|\}/g,"");
+  let n=0;
+  for(const c of r){
+    if("ゃゅょャュョ".includes(c)) continue;
+    if("、".includes(c)){ n+=2; continue; }
+    if("。！？".includes(c)){ n+=4; continue; }
+    if("「」『』（）".includes(c)) continue;
+    n++;
+  }
+  return Math.max(1,n);
+}
+let _rdKaraRAF=0;
+function rdKaraClear(){
+  cancelAnimationFrame(_rdKaraRAF); _rdKaraRAF=0;
+  const b=$("rrBody"); if(b) b.querySelectorAll(".rd-k").forEach(e=>e.classList.remove("now","said"));
+}
+// 문장 재생이 시작될 때 호출 — 오디오 진행률을 보고 조각을 순서대로 짚는다
+function rdKaraRun(el){
+  cancelAnimationFrame(_rdKaraRAF);
+  if(!rdKara || !el) return;
+  const ks=[...el.querySelectorAll(".rd-k")];
+  if(!ks.length) return;
+  const w=ks.map(k=>+k.dataset.m||1), tot=w.reduce((a,b)=>a+b,0);
+  const acc=[]; let s=0; for(const v of w){ s+=v; acc.push(s/tot); }
+  const a=(typeof _getAudioEl==="function") ? _getAudioEl() : null;
+  const t0=performance.now();
+  const guess=tot*175+400;                       // 오디오를 못 쓸 때(합성음) 대략 모라당 175ms
+  const step=()=>{
+    let p;
+    if(a && isFinite(a.duration) && a.duration>0 && !a.paused) p=a.currentTime/a.duration;
+    else p=(performance.now()-t0)/guess;
+    p=Math.min(1,Math.max(0,p));
+    let idx=acc.findIndex(x=>p<=x); if(idx<0) idx=ks.length-1;
+    ks.forEach((k,i)=>{ k.classList.toggle("now",i===idx); k.classList.toggle("said",i<idx); });
+    if(p<1) _rdKaraRAF=requestAnimationFrame(step);
+  };
+  _rdKaraRAF=requestAnimationFrame(step);
+}
 function rdPlain(t){ return String(t).replace(/\{([^|{}]+)\|[^|{}]+\}/g,'$1'); }
 function rdReading(t){ return String(t).replace(/\{[^|{}]+\|([^|{}]+)\}/g,'$1'); }
 
@@ -3498,11 +3579,15 @@ function openChapter(k){
   $("rrPos").textContent=`${k+1} / ${b.chapters.length}`;
   const body=$("rrBody");
   body.className="rd-body"+(rdRuby?"":" rd-noruby");
-  body.innerHTML=c.s.map((x,i)=>
-    `<div class="rd-s ${rdKo?'open':''}" data-i="${i}" onclick="rdTapSentence(event,${i})">
-       <div class="jp">${rdRubyHtml(x.jp)}</div>${x.ro?`<div class="ro">${x.ro}</div>`:""}<div class="ko">${x.ko}</div></div>`).join("");
+  body.innerHTML=c.s.map((x,i)=>{
+    const jp = rdChunks(x.jp).map(seg=>
+      `<span class="rd-k" data-m="${rdMora(seg)}">${rdRubyHtml(seg)}</span>`).join("");
+    return `<div class="rd-s ${rdKo?'open':''}" data-i="${i}" onclick="rdTapSentence(event,${i})">
+       <div class="jp">${jp}</div>${x.ro?`<div class="ro">${x.ro}</div>`:""}<div class="ko">${x.ko}</div></div>`;
+  }).join("");
   $("rrRuby").classList.toggle("on",rdRuby);
   $("rrKo").classList.toggle("on",rdKo);
+  $("rrKa").classList.toggle("on",rdKara);
   const hasRo=c.s.some(x=>x.ro);
   $("rrRo").style.display = hasRo ? "" : "none";
   $("rrRo").classList.toggle("on",rdRo);
@@ -3517,7 +3602,11 @@ function rdTapSentence(e,i){
     openWordPop(t.dataset.w, t.dataset.r, i); return; }
   const el=e.currentTarget; el.classList.toggle("open");
   const c=rdBookCur.chapters[rdChapCur];
-  speak(rdReading(c.s[i].jp));
+  rdKaraClear();
+  $("rrBody").querySelectorAll(".rd-s.cur").forEach(x=>x.classList.remove("cur"));
+  el.classList.add("cur");
+  speakP(rdReading(c.s[i].jp)).then(()=>{ el.classList.remove("cur"); rdKaraClear(); });
+  setTimeout(()=>rdKaraRun(el), 80);
 }
 function rdToggleRo(){ rdRo=!rdRo; $("rrRo").classList.toggle("on",rdRo);
   $("rrBody").querySelectorAll(".rd-s").forEach(e=>e.classList.toggle("ropen",rdRo)); }
@@ -3569,16 +3658,19 @@ async function rdPlayAll(){
   $("rrPlay").textContent="⏸ 멈춤";
   for(let i=0;i<c.s.length;i++){
     if(my!==_rdPlayTok){ return; }
+    rdKaraClear();
     els.forEach(e=>e.classList.remove("cur"));
     els[i].classList.add("cur"); els[i].scrollIntoView({block:"center",behavior:"smooth"});
-    await speakP(rdReading(c.s[i].jp));
+    const pr = speakP(rdReading(c.s[i].jp));
+    setTimeout(()=>rdKaraRun(els[i]), 80);        // 오디오가 재생을 시작한 뒤 진행률을 읽는다
+    await pr;
     if(my!==_rdPlayTok) return;
     await new Promise(r=>setTimeout(r,180));
   }
   rdStopPlay();
 }
 function rdStopPlay(){
-  _rdPlayTok++; _rdPlaying=false;
+  _rdPlayTok++; _rdPlaying=false; rdKaraClear();
   try{ const a=_getAudioEl(); if(a){ a.pause(); } }catch(e){}
   try{ speechSynthesis.cancel(); }catch(e){}
   const b=$("rrPlay"); if(b) b.textContent="🔊 이어 듣기";
