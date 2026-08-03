@@ -552,6 +552,37 @@
   display:flex;align-items:center;justify-content:center;
   font-size:20px;color:var(--ink);cursor:pointer;background:var(--soft);border:1px solid var(--line);z-index:2}
 .wp .cl:active{background:var(--line)}
+/* ─── 히라가나 숨은그림찾기 (6~7세) ─── */
+.hg-top{padding:10px 16px 6px;text-align:center}
+.hg-ask{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.hg-ask .t{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  font-size:38px;color:var(--accent);vertical-align:-6px;margin:0 4px}
+.hg-sub{font-size:12.5px;color:var(--sub);margin-top:3px;font-weight:600}
+.hg-bar{display:flex;gap:7px;justify-content:center;padding:8px 16px 4px;flex-wrap:wrap}
+.hg-bar button{padding:8px 14px;border:1px solid var(--line);background:var(--card);border-radius:15px;
+  font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+.hg-bar button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hg-stage{position:relative;margin:8px 14px 0;border-radius:20px;overflow:hidden;
+  height:min(58vh,430px);border:2px solid var(--line);touch-action:manipulation;user-select:none}
+.hg-deco{position:absolute;font-size:30px;line-height:1;pointer-events:none;opacity:.92}
+.hg-ch{position:absolute;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  font-weight:800;cursor:pointer;line-height:1;transition:transform .18s,color .18s,text-shadow .18s;
+  -webkit-text-stroke:.5px rgba(255,255,255,.55)}
+.hg-ch.found{color:var(--ok)!important;transform:scale(1.35) rotate(0deg)!important;
+  text-shadow:0 0 14px rgba(90,160,110,.65);pointer-events:none;-webkit-text-stroke:1.5px #fff}
+.hg-ch.hint{animation:hgPulse .7s ease-in-out infinite}
+@keyframes hgPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.hg-ch.bad{animation:hgBad .4s}
+@keyframes hgBad{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.hg-pop{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.5);opacity:0;
+  font-size:64px;pointer-events:none;transition:.28s}
+.hg-pop.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.hg-foot{display:flex;gap:9px;padding:12px 16px 18px}
+.hg-foot button{flex:1;padding:13px 0;border:none;border-radius:13px;font-size:14px;font-weight:800;
+  background:var(--soft);color:var(--ink);cursor:pointer;font-family:inherit}
+.hg-foot button.pri{background:var(--accent);color:#fff}
+.hg-sc{display:flex;gap:10px;justify-content:center;font-size:12.5px;color:var(--sub);font-weight:700;padding-top:8px}
+.hg-sc b{color:var(--ink)}
 /* 챕터 결과 */
 .rd-res{padding:26px 20px;text-align:center}
 .rd-res .em{font-size:46px}
@@ -1121,6 +1152,27 @@
   <button class="sp" onclick="wpSpeak()">🔊 발음 듣기</button>
 </div>
 
+
+<!-- ═══ 히라가나 숨은그림찾기 (6~7세) ═══ -->
+<div class="screen" id="hgScreen">
+  <div class="top">
+    <button class="back" onclick="show('ghScreen')">‹</button>
+    <span class="title">🔍 히라가나 숨은그림찾기</span>
+    <span class="count" id="hgPos"></span>
+  </div>
+  <div class="hg-bar" id="hgRows"></div>
+  <div class="hg-top">
+    <div class="hg-ask" id="hgAsk"></div>
+    <div class="hg-sub" id="hgSub">그림 속에 숨어 있어요. 찾아서 눌러 보세요!</div>
+  </div>
+  <div class="hg-stage" id="hgStage"><div class="hg-pop" id="hgPop">🎉</div></div>
+  <div class="hg-sc"><span>찾은 글자 <b id="hgFound">0</b></span><span>최고 기록 <b id="hgBest">0</b></span></div>
+  <div class="hg-foot">
+    <button onclick="hgHint()">💡 힌트</button>
+    <button onclick="hgSay()">🔊 다시 듣기</button>
+    <button class="pri" onclick="hgNewScene()">🖼 새 그림</button>
+  </div>
+</div>
 
 <!-- ═══ 게임 허브 ═══ -->
 <div class="screen" id="ghScreen">
@@ -2496,7 +2548,7 @@ function startWrongbook(){
   show("quizScreen"); loadQ();
 }
 // ═══════════ 백업/복원 (기기 이전) ═══════════
-const BK_KEYS=["owned_packs","collection","daily_state","ta_best","sb_best","mt_best","cj_best","sp_best","kids","kt_best","sv_best","writing","reading","wrongbook","pack_last","pity","conf","license"];
+const BK_KEYS=["owned_packs","collection","daily_state","ta_best","sb_best","mt_best","cj_best","sp_best","kids","kt_best","sv_best","hg_best","rd_ruby","rd_ko","rd_fs","writing","reading","wrongbook","pack_last","pity","conf","license"];
 async function exportProgress(){
   const data={_app:"nihongocards",_v:1,_d:new Date().toISOString().slice(0,10)};
   BK_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!==null) data[k]=v; });
@@ -3643,8 +3695,122 @@ const GAMES=[
   {id:"kt",  ic:"🃏", bg:"var(--rg-bg)",  tt:"카르타 (짝 맞추기)", ds:"카드를 뒤집어 일본어와 뜻의 짝 찾기 · 몇 초에 끝낼까?", go:"openKarta", best:()=>{const b=ktBest()[8]; return b?`8쌍 ${b}초`:"";}},
   {id:"sv",  ic:"❤️", bg:"var(--miss-bg)", tt:"서바이벌", ds:"목숨 3개 · 5문제마다 난이도 상승 · 몇 문제까지 버틸까?", go:"openSurvival", best:()=>{const b=svBest(); return b?`최고 ${b}문제`:"";}},
   {id:"kd",  ic:"🧸", bg:"var(--soft)", tt:"그림 낱말카드 (어린이)", ds:"그림 카드를 뒤집어 맞추기 · 한국어와 소리가 닮은 말부터", go:"openKids", best:()=>{const n=Object.keys(kdLog()).length; return n?`${n}장 배움`:"";}},
+  {id:"hg",  ic:"🔍", bg:"var(--rr-bg)", tt:"숨은그림찾기 (히라가나)", ds:"그림 속에 숨은 글자 찾기 · 6~7세 첫 히라가나", go:"openHidden", best:()=>{const b=hgBest(); return b?`최고 ${b}개`:"";}},
   {id:"cj",  ic:"🔁", bg:"var(--ok-bg)",  tt:"동사 활용",      ds:"ます·て·ない·た형 4지선다 · 틀리면 즉시 규칙 해설", go:"openConj", best:()=>{const b=cjBest(); return b?`최고 연속 ${b}`:"";}},
 ];
+// ══════════ 🔍 히라가나 숨은그림찾기 (6~7세) ══════════
+// 그림 파일 없이 이모지 + 글자만으로 장면을 만든다(무료·오프라인·용량 0).
+// 아이가 "글자를 그림 속에서 찾아내는" 경험이 핵심이라, 글자는 배경에 살짝 녹인 색으로
+// 기울여 놓고, 찾으면 초록으로 커지며 발음이 나온다.
+const HG_ROWS = [
+  {t:"あ행", cs:["あ","い","う","え","お"]},
+  {t:"か행", cs:["か","き","く","け","こ"]},
+  {t:"さ행", cs:["さ","し","す","せ","そ"]},
+  {t:"た행", cs:["た","ち","つ","て","と"]},
+  {t:"な행", cs:["な","に","ぬ","ね","の"]},
+  {t:"は행", cs:["は","ひ","ふ","へ","ほ"]},
+  {t:"ま행", cs:["ま","み","む","め","も"]},
+  {t:"や·ら·わ", cs:["や","ゆ","よ","ら","り","る","れ","ろ","わ","を","ん"]},
+];
+const HG_SCENES = [
+  {n:"공원",  bg:"linear-gradient(#cfe9ff,#eaf7e0)", ink:"#3f6b8a", deco:"🌳🌲🌷🌼🦋🐝🐞🌈☁️🪁🍀🐦🌻🏞️🧒"},
+  {n:"바다",  bg:"linear-gradient(#bfe8f5,#dff4ff)", ink:"#2f7590", deco:"🐠🐟🐬🐙🦀🐚🌊⛵🏝️🦑🪸🐳☀️🫧🦈"},
+  {n:"하늘",  bg:"linear-gradient(#dbeaff,#fdf2d8)", ink:"#5a6fa8", deco:"☁️🌤️✈️🎈🕊️⭐🌙🚀🪂🌟🦅☄️🛸🌥️🪁"},
+  {n:"숲",    bg:"linear-gradient(#dff0d2,#f3f7dd)", ink:"#4e7a45", deco:"🌲🍄🐿️🦔🦉🐻🌰🍁🪵🐛🦌🌿🐸🕸️🪺"},
+  {n:"방",    bg:"linear-gradient(#fdeede,#fbf6ee)", ink:"#9a6a4a", deco:"🧸🪀🧩🖍️📚🛏️🪟🕰️🧦🪆🎨🚂🪁🍪🐈"},
+  {n:"놀이터",bg:"linear-gradient(#ffe9ef,#fff6e5)", ink:"#a85c78", deco:"🛝🎠🏀⚽🪃🛴🎪🎈🧃🍦🐕🌞🏐🤸🪁"},
+];
+let hgRow=0, hgScene=0, hgItems=[], hgTarget=null, hgFoundN=0, hgHintT=0;
+const hgBest = ()=>{ try{ return +localStorage.getItem("hg_best")||0; }catch(e){ return 0; } };
+const hgSetBest = n=>{ try{ if(n>hgBest()) localStorage.setItem("hg_best",n); }catch(e){} };
+
+function openHidden(){
+  show("hgScreen");
+  $("hgRows").innerHTML = HG_ROWS.map((r,i)=>
+    `<button class="${i===hgRow?'on':''}" onclick="hgPickRow(${i})">${r.t}</button>`).join("");
+  hgFoundN=0; $("hgFound").textContent=0; $("hgBest").textContent=hgBest();
+  hgNewScene();
+}
+function hgPickRow(i){
+  hgRow=i;
+  document.querySelectorAll("#hgRows button").forEach((b,k)=>b.classList.toggle("on",k===i));
+  hgNewScene();
+}
+function hgNewScene(){
+  clearTimeout(hgHintT);
+  hgScene=(hgScene+1)%HG_SCENES.length;
+  const sc=HG_SCENES[hgScene], st=$("hgStage");
+  st.style.background=sc.bg;
+  const W=st.clientWidth||330, H=st.clientHeight||400;
+  const deco=[...sc.deco];
+  const put=[];                                   // 겹침 방지용 배치 기록
+  const free=(x,y,r)=> put.every(p=> Math.hypot(p.x-x,p.y-y) > (p.r+r)*0.92 );
+  const spot=(r)=>{ for(let k=0;k<200;k++){
+      const x=r+Math.random()*(W-2*r), y=r+Math.random()*(H-2*r);
+      if(free(x,y,r)){ put.push({x,y,r}); return {x,y}; } } return null; };
+
+  let html='<div class="hg-pop" id="hgPop">🎉</div>';
+  // 1) 장식 이모지
+  for(let i=0;i<14;i++){
+    const s=24+Math.random()*20, p=spot(s*0.62); if(!p) continue;
+    html+=`<span class="hg-deco" style="left:${p.x-s/2}px;top:${p.y-s/2}px;font-size:${s}px;
+      transform:rotate(${(Math.random()*24-12).toFixed(1)}deg)">${deco[i%deco.length]}</span>`;
+  }
+  // 2) 숨은 글자 — 배경에 반쯤 녹인 색으로
+  const cs=HG_ROWS[hgRow].cs.slice();
+  hgItems=[];
+  cs.forEach((c,i)=>{
+    const s=30+Math.random()*16, p=spot(s*0.6); if(!p) return;
+    const op=(0.42+Math.random()*0.26).toFixed(2);
+    hgItems.push({c, id:"hgc"+i});
+    html+=`<span class="hg-ch" id="hgc${i}" data-c="${c}" onclick="hgTap('${c}','hgc${i}')"
+      style="left:${p.x-s/2}px;top:${p.y-s/2}px;font-size:${s}px;color:${sc.ink};opacity:${op};
+      transform:rotate(${(Math.random()*40-20).toFixed(1)}deg)">${c}</span>`;
+  });
+  st.innerHTML=html;
+  $("hgPos").textContent = `${sc.n} · ${hgItems.length}글자`;
+  hgNext();
+}
+function hgNext(){
+  clearTimeout(hgHintT);
+  const left=hgItems.filter(x=>!x.done);
+  if(!left.length){ hgCheer("🏆","다 찾았어요! 새 그림으로 갈까요?"); setTimeout(hgNewScene,1400); return; }
+  hgTarget=left[Math.floor(Math.random()*left.length)];
+  $("hgAsk").innerHTML=`<span class="t">${hgTarget.c}</span> 를 찾아보세요!`;
+  $("hgSub").textContent="그림 속에 숨어 있어요. 찾아서 눌러 보세요!";
+  hgSay();
+  hgHintT=setTimeout(hgHint, 12000);            // 12초 지나면 알아서 살짝 알려 준다
+}
+function hgSay(){ if(hgTarget) speak(hgTarget.c); }
+function hgHint(){
+  if(!hgTarget) return;
+  const el=$(hgTarget.id); if(!el) return;
+  el.classList.add("hint"); $("hgSub").textContent="여기 근처에 있어요! 반짝이는 글자를 눌러 보세요";
+  setTimeout(()=>el.classList.remove("hint"),3000);
+}
+function hgTap(c,id){
+  if(!hgTarget) return;
+  const el=$(id);
+  if(c===hgTarget.c){
+    clearTimeout(hgHintT);
+    el.classList.add("found"); el.style.opacity=1;
+    hgTarget.done=true; hgFoundN++;
+    $("hgFound").textContent=hgFoundN; hgSetBest(hgFoundN); $("hgBest").textContent=hgBest();
+    speak(c);
+    hgCheer(["🎉","👏","🌟","💯","🥳"][Math.floor(Math.random()*5)],
+            ["잘했어요!","맞았어요!","최고예요!","대단해요!"][Math.floor(Math.random()*4)]);
+    setTimeout(hgNext,1200);
+  }else{
+    el.classList.add("bad"); setTimeout(()=>el.classList.remove("bad"),420);
+    $("hgSub").textContent=`이건 「${c}」예요. 「${hgTarget.c}」를 더 찾아봐요!`;
+    speak(c);
+  }
+}
+function hgCheer(em,msg){
+  const p=$("hgPop"); if(p){ p.textContent=em; p.classList.add("on"); setTimeout(()=>p.classList.remove("on"),900); }
+  if(msg) $("hgSub").textContent=msg;
+}
+
 function openGames(){
   show("ghScreen");
   $("ghLv").innerHTML = lvBarHtml("null");
