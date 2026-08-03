@@ -694,6 +694,19 @@
 /* ══ 오답노트 ══ */
 .wb-sum{padding:12px 16px 2px;text-align:center;font-size:13px;color:var(--sub);font-weight:700}
 .wb-sum b{color:var(--miss);font-size:17px}
+.wb-add{padding:10px 16px 2px}
+.wb-add input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:13px;
+  background:var(--card);font-size:14px;font-family:inherit;color:var(--ink);outline:none}
+.wb-add input:focus{border-color:var(--accent)}
+.wb-res{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:230px;overflow-y:auto}
+.wb-res button{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);
+  background:var(--card);border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%}
+.wb-res button:active{background:var(--soft)}
+.wb-res .f{font-size:16px;font-weight:800;flex:0 0 auto;max-width:40%;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.wb-res .m{flex:1;min-width:0;font-size:12.5px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wb-res .p{flex:0 0 auto;font-size:10.5px;font-weight:800;color:var(--accent)}
+.wb-res .none{color:var(--sub);font-size:12.5px;text-align:center;padding:10px}
 .wb-set{padding:8px 16px 0}
 .wb-set .row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .wb-set .lab{flex:0 0 76px;font-size:12px;font-weight:800;color:var(--sub)}
@@ -1258,6 +1271,7 @@
     <span class="title">🔍 히라가나 숨은그림찾기</span>
     <span class="count" id="hgPos"></span>
   </div>
+  <div class="hg-bar" id="hgKind" style="padding-bottom:0"></div>
   <div class="hg-bar" id="hgRows"></div>
   <div class="hg-top">
     <div class="hg-ask" id="hgAsk"></div>
@@ -1337,6 +1351,12 @@
     <span class="count" id="wbTot"></span>
   </div>
   <div class="wb-sum" id="wbSum"></div>
+  <!-- 직접 추가: 틀린 적은 없어도 "이건 꼭 다시 보고 싶다" 하는 단어를 담는다 -->
+  <div class="wb-add">
+    <input id="wbQ" type="search" placeholder="단어·한자·뜻으로 검색해 추가 (예: 約束, 약속)"
+           oninput="wbSearch()" autocomplete="off">
+    <div class="wb-res" id="wbRes"></div>
+  </div>
   <div class="wb-set" id="wbSet">
     <div class="row"><div class="lab">문제 수</div>
       <div class="seg" id="wbSegN">
@@ -2569,6 +2589,45 @@ function renderWbBar(){
   if(tile) tile.classList.toggle("hot", n>0);
 }
 
+// ── 오답노트에 직접 추가 (틀린 적 없어도 담고 싶은 단어) ──
+function wbSearch(){
+  const q=($("wbQ").value||"").trim();
+  const box=$("wbRes");
+  if(q.length<1){ box.innerHTML=""; return; }
+  const have=getWB();
+  const hit=[];
+  for(const cat in DATA){
+    if(cat.startsWith("__")) continue;
+    for(const c of (DATA[cat]||[])){
+      const f=c.front||"", ko=c.ko||"", rd=c.romaji||"";
+      if(f.indexOf(q)<0 && ko.indexOf(q)<0 && rd.indexOf(q)<0) continue;
+      if(have[cat+"|"+f]) continue;                 // 이미 담긴 건 빼고
+      hit.push({cat,c});
+      if(hit.length>=40) break;
+    }
+    if(hit.length>=40) break;
+  }
+  // 앞에서부터 일치하는 것을 위로
+  hit.sort((a,b)=>((a.c.front||"").indexOf(q)===0?0:1)-((b.c.front||"").indexOf(q)===0?0:1));
+  box.innerHTML = hit.length
+    ? hit.slice(0,12).map(({cat,c})=>{
+        const nm=(NAV_NAME[cat]||cat);
+        const mean=c.sent ? (c.exk||c.ko||"") : (c.ko||"");
+        return `<button onclick="wbAddManual('${cat}','${String(c.front).replace(/'/g,"\\'")}')">
+          <span class="f">${c.front}</span><span class="m">${mean}</span><span class="p">＋ ${nm}</span></button>`;
+      }).join("")
+    : `<div class="none">"${q}" — 찾는 단어가 없어요</div>`;
+}
+// 팩 코드 → 사람이 읽는 이름 (검색 결과에 출처 표시)
+const NAV_NAME=(()=>{ const m={}; for(const s in NAV) NAV[s].forEach(g=>g.items.forEach(it=>m[it.code]=it.ko)); return m; })();
+function wbAddManual(cat,front){
+  const w=getWB(), k=cat+"|"+front;
+  if(!w[k]){ w[k]={n:1,t:Date.now(),manual:1}; saveWB(w); }
+  $("wbQ").value=""; $("wbRes").innerHTML="";
+  renderWbList(); renderWbBar();
+  toast(`📕 「${front}」 오답노트에 담았어요`);
+}
+
 // ── 오답노트 화면 ──
 let wbConf={n:20,t:5,r:0};
 function wbItems(){
@@ -2604,7 +2663,7 @@ function renderWbList(){
   $("wbGo").disabled = ready<1;
   const list=$("wbList");
   if(!items.length){
-    list.innerHTML=`<div class="wb-empty">아직 오답이 없어요 🎉<br><span style="font-size:12.5px">퀴즈에서 틀린 문제가 여기에 자동으로 쌓입니다</span></div>`;
+    list.innerHTML=`<div class="wb-empty">아직 오답이 없어요 🎉<br><span style="font-size:12.5px">퀴즈에서 틀린 문제가 자동으로 쌓이고,<br>위 칸에서 검색해 직접 담을 수도 있어요</span></div>`;
     $("wbSet").style.display="none"; return;
   }
   $("wbSet").style.display="block";
@@ -3912,7 +3971,7 @@ const GAMES=[
   {id:"sv",  ic:"❤️", bg:"var(--miss-bg)", tt:"서바이벌", ds:"목숨 3개 · 5문제마다 난이도 상승 · 몇 문제까지 버틸까?", go:"openSurvival", best:()=>{const b=svBest(); return b?`최고 ${b}문제`:"";}},
   {id:"kd",  ic:"🧸", bg:"var(--soft)", tt:"그림 낱말카드 (어린이)", ds:"그림 카드를 뒤집어 맞추기 · 한국어와 소리가 닮은 말부터", go:"openKids", best:()=>{const n=Object.keys(kdLog()).length; return n?`${n}장 배움`:"";}},
   {id:"mn",  ic:"🖼", bg:"var(--rs-bg)", tt:"그림으로 외우는 히라가나", ds:"う=우산, き=키(열쇠)… 그림에 글자를 겹쳐 소리까지 한 번에", go:"openMnemonic", best:()=>""},
-  {id:"hg",  ic:"🔍", bg:"var(--rr-bg)", tt:"숨은그림찾기 (히라가나)", ds:"그림 속에 숨은 글자 찾기 · 6~7세 첫 히라가나", go:"openHidden", best:()=>{const b=hgBest(); return b?`최고 ${b}개`:"";}},
+  {id:"hg",  ic:"🔍", bg:"var(--rr-bg)", tt:"숨은그림찾기 (글자)", ds:"그림 속에 숨은 글자 찾기 · 히라가나/가타카나 · 6~7세", go:"openHidden", best:()=>{const b=hgBest(); return b?`최고 ${b}개`:"";}},
   {id:"cj",  ic:"🔁", bg:"var(--ok-bg)",  tt:"동사 활용",      ds:"ます·て·ない·た형 4지선다 · 틀리면 즉시 규칙 해설", go:"openConj", best:()=>{const b=cjBest(); return b?`최고 연속 ${b}`:"";}},
 ];
 // ══════════ 🖼 그림으로 외우는 히라가나 (연상법) ══════════
@@ -4102,6 +4161,16 @@ function mqPick(c,a,el){
 // 그림 파일 없이 이모지 + 글자만으로 장면을 만든다(무료·오프라인·용량 0).
 // 아이가 "글자를 그림 속에서 찾아내는" 경험이 핵심이라, 글자는 배경에 살짝 녹인 색으로
 // 기울여 놓고, 찾으면 초록으로 커지며 발음이 나온다.
+const HG_ROWS_K = [
+  {t:"ア행", cs:["ア","イ","ウ","エ","オ"]},
+  {t:"カ행", cs:["カ","キ","ク","ケ","コ"]},
+  {t:"サ행", cs:["サ","シ","ス","セ","ソ"]},
+  {t:"タ행", cs:["タ","チ","ツ","テ","ト"]},
+  {t:"ナ행", cs:["ナ","ニ","ヌ","ネ","ノ"]},
+  {t:"ハ행", cs:["ハ","ヒ","フ","ヘ","ホ"]},
+  {t:"マ행", cs:["マ","ミ","ム","メ","モ"]},
+  {t:"ヤ·ラ·ワ", cs:["ヤ","ユ","ヨ","ラ","リ","ル","レ","ロ","ワ","ヲ","ン"]},
+];
 const HG_ROWS = [
   {t:"あ행", cs:["あ","い","う","え","お"]},
   {t:"か행", cs:["か","き","く","け","こ"]},
@@ -4120,17 +4189,26 @@ const HG_SCENES = [
   {n:"방",    bg:"linear-gradient(#fdeede,#fbf6ee)", ink:"#9a6a4a", deco:"🧸🪀🧩🖍️📚🛏️🪟🕰️🧦🪆🎨🚂🪁🍪🐈"},
   {n:"놀이터",bg:"linear-gradient(#ffe9ef,#fff6e5)", ink:"#a85c78", deco:"🛝🎠🏀⚽🪃🛴🎪🎈🧃🍦🐕🌞🏐🤸🪁"},
 ];
-let hgRow=0, hgScene=0, hgItems=[], hgTarget=null, hgFoundN=0, hgHintT=0;
+let hgKind="h", hgRow=0, hgScene=0, hgItems=[], hgTarget=null, hgFoundN=0, hgHintT=0;
+const hgRows = ()=> hgKind==="h" ? HG_ROWS : HG_ROWS_K;
+const hgMne  = ()=> hgKind==="h" ? MNE : MNE_K;
 const hgBest = ()=>{ try{ return +localStorage.getItem("hg_best")||0; }catch(e){ return 0; } };
 const hgSetBest = n=>{ try{ if(n>hgBest()) localStorage.setItem("hg_best",n); }catch(e){} };
 
 function openHidden(){
   show("hgScreen");
-  $("hgRows").innerHTML = HG_ROWS.map((r,i)=>
-    `<button class="${i===hgRow?'on':''}" onclick="hgPickRow(${i})">${r.t}</button>`).join("");
+  hgSyncBar();
   hgFoundN=0; $("hgFound").textContent=0; $("hgBest").textContent=hgBest();
   hgDraw();
 }
+function hgSyncBar(){
+  $("hgKind").innerHTML =
+    `<button class="${hgKind==='h'?'on':''}" onclick="hgKindSet('h')">ひらがな</button>`+
+    `<button class="${hgKind==='k'?'on':''}" onclick="hgKindSet('k')">カタカナ</button>`;
+  $("hgRows").innerHTML = hgRows().map((r,i)=>
+    `<button class="${i===hgRow?'on':''}" onclick="hgPickRow(${i})">${r.t}</button>`).join("");
+}
+function hgKindSet(k){ hgKind=k; hgRow=0; hgSyncBar(); hgDraw(); }
 function hgPickRow(i){
   hgRow=i;
   document.querySelectorAll("#hgRows button").forEach((b,k)=>b.classList.toggle("on",k===i));
@@ -4173,7 +4251,7 @@ function hgRender(){
       transform:rotate(${(Math.random()*24-12).toFixed(1)}deg)">${deco[i%deco.length]}</span>`;
   }
   // 2) 숨은 글자 — 배경에 반쯤 녹인 색으로
-  const cs=HG_ROWS[hgRow].cs.slice();
+  const cs=hgRows()[hgRow].cs.slice();
   hgItems=[];
   cs.forEach((c,i)=>{
     const s=30+Math.random()*16, p=spot(s*0.6); if(!p) return;
@@ -4202,7 +4280,7 @@ function hgHint(){
   if(!hgTarget) return;
   const el=$(hgTarget.id); if(!el) return;
   el.classList.add("hint");
-  const m=MNE.find(x=>x[0]===hgTarget.c);       // 연상 그림으로 한 번 더 도와준다
+  const m=hgMne().find(x=>x[0]===hgTarget.c);   // 연상 그림으로 한 번 더 도와준다
   $("hgSub").innerHTML = m ? `${m[2]} <b>${m[3]}</b>의 「${m[0]}」— 반짝이는 글자를 눌러 보세요`
                            : "여기 근처에 있어요! 반짝이는 글자를 눌러 보세요";
   setTimeout(()=>el.classList.remove("hint"),3000);
