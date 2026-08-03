@@ -66,6 +66,12 @@
   /* ─── 카테고리 격자 (탭+아코디언 대체) ─── */
   .sec-h{font-size:12.5px;font-weight:800;color:var(--sub);padding:18px 20px 8px;letter-spacing:.2px}
   .cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 16px 26px}
+  .sec-tools{display:flex;gap:8px;padding:12px 16px 2px;flex-wrap:wrap}
+  .sec-tools button{flex:1 1 calc(50% - 4px);display:flex;align-items:center;gap:7px;justify-content:center;
+    padding:12px 8px;border:1px solid var(--line);background:var(--card);border-radius:14px;
+    font-size:13px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+  .sec-tools button i{font-style:normal;font-size:17px}
+  .sec-tools button:active{background:var(--soft)}
   .cg{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 8px 12px;
     display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:inherit;
     box-shadow:0 1px 3px rgba(0,0,0,.03);transition:.14s;position:relative;min-height:104px;justify-content:center}
@@ -893,6 +899,7 @@
     <span class="title" id="secTitle">카테고리</span>
     <span class="count" id="secCount"></span>
   </div>
+  <div class="sec-tools" id="secTools"></div>
   <div class="list" id="catList"></div>
 </div>
 
@@ -1874,24 +1881,25 @@ function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("sho
 //   격자 한 칸 = 카테고리 → 누르면 그 카테고리의 팩 목록(secScreen) 한 장으로 펼쳐진다.
 //   팩이 늘어도 홈은 그대로. 신규 팩은 NAV에, 신규 카테고리는 아래 CGRID에만 추가할 것.
 const CGRID = [
-  {ic:"🔤", ko:"글자",        sub:"히라가나·가타카나", sec:"kana",     grp:[""]},
-  {ic:"🖼", ko:"그림 히라가나", sub:"う=우산 연상법",    act:()=>openMnemonic()},
-  {ic:"🈳", ko:"50음도표",    sub:"눌러서 발음",       act:()=>openChart()},
-  {ic:"🧸", ko:"어린이 카드",  sub:"그림 뒤집기",       act:()=>openKids(), kids:true},
-  {ic:"🌱", ko:"기초 필수",    sub:"숫자·요일·가족",    sec:"kana",     grp:["기초 필수"]},
-  {ic:"🍎", ko:"주제·생활",    sub:"동물·음식·직업",    sec:"kana",     grp:["주제·생활"]},
-  {ic:"🈶", ko:"JLPT 한자",   sub:"N5~N1",            sec:"kanji",    grp:["자격시험 JLPT"]},
-  {ic:"📗", ko:"JLPT 어휘",   sub:"N5~N1 빈칸",        sec:"vocab",    grp:["JLPT 실전 어휘 · 빈칸(끼워넣기)"]},
-  {ic:"🧳", ko:"상황·장면",    sub:"여행·회사·병원",    sec:"vocab",    grp:["상황·장면별"]},
-  {ic:"🔬", ko:"분야·전문",    sub:"뉴스·의학·법률",    sec:"vocab",    grp:["분야·주제별"]},
-  {ic:"📚", ko:"독서 빈출",    sub:"소설·평론",         sec:"vocab",    grp:["책 빈도별"]},
-  {ic:"🅰", ko:"가타카나 심화", sub:"和製英語·줄임말",   sec:"vocab",    grp:["가타카나 마스터·빈칸","특화·빈칸"]},
-  {ic:"📝", ko:"통문장·문법",  sub:"예문·조사·문형",    sec:"sentence", grp:["*"], sec2:"grammar", grp2:["*"]},
+  {ic:"🔤", ko:"글자",     sub:"히라가나·가타카나", sec:"kana", grp:[""],
+   tools:[["🈳","50음도표","openChart()"],["🖼","그림 연상","openMnemonic()"],
+          ["🔍","숨은그림찾기","openHidden()"],["✍️","글자 쓰기","openWriting('hiragana')"]]},
+  {ic:"📗", ko:"단어",     sub:"기초·JLPT·상황·분야", sec:"kana", grp:["기초 필수","주제·생활"],
+   more:[["kanji",["자격시험 JLPT"]],["vocab",["JLPT 실전 어휘 · 빈칸(끼워넣기)","상황·장면별",
+          "분야·주제별","책 빈도별","가타카나 마스터·빈칸","특화·빈칸"]]],
+   tools:[["✍️","한자 쓰기","openWriting('N5')"],["🎮","단어 게임","openGames()"]]},
+  {ic:"📝", ko:"문장 암기", sub:"수험·여행·비즈니스", sec:"sentence", grp:["*"],
+   tools:[["🧩","문장 만들기","openSb()"],["🗣","말하기","openSpeak()"]]},
+  {ic:"📐", ko:"문법 카드", sub:"조사·부사·활용·문형", sec:"grammar", grp:["*"],
+   tools:[["🔁","동사 활용","openConj()"]]},
+  {ic:"🧸", ko:"어린이 카드", sub:"그림 뒤집기",  act:()=>openKids(), kids:true},
+  {ic:"📖", ko:"책읽기",    sub:"5세부터 원서",   act:()=>openRead()},
 ];
 function cgGroups(c){
   const pick=(sec,names)=> (NAV[sec]||[]).filter(g=> names.includes("*") || names.includes(g.ko));
   let gs = c.sec ? pick(c.sec, c.grp) : [];
   if(c.sec2) gs = gs.concat(pick(c.sec2, c.grp2));
+  (c.more||[]).forEach(([sec,names])=>{ gs = gs.concat(pick(sec,names)); });
   return gs;
 }
 function cgCount(c){ return cgGroups(c).reduce((n,g)=>n+g.items.length,0); }
@@ -1913,6 +1921,9 @@ function cgOpen(i){
   curSecCat=c;
   $("secTitle").textContent = `${c.ic} ${c.ko}`;
   $("secCount").textContent = `${cgCount(c)}팩`;
+  // 카테고리 안에 그 분야의 도구(게임·쓰기·표 등)를 함께 놓는다 — 흩어져 있으면 못 찾는다
+  $("secTools").innerHTML = (c.tools||[]).map(([ic,label,fn])=>
+    `<button onclick="${fn}"><i>${ic}</i>${label}</button>`).join("");
   renderNav();
   show("secScreen"); window.scrollTo(0,0);
 }
@@ -3261,7 +3272,8 @@ function wrOK(){
   toast("👏 좋아요! 다음 글자");
   wrIdx++; wrLoad();
 }
-function openWriting(){
+function openWriting(preset){
+  if(preset && (DATA[preset]||[]).length) wrCat=preset;      // 카테고리에서 바로 들어올 때 소스 지정
   show("wrScreen"); renderWrSrc();
   if(!(DATA[wrCat]||[]).length){ const f=WR_SRC.find(s=>(DATA[s.code]||[]).length); if(f) wrCat=f.code; renderWrSrc(); }
   wrLoad();
