@@ -3729,19 +3729,35 @@ function openHidden(){
   $("hgRows").innerHTML = HG_ROWS.map((r,i)=>
     `<button class="${i===hgRow?'on':''}" onclick="hgPickRow(${i})">${r.t}</button>`).join("");
   hgFoundN=0; $("hgFound").textContent=0; $("hgBest").textContent=hgBest();
-  hgNewScene();
+  hgDraw();
 }
 function hgPickRow(i){
   hgRow=i;
   document.querySelectorAll("#hgRows button").forEach((b,k)=>b.classList.toggle("on",k===i));
-  hgNewScene();
+  hgDraw();
 }
+// 화면 회전·크기 변경 시 글자가 밖으로 나가지 않게 다시 배치
+addEventListener("resize",()=>{ const st=$("hgStage");
+  if(st && st.closest(".screen").classList.contains("on") && st.clientWidth && Math.abs(st.clientWidth-_hgW)>24) hgRender(); });
 function hgNewScene(){
-  clearTimeout(hgHintT);
   hgScene=(hgScene+1)%HG_SCENES.length;
+  hgDraw();
+}
+// ⚠ 화면을 막 띄운 직후엔 clientWidth가 0이라 글자가 한쪽에 몰린다.
+//   레이아웃이 잡힐 때까지 즉시→rAF→지연 3단으로 재시도. (손글씨 캔버스에서 겪은 것과 같은 함정)
+function hgDraw(){
+  const st=$("hgStage");
+  if(!st) return;
+  if(!st.clientWidth){ requestAnimationFrame(hgDraw); setTimeout(hgDraw,120); return; }
+  hgRender();
+}
+let _hgW=0;
+function hgRender(){
+  clearTimeout(hgHintT);
   const sc=HG_SCENES[hgScene], st=$("hgStage");
   st.style.background=sc.bg;
   const W=st.clientWidth||330, H=st.clientHeight||400;
+  _hgW=W;
   const deco=[...sc.deco];
   const put=[];                                   // 겹침 방지용 배치 기록
   const free=(x,y,r)=> put.every(p=> Math.hypot(p.x-x,p.y-y) > (p.r+r)*0.92 );
