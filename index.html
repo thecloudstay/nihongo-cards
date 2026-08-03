@@ -1191,6 +1191,7 @@
     <span class="title">🖼 그림으로 외우는 히라가나</span>
     <span class="count" id="mnPos"></span>
   </div>
+  <div class="mn-rows" id="mnKind" style="padding-bottom:0"></div>
   <div class="mn-rows" id="mnRows"></div>
   <div class="mn-wrap">
     <div class="mn-card" onclick="mnSay()">
@@ -3829,43 +3830,104 @@ const MNE = [
  ["を","wo","🅾️","오(を)","소리는 <b>오</b> · 목적어에만 씀"],
  ["ん","n","🔚","받침","받침 <b>ㄴ·ㅇ</b> 소리로 끝"],
 ];
-const MN_ROWS=[["あ행",0,5],["か행",5,10],["さ행",10,15],["た행",15,20],["な행",20,25],
-               ["は행",25,30],["ま행",30,35],["や행",35,38],["ら행",38,43],["わ·ん",43,46]];
-let mnRow=0, mnI=0;
+// 가타카나 46자 — 히라가나와 같은 그림을 쓰되(같은 소리는 같은 그림이라 아이가 두 글자를 묶어 기억),
+// 모양 설명은 가타카나 고유의 형태(한자 부수에서 온 각진 모양)로 새로 씀.
+const MNE_K = [
+ ["ア","a","📡","안테나","비스듬한 안테나 — <b>아</b>"],
+ ["イ","i","🧍","이 사람","사람이 서 있는 모양(人변) — <b>이</b>"],
+ ["ウ","u","🏠","우리 집","집 지붕(갓머리 宀) — <b>우</b>"],
+ ["エ","e","🏗️","에구, 공사중","철골 工 모양 — <b>에</b>"],
+ ["オ","o","🍢","오뎅","꼬치에 꽂은 <b>오</b>뎅"],
+ ["カ","ka","💪","카! 힘(力)","力(힘 력)과 똑같은 모양 — <b>카</b>"],
+ ["キ","ki","🔑","키(열쇠)","히라가나 き의 각진 형제 — <b>키</b>"],
+ ["ク","ku","🐦","구관조 부리","꺾인 부리 — <b>구</b>"],
+ ["ケ","ke","🎂","케이크","한 조각 잘라 낸 <b>케</b>이크"],
+ ["コ","ko","🐘","코끼리","ㄷ자로 굽은 <b>코</b>"],
+ ["サ","sa","🦌","사슴","뿔 두 개 달린 <b>사</b>슴"],
+ ["シ","shi","💧","시원한 물방울","점 3개가 <b>아래에서 위로</b> — 시 (ツ와 구분!)"],
+ ["ス","su","🎿","스키","비탈을 내려오는 <b>스</b>키"],
+ ["セ","se","🌏","세계(世)","世(세상 세)를 닮은 모양 — <b>세</b>"],
+ ["ソ","so","🌧️","소나기","점 2개 — <b>소</b>나기 (ン과 구분!)"],
+ ["タ","ta","🛞","타이어","夕(저녁 석) 모양 — <b>타</b>이어"],
+ ["チ","chi","🧀","치즈","千(천)을 닮은 모양 — <b>치</b>즈"],
+ ["ツ","tsu","🌊","쓰나미","점 3개가 <b>위에서 아래로</b> — 쓰 (シ와 구분!)"],
+ ["テ","te","🎾","테니스","天(하늘 천) 모양 — <b>테</b>니스"],
+ ["ト","to","🍅","토마토","꼬챙이에 콕 — <b>토</b>마토"],
+ ["ナ","na","🔪","나이프","十에 삐침 — <b>나</b>이프"],
+ ["ニ","ni","🐠","니모","二(2)와 똑같이 생김 · に도 일본어로 2 — <b>니</b>"],
+ ["ヌ","nu","🍜","누들(국수)","又 모양으로 꼬인 면 — <b>누</b>들"],
+ ["ネ","ne","🐱","네코(고양이)","示변 모양 — <b>네</b>코=고양이"],
+ ["ノ","no","🚫","노(No)","한 획 쓱 — <b>노</b>"],
+ ["ハ","ha","😄","하하 웃음","八자로 벌어진 다리 — <b>하</b>하"],
+ ["ヒ","hi","😁","히죽 웃는 입","匕 모양 — <b>히</b>죽"],
+ ["フ","fu","🗻","후지산","산 능선 한 줄 — <b>후</b>지산"],
+ ["ヘ","he","⛰️","헤벌쭉 언덕","히라가나 へ와 똑같이 생김 — <b>헤</b>"],
+ ["ホ","ho","🌲","호랑가시나무","木(나무 목) 모양 — <b>호</b>"],
+ ["マ","ma","🎤","마이크","손에 든 <b>마</b>이크"],
+ ["ミ","mi","🎵","미(계이름)","三(3)처럼 세 줄 — 도레<b>미</b>"],
+ ["ム","mu","🌈","무지개","무릎 꿇은 모양 — <b>무</b>지개"],
+ ["メ","me","👁️","눈(메)","X자로 감은 <b>눈</b> — 메"],
+ ["モ","mo","👒","모자","毛(털 모) 모양 — <b>모</b>자"],
+ ["ヤ","ya","⚾","야구","방망이 휘두르는 모양 — <b>야</b>구"],
+ ["ユ","yu","👻","유턴","ㅗ를 뒤집은 <b>유</b>턴"],
+ ["ヨ","yo","🧘","요가","가로 세 줄 — <b>요</b>가"],
+ ["ラ","ra","🍜","라면","고불고불 <b>라</b>면"],
+ ["リ","ri","🎀","리본","리본 끈 두 줄 — <b>리</b>본"],
+ ["ル","ru","🏃","루~ 달리기","두 다리(儿) — <b>루</b>"],
+ ["レ","re","🍋","레몬","체크 표시 같은 한 획 — <b>레</b>몬"],
+ ["ロ","ro","🤖","로봇","口(입 구) 네모 = 로봇 얼굴 — <b>로</b>봇"],
+ ["ワ","wa","😲","와! 놀람","ウ에서 점 뺀 모양 — <b>와</b>!"],
+ ["ヲ","wo","🅾️","오(ヲ)","소리는 <b>오</b> · 거의 안 씀"],
+ ["ン","n","🔚","받침","받침 <b>ㄴ·ㅇ</b> · 점이 아래에서 위로 (ソ와 구분!)"],
+];
+const MN_ROWS_H=[["あ행",0,5],["か행",5,10],["さ행",10,15],["た행",15,20],["な행",20,25],
+                 ["は행",25,30],["ま행",30,35],["や행",35,38],["ら행",38,43],["わ·ん",43,46]];
+const MN_ROWS_K=[["ア행",0,5],["カ행",5,10],["サ행",10,15],["タ행",15,20],["ナ행",20,25],
+                 ["ハ행",25,30],["マ행",30,35],["ヤ행",35,38],["ラ행",38,43],["ワ·ン",43,46]];
+let mnKind="h", mnRow=0, mnI=0;
+const mnData = ()=> mnKind==="h" ? MNE : MNE_K;
+const mnRows = ()=> mnKind==="h" ? MN_ROWS_H : MN_ROWS_K;
 function openMnemonic(){
   show("mnScreen");
-  $("mnRows").innerHTML = MN_ROWS.map((r,i)=>
+  mnRender();
+}
+function mnKindSet(k){ mnKind=k; mnRow=0; mnRender(); }
+function mnRender(){
+  $("mnKind").innerHTML =
+    `<button class="${mnKind==='h'?'on':''}" onclick="mnKindSet('h')">ひらがな 히라가나</button>`+
+    `<button class="${mnKind==='k'?'on':''}" onclick="mnKindSet('k')">カタカナ 가타카나</button>`;
+  $("mnRows").innerHTML = mnRows().map((r,i)=>
     `<button class="${i===mnRow?'on':''}" onclick="mnPickRow(${i})">${r[0]}</button>`).join("");
-  mnI = MN_ROWS[mnRow][1];
+  mnI = mnRows()[mnRow][1];
   mnShow();
 }
 function mnPickRow(i){
-  mnRow=i; mnI=MN_ROWS[i][1];
+  mnRow=i; mnI=mnRows()[i][1];
   document.querySelectorAll("#mnRows button").forEach((b,k)=>b.classList.toggle("on",k===i));
   mnShow();
 }
 function mnShow(){
-  const [c,r,em,w,tip]=MNE[mnI];
+  const [c,r,em,w,tip]=mnData()[mnI];
   $("mnPic").textContent=em; $("mnCh").textContent=c;
   $("mnSay").innerHTML=`<span class="em">${em}</span> ${w} 의 <b>${w.replace(/\(.*/,"").charAt(0)}</b>`;
   $("mnTip").innerHTML=tip;
   $("mnRo").textContent=r;
-  const [_,st,en]=MN_ROWS[mnRow];
+  const [_,st,en]=mnRows()[mnRow];
   $("mnPos").textContent=`${mnI-st+1} / ${en-st}`;
   $("mnPrev").disabled = mnI<=st; $("mnNext").disabled = mnI>=en-1;
   mnSay();
 }
 function mnGo(d){
-  const [_,st,en]=MN_ROWS[mnRow];
+  const [_,st,en]=mnRows()[mnRow];
   const n=mnI+d; if(n<st||n>=en) return;
   mnI=n; mnShow();
 }
-function mnSay(){ speak(MNE[mnI][0]); }
+function mnSay(){ speak(mnData()[mnI][0]); }
 // ── 그림 보고 글자 맞히기 ──
 let mqList=[], mqI=0, mqOk=0;
 function mnQuizStart(){
-  const [_,st,en]=MN_ROWS[mnRow];
-  mqList=shuffle(MNE.slice(st,en)); mqI=0; mqOk=0;
+  const [_,st,en]=mnRows()[mnRow];
+  mqList=shuffle(mnData().slice(st,en)); mqI=0; mqOk=0;
   show("mqScreen"); mqShow();
 }
 function mqShow(){
@@ -3881,7 +3943,7 @@ function mqShow(){
   $("mqSay").innerHTML=`<span style="font-size:17px">이 그림은 <b>${q[3]}</b> — 어떤 글자일까요?`;
   $("mqPos").textContent=`${mqI+1} / ${mqList.length}`;
   $("mqFb").textContent="";
-  const wrong=shuffle(MNE.filter(x=>x[0]!==q[0])).slice(0,3);
+  const wrong=shuffle(mnData().filter(x=>x[0]!==q[0])).slice(0,3);
   const opts=shuffle([q,...wrong]);
   $("mqOpts").innerHTML=opts.map(o=>`<button onclick="mqPick('${o[0]}','${q[0]}',this)">${o[0]}</button>`).join("");
 }
@@ -3891,7 +3953,7 @@ function mqPick(c,a,el){
   if(c===a){
     el.parentNode.dataset.done=1;
     el.classList.add("ok"); mqOk++;
-    $("mqFb").innerHTML=`정답! <b>${a}</b> — ${MNE.find(x=>x[0]===a)[4]}`;
+    $("mqFb").innerHTML=`정답! <b>${a}</b> — ${mnData().find(x=>x[0]===a)[4]}`;
     setTimeout(()=>{ mqI++; $("mqOpts").dataset.done=""; mqShow(); },1400);
   }else{
     el.classList.add("no");
