@@ -583,6 +583,37 @@
 .hg-foot button.pri{background:var(--accent);color:#fff}
 .hg-sc{display:flex;gap:10px;justify-content:center;font-size:12.5px;color:var(--sub);font-weight:700;padding-top:8px}
 .hg-sc b{color:var(--ink)}
+/* ─── 그림으로 외우는 히라가나 (연상 카드) ─── */
+.mn-wrap{padding:10px 16px 0}
+.mn-card{position:relative;border-radius:24px;overflow:hidden;padding:26px 18px 20px;text-align:center;
+  background:var(--card);border:2px solid var(--line);box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.mn-stage{position:relative;height:min(40vh,270px);display:flex;align-items:center;justify-content:center}
+.mn-pic{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:min(46vw,200px);line-height:1;opacity:.5;filter:saturate(1.15)}
+.mn-ch{position:relative;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  font-size:min(40vw,180px);font-weight:800;line-height:1;color:var(--ink);
+  text-shadow:0 2px 0 #fff,0 -2px 0 #fff,2px 0 0 #fff,-2px 0 0 #fff,0 6px 20px rgba(0,0,0,.18)}
+.mn-say{font-size:22px;font-weight:900;margin-top:12px;letter-spacing:-.4px}
+.mn-say .em{font-size:26px;vertical-align:-3px}
+.mn-say b{color:var(--accent)}
+.mn-tip{font-size:13.5px;color:var(--sub);margin-top:7px;font-weight:600;line-height:1.5}
+.mn-ro{display:inline-block;margin-top:10px;padding:5px 14px;border-radius:14px;background:var(--soft);
+  font-size:13px;font-weight:800;color:var(--sub);letter-spacing:.5px}
+.mn-nav{display:flex;gap:9px;padding:14px 16px 8px}
+.mn-nav button{flex:1;padding:14px 0;border:none;border-radius:14px;font-size:14.5px;font-weight:800;
+  background:var(--soft);color:var(--ink);cursor:pointer;font-family:inherit}
+.mn-nav button.pri{background:var(--accent);color:#fff;flex:1.4}
+.mn-nav button:disabled{opacity:.38}
+.mn-rows{display:flex;gap:6px;justify-content:center;padding:8px 14px 2px;flex-wrap:wrap}
+.mn-rows button{padding:7px 12px;border:1px solid var(--line);background:var(--card);border-radius:14px;
+  font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+.mn-rows button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mn-q{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px 16px}
+.mn-q button{padding:22px 0;border:2px solid var(--line);background:var(--card);border-radius:18px;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;font-size:42px;font-weight:800;
+  color:var(--ink);cursor:pointer}
+.mn-q button.ok{border-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+.mn-q button.no{border-color:var(--miss);background:var(--miss-bg);opacity:.6}
 /* 챕터 결과 */
 .rd-res{padding:26px 20px;text-align:center}
 .rd-res .em{font-size:46px}
@@ -1152,6 +1183,52 @@
   <button class="sp" onclick="wpSpeak()">🔊 발음 듣기</button>
 </div>
 
+
+<!-- ═══ 그림으로 외우는 히라가나 (연상 카드) ═══ -->
+<div class="screen" id="mnScreen">
+  <div class="top">
+    <button class="back" onclick="show('ghScreen')">‹</button>
+    <span class="title">🖼 그림으로 외우는 히라가나</span>
+    <span class="count" id="mnPos"></span>
+  </div>
+  <div class="mn-rows" id="mnRows"></div>
+  <div class="mn-wrap">
+    <div class="mn-card" onclick="mnSay()">
+      <div class="mn-stage">
+        <div class="mn-pic" id="mnPic">☂️</div>
+        <div class="mn-ch" id="mnCh">う</div>
+      </div>
+      <div class="mn-say" id="mnSay"></div>
+      <div class="mn-tip" id="mnTip"></div>
+      <div class="mn-ro" id="mnRo"></div>
+    </div>
+  </div>
+  <div class="mn-nav">
+    <button id="mnPrev" onclick="mnGo(-1)">←</button>
+    <button class="pri" onclick="mnSay()">🔊 소리 듣기</button>
+    <button id="mnNext" onclick="mnGo(1)">→</button>
+  </div>
+  <div class="mn-nav" style="padding-top:0">
+    <button onclick="mnQuizStart()">🎯 그림 보고 맞히기</button>
+  </div>
+</div>
+
+<!-- ═══ 연상 퀴즈 ═══ -->
+<div class="screen" id="mqScreen">
+  <div class="top">
+    <button class="back" onclick="show('mnScreen')">‹</button>
+    <span class="title">🎯 그림 보고 글자 맞히기</span>
+    <span class="count" id="mqPos"></span>
+  </div>
+  <div class="mn-wrap">
+    <div class="mn-card">
+      <div class="mn-stage"><div class="mn-pic" id="mqPic" style="opacity:1"></div></div>
+      <div class="mn-say" id="mqSay"></div>
+    </div>
+  </div>
+  <div class="mn-q" id="mqOpts"></div>
+  <div class="mn-tip" id="mqFb" style="text-align:center;min-height:22px"></div>
+</div>
 
 <!-- ═══ 히라가나 숨은그림찾기 (6~7세) ═══ -->
 <div class="screen" id="hgScreen">
@@ -1784,6 +1861,7 @@ function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("sho
 //   팩이 늘어도 홈은 그대로. 신규 팩은 NAV에, 신규 카테고리는 아래 CGRID에만 추가할 것.
 const CGRID = [
   {ic:"🔤", ko:"글자",        sub:"히라가나·가타카나", sec:"kana",     grp:[""]},
+  {ic:"🖼", ko:"그림 히라가나", sub:"う=우산 연상법",    act:()=>openMnemonic()},
   {ic:"🈳", ko:"50음도표",    sub:"눌러서 발음",       act:()=>openChart()},
   {ic:"🧸", ko:"어린이 카드",  sub:"그림 뒤집기",       act:()=>openKids(), kids:true},
   {ic:"🌱", ko:"기초 필수",    sub:"숫자·요일·가족",    sec:"kana",     grp:["기초 필수"]},
@@ -3695,9 +3773,132 @@ const GAMES=[
   {id:"kt",  ic:"🃏", bg:"var(--rg-bg)",  tt:"카르타 (짝 맞추기)", ds:"카드를 뒤집어 일본어와 뜻의 짝 찾기 · 몇 초에 끝낼까?", go:"openKarta", best:()=>{const b=ktBest()[8]; return b?`8쌍 ${b}초`:"";}},
   {id:"sv",  ic:"❤️", bg:"var(--miss-bg)", tt:"서바이벌", ds:"목숨 3개 · 5문제마다 난이도 상승 · 몇 문제까지 버틸까?", go:"openSurvival", best:()=>{const b=svBest(); return b?`최고 ${b}문제`:"";}},
   {id:"kd",  ic:"🧸", bg:"var(--soft)", tt:"그림 낱말카드 (어린이)", ds:"그림 카드를 뒤집어 맞추기 · 한국어와 소리가 닮은 말부터", go:"openKids", best:()=>{const n=Object.keys(kdLog()).length; return n?`${n}장 배움`:"";}},
+  {id:"mn",  ic:"🖼", bg:"var(--rs-bg)", tt:"그림으로 외우는 히라가나", ds:"う=우산, き=키(열쇠)… 그림에 글자를 겹쳐 소리까지 한 번에", go:"openMnemonic", best:()=>""},
   {id:"hg",  ic:"🔍", bg:"var(--rr-bg)", tt:"숨은그림찾기 (히라가나)", ds:"그림 속에 숨은 글자 찾기 · 6~7세 첫 히라가나", go:"openHidden", best:()=>{const b=hgBest(); return b?`최고 ${b}개`:"";}},
   {id:"cj",  ic:"🔁", bg:"var(--ok-bg)",  tt:"동사 활용",      ds:"ます·て·ない·た형 4지선다 · 틀리면 즉시 규칙 해설", go:"openConj", best:()=>{const b=cjBest(); return b?`최고 연속 ${b}`:"";}},
 ];
+// ══════════ 🖼 그림으로 외우는 히라가나 (연상법) ══════════
+// 박 대표 지시: "う는 우산, き는 열쇠(키)" — 글자 모양을 그림에 겹쳐 보여 주고
+// 한국어 소리로 연결한다. 그림은 이모지를 크게 깔고 그 위에 글자를 얹는 방식.
+// [글자, 로마자, 그림(이모지), 한국어 낱말, 모양 설명]
+const MNE = [
+ ["あ","a","👩‍🦱","아줌마","십자 위에 곱슬머리 — <b>아</b>줌마!"],
+ ["い","i","🦷","이(치아)","앞니 두 개가 나란히 — <b>이</b>!"],
+ ["う","u","☂️","우산","손잡이 굽은 <b>우</b>산 모양"],
+ ["え","e","🗼","에펠탑","뾰족한 탑 — <b>에</b>펠탑"],
+ ["お","o","🦑","오징어","다리 달린 <b>오</b>징어"],
+ ["か","ka","🔪","칼","삐죽한 <b>카</b>… 칼 모양"],
+ ["き","ki","🔑","키(열쇠)","톱니 달린 <b>키</b> — key!"],
+ ["く","ku","🐦","구관조 부리","새 부리처럼 꺾인 — <b>구</b>"],
+ ["け","ke","🎂","케이크","초 꽂은 <b>케</b>이크"],
+ ["こ","ko","🐘","코끼리","상아 두 개 — <b>코</b>끼리"],
+ ["さ","sa","🍎","사과","꼭지 달린 <b>사</b>과"],
+ ["し","shi","🎣","시(낚싯바늘)","쭉 내려와 휜 바늘 — <b>시</b>"],
+ ["す","su","🏊","수영","물속 소용돌이 — <b>수</b>영"],
+ ["せ","se","🔺","세모","뾰족뾰족 <b>세</b>모"],
+ ["そ","so","🐄","소","지그재그 뿔 — <b>소</b>"],
+ ["た","ta","🏓","탁구","라켓과 공 — <b>타</b>구(탁구)"],
+ ["ち","chi","🧀","치즈","한 조각 <b>치</b>즈"],
+ ["つ","tsu","🌊","쓰나미","파도 한 줄 — <b>쓰</b>나미"],
+ ["て","te","🎾","테니스","라켓 손잡이 — <b>테</b>니스"],
+ ["と","to","🍅","토마토","꼬치에 콕 — <b>토</b>마토"],
+ ["な","na","🦋","나비","날개 팔랑 — <b>나</b>비"],
+ ["に","ni","🐠","니모","물고기 <b>니</b>모 (に=일본어로 2)"],
+ ["ぬ","nu","🍜","누들(국수)","꼬인 면발 — <b>누</b>들"],
+ ["ね","ne","🐱","네코(고양이)","말린 꼬리 — <b>네</b>코=고양이"],
+ ["の","no","🚫","노(No)","빙글 돈 금지 표시 — <b>노</b>"],
+ ["は","ha","😄","하하 웃음","입 벌리고 <b>하</b>하"],
+ ["ひ","hi","😁","히죽 웃는 입","활짝 웃는 입 — <b>히</b>"],
+ ["ふ","fu","🗻","후지산","눈 덮인 <b>후</b>지산"],
+ ["へ","he","⛰️","헤벌쭉 언덕","낮은 산 하나 — <b>헤</b>"],
+ ["ほ","ho","🎅","호호호","산타 웃음 — <b>호</b>"],
+ ["ま","ma","🎤","마이크","손에 든 <b>마</b>이크"],
+ ["み","mi","🎵","미(계이름)","숫자 21처럼 — 도레<b>미</b>"],
+ ["む","mu","🌈","무지개","소가 <b>무</b>~ / <b>무</b>지개"],
+ ["め","me","👁️","눈(메)","め는 일본어로 <b>눈</b> — 메"],
+ ["も","mo","👒","모자","챙 넓은 <b>모</b>자"],
+ ["や","ya","⚾","야구","방망이와 공 — <b>야</b>구"],
+ ["ゆ","yu","🐟","유영하는 물고기","헤엄치는 물고기 — <b>유</b>"],
+ ["よ","yo","🧘","요가","한 다리로 <b>요</b>가"],
+ ["ら","ra","🍜","라면","꼬불꼬불 <b>라</b>면"],
+ ["り","ri","🎀","리본","두 줄 <b>리</b>본"],
+ ["る","ru","💎","루비","아래 동그란 고리 — <b>루</b>비"],
+ ["れ","re","🍋","레몬","새콤한 <b>레</b>몬"],
+ ["ろ","ro","🤖","로봇","る에서 고리 뺀 것 — <b>로</b>봇"],
+ ["わ","wa","😲","와! 놀람","입 쩍 — <b>와</b>!"],
+ ["を","wo","🅾️","오(を)","소리는 <b>오</b> · 목적어에만 씀"],
+ ["ん","n","🔚","받침","받침 <b>ㄴ·ㅇ</b> 소리로 끝"],
+];
+const MN_ROWS=[["あ행",0,5],["か행",5,10],["さ행",10,15],["た행",15,20],["な행",20,25],
+               ["は행",25,30],["ま행",30,35],["や행",35,38],["ら행",38,43],["わ·ん",43,46]];
+let mnRow=0, mnI=0;
+function openMnemonic(){
+  show("mnScreen");
+  $("mnRows").innerHTML = MN_ROWS.map((r,i)=>
+    `<button class="${i===mnRow?'on':''}" onclick="mnPickRow(${i})">${r[0]}</button>`).join("");
+  mnI = MN_ROWS[mnRow][1];
+  mnShow();
+}
+function mnPickRow(i){
+  mnRow=i; mnI=MN_ROWS[i][1];
+  document.querySelectorAll("#mnRows button").forEach((b,k)=>b.classList.toggle("on",k===i));
+  mnShow();
+}
+function mnShow(){
+  const [c,r,em,w,tip]=MNE[mnI];
+  $("mnPic").textContent=em; $("mnCh").textContent=c;
+  $("mnSay").innerHTML=`<span class="em">${em}</span> ${w} 의 <b>${w.replace(/\(.*/,"").charAt(0)}</b>`;
+  $("mnTip").innerHTML=tip;
+  $("mnRo").textContent=r;
+  const [_,st,en]=MN_ROWS[mnRow];
+  $("mnPos").textContent=`${mnI-st+1} / ${en-st}`;
+  $("mnPrev").disabled = mnI<=st; $("mnNext").disabled = mnI>=en-1;
+  mnSay();
+}
+function mnGo(d){
+  const [_,st,en]=MN_ROWS[mnRow];
+  const n=mnI+d; if(n<st||n>=en) return;
+  mnI=n; mnShow();
+}
+function mnSay(){ speak(MNE[mnI][0]); }
+// ── 그림 보고 글자 맞히기 ──
+let mqList=[], mqI=0, mqOk=0;
+function mnQuizStart(){
+  const [_,st,en]=MN_ROWS[mnRow];
+  mqList=shuffle(MNE.slice(st,en)); mqI=0; mqOk=0;
+  show("mqScreen"); mqShow();
+}
+function mqShow(){
+  if(mqI>=mqList.length){
+    $("mqPic").textContent = mqOk===mqList.length ? "🏆" : "🎉";
+    $("mqSay").innerHTML=`${mqList.length}문제 중 <b>${mqOk}</b>개 정답!`;
+    $("mqOpts").innerHTML=`<button style="grid-column:1/-1;font-size:16px;font-family:inherit" onclick="mnQuizStart()">다시 하기</button>`;
+    $("mqFb").textContent=""; $("mqPos").textContent="완료";
+    return;
+  }
+  const q=mqList[mqI];
+  $("mqPic").textContent=q[2];
+  $("mqSay").innerHTML=`<span style="font-size:17px">이 그림은 <b>${q[3]}</b> — 어떤 글자일까요?`;
+  $("mqPos").textContent=`${mqI+1} / ${mqList.length}`;
+  $("mqFb").textContent="";
+  const wrong=shuffle(MNE.filter(x=>x[0]!==q[0])).slice(0,3);
+  const opts=shuffle([q,...wrong]);
+  $("mqOpts").innerHTML=opts.map(o=>`<button onclick="mqPick('${o[0]}','${q[0]}',this)">${o[0]}</button>`).join("");
+}
+function mqPick(c,a,el){
+  if(el.parentNode.dataset.done) return;
+  speak(c);
+  if(c===a){
+    el.parentNode.dataset.done=1;
+    el.classList.add("ok"); mqOk++;
+    $("mqFb").innerHTML=`정답! <b>${a}</b> — ${MNE.find(x=>x[0]===a)[4]}`;
+    setTimeout(()=>{ mqI++; $("mqOpts").dataset.done=""; mqShow(); },1400);
+  }else{
+    el.classList.add("no");
+    $("mqFb").textContent=`이건 「${c}」예요. 다시 골라 보세요!`;
+  }
+}
+
 // ══════════ 🔍 히라가나 숨은그림찾기 (6~7세) ══════════
 // 그림 파일 없이 이모지 + 글자만으로 장면을 만든다(무료·오프라인·용량 0).
 // 아이가 "글자를 그림 속에서 찾아내는" 경험이 핵심이라, 글자는 배경에 살짝 녹인 색으로
@@ -3801,7 +4002,10 @@ function hgSay(){ if(hgTarget) speak(hgTarget.c); }
 function hgHint(){
   if(!hgTarget) return;
   const el=$(hgTarget.id); if(!el) return;
-  el.classList.add("hint"); $("hgSub").textContent="여기 근처에 있어요! 반짝이는 글자를 눌러 보세요";
+  el.classList.add("hint");
+  const m=MNE.find(x=>x[0]===hgTarget.c);       // 연상 그림으로 한 번 더 도와준다
+  $("hgSub").innerHTML = m ? `${m[2]} <b>${m[3]}</b>의 「${m[0]}」— 반짝이는 글자를 눌러 보세요`
+                           : "여기 근처에 있어요! 반짝이는 글자를 눌러 보세요";
   setTimeout(()=>el.classList.remove("hint"),3000);
 }
 function hgTap(c,id){
