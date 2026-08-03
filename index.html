@@ -58,7 +58,23 @@
     border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-15px;transition:.15s}
   .tabs button .s{display:block;font-size:12px;font-weight:600;margin-top:3px;opacity:.7}
   .tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
-  .list{flex:1;overflow-y:auto;padding:8px 18px 40px}
+  /* ⚠ 예전엔 .list 가 flex:1 + overflow-y:auto 라 홈 안에 스크롤 영역이 하나 더 생겼다.
+       바깥(페이지)과 안쪽(목록)이 각각 스크롤돼 "스크롤이 잘 안 된다"는 증상의 원인.
+       → 홈은 페이지 한 겹만 스크롤한다. */
+  .list{padding:8px 18px 40px}
+
+  /* ─── 카테고리 격자 (탭+아코디언 대체) ─── */
+  .sec-h{font-size:12.5px;font-weight:800;color:var(--sub);padding:18px 20px 8px;letter-spacing:.2px}
+  .cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 16px 26px}
+  .cg{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 8px 12px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:inherit;
+    box-shadow:0 1px 3px rgba(0,0,0,.03);transition:.14s;position:relative;min-height:104px;justify-content:center}
+  .cg:active{background:var(--soft);transform:scale(.97)}
+  .cg i{font-size:26px;font-style:normal;line-height:1}
+  .cg b{font-size:13px;font-weight:800;letter-spacing:-.3px;text-align:center;line-height:1.25}
+  .cg s{font-size:10.5px;color:var(--sub);text-decoration:none;font-weight:600}
+  .cg.kids{background:var(--rg-bg);border-color:var(--rg2)}
+  .cg .fr{position:absolute;top:7px;right:8px;font-size:9px;font-weight:800;color:var(--ok)}
   .grp{margin-top:20px}
   .grp{margin-top:26px}
   .grp-h{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 15px;
@@ -504,29 +520,36 @@
 .rd-w:active{background:var(--rg-bg)}
 .rd-noruby .rd-w{border-bottom:1px dotted var(--line)}
 .rd-foot{padding:16px;display:flex;gap:9px;flex-wrap:wrap}
-.rd-foot .nx{flex:1 0 100%;background:var(--ink);color:#fff}
+.rd-nav{flex:1 0 100%;display:flex;gap:9px}
+.rd-nav button{flex:1}
+.rd-foot .nx{flex:1.6;background:var(--ink);color:#fff}
+.rd-foot button:disabled{opacity:.4;cursor:default}
 .rd-foot button{flex:1;padding:14px 0;border:none;border-radius:13px;font-size:14.5px;font-weight:800;cursor:pointer;
   background:var(--soft);color:var(--ink);font-family:inherit}
 .rd-foot button.pri{background:var(--ok);color:#fff}
 /* 단어 팝업 — 확대(pinch-zoom) 중에도 화면 안에 뜨도록 visualViewport 기준으로 JS가 위치를 잡는다 */
 .wp-bd{position:fixed;inset:0;z-index:59;background:rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .18s}
 .wp-bd.on{opacity:1;pointer-events:auto}
-.wp{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--card);border-radius:20px 20px 0 0;
-  box-shadow:0 -8px 30px rgba(0,0,0,.14);padding:18px 20px 26px;transform:translateY(110%);transition:transform .22s;
-  max-height:70vh;overflow-y:auto}
-.wp.on{transform:translateY(0)}
-.wp.fx{border-radius:18px;transition:opacity .18s;transform:none;opacity:0}   /* 확대 중: 화면 중앙 카드 */
-.wp.fx.on{opacity:1}
-.wp .w{font-size:30px;font-weight:800;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;padding-right:44px}
-.wp .r{font-size:15px;color:var(--accent);font-weight:700;margin-top:4px}
-.wp .k{font-size:15px;margin-top:6px}
-.wp .cx{font-size:12.5px;color:var(--sub);margin-top:9px;padding-top:9px;border-top:1px solid var(--line);line-height:1.55}
-.wp .cx b{color:var(--ink)}
-.wp .sp{margin-top:12px;padding:9px 16px;border:1px solid var(--line);background:var(--soft);
-  border-radius:11px;font-size:13px;font-weight:800;cursor:pointer;color:var(--ink)}
-.wp .cl{position:absolute;top:10px;right:12px;width:38px;height:38px;border-radius:50%;
+/* 본문 폭(앱 폭)에 맞춰 화면 한가운데 뜨는 카드. 내용은 가운데 정렬, ✕는 카드 우상단. */
+.wp{position:fixed;left:50%;top:50%;z-index:60;background:var(--card);border-radius:20px;
+  box-shadow:0 14px 44px rgba(0,0,0,.22);padding:26px 22px 22px;
+  width:min(430px, calc(100% - 36px));
+  transform:translate(-50%,-46%) scale(.96);opacity:0;pointer-events:none;
+  transition:opacity .18s, transform .18s;
+  max-height:76vh;overflow-y:auto;text-align:center}
+.wp.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.wp .w{font-size:32px;font-weight:800;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  line-height:1.25;padding:0 34px}
+.wp .r{font-size:16px;color:var(--accent);font-weight:700;margin-top:6px}
+.wp .k{font-size:16px;margin-top:8px;line-height:1.5}
+.wp .cx{font-size:12.5px;color:var(--sub);margin-top:14px;padding-top:12px;border-top:1px solid var(--line);line-height:1.6}
+.wp .cx b{color:var(--ink);display:block;margin-bottom:3px;font-size:11.5px;letter-spacing:.3px}
+.wp .sp{margin:16px auto 0;padding:11px 20px;border:1px solid var(--line);background:var(--soft);
+  border-radius:12px;font-size:13.5px;font-weight:800;cursor:pointer;color:var(--ink);font-family:inherit}
+.wp .cl{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:19px;color:var(--ink);cursor:pointer;background:var(--soft);border:1px solid var(--line);z-index:2}
+  font-size:20px;color:var(--ink);cursor:pointer;background:var(--soft);border:1px solid var(--line);z-index:2}
+.wp .cl:active{background:var(--line)}
 /* 챕터 결과 */
 .rd-res{padding:26px 20px;text-align:center}
 .rd-res .em{font-size:46px}
@@ -782,25 +805,25 @@
     <button class="tile" onclick="openConj()"><i>🔁</i><b>동사 활용</b><s id="tCj">ます·て</s></button>
     <button class="tile" id="tileWb" onclick="openWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
   </div>
-  <div class="tabs">
-    <button class="on" data-sec="kana" onclick="switchTab('kana',this)">기초<span class="s">基礎</span></button>
-    <button data-sec="vocab" onclick="switchTab('vocab',this)">실전어휘<span class="s">語彙</span></button>
-    <button data-sec="kanji" onclick="switchTab('kanji',this)">한자<span class="s">漢字</span></button>
-    <button data-sec="sentence" onclick="switchTab('sentence',this)">통문장<span class="s">例文</span></button>
-    <button data-sec="grammar" onclick="switchTab('grammar',this)">문법<span class="s">文法</span></button>
-  </div>
-  <div class="wr-bar" id="kdBar" onclick="openKids()" style="display:none;margin:0 16px 8px;background:var(--rg-bg);border-color:var(--rg2)">
-    🧸 어린이 그림 낱말카드 <small style="font-weight:600;font-size:12px;color:var(--rg-ink)">— 뒤집어 맞추기 · 무료</small>
-    <span class="cnt" id="tKd">그림카드</span>
+  <div class="sec-h">📇 단어장 — 무엇을 외울까요?</div>
+  <div class="cgrid" id="catGrid"></div>
+  <div class="legal-links"><a href="privacy.html">개인정보처리방침</a> · <a href="terms.html">이용약관·환불정책</a></div>
+</div>
+
+<!-- ═══ 카테고리 안 팩 목록 (격자 → 목록) ═══ -->
+<div class="screen" id="secScreen">
+  <div class="top">
+    <button class="back" onclick="show('home')">‹</button>
+    <span class="title" id="secTitle">카테고리</span>
+    <span class="count" id="secCount"></span>
   </div>
   <div class="list" id="catList"></div>
-  <div class="legal-links"><a href="privacy.html">개인정보처리방침</a> · <a href="terms.html">이용약관·환불정책</a></div>
 </div>
 
 <!-- ═══ 설정 ═══ -->
 <div class="screen" id="setup">
   <div class="top">
-    <button class="back" onclick="show('home')">‹</button>
+    <button class="back" onclick="backToCats()">‹</button>
     <span class="title">테스트 설정<span class="s"> 選択</span></span>
   </div>
   <div class="setup-body">
@@ -1055,7 +1078,10 @@
   <div class="rd-foot">
     <button onclick="rdWordCards()">📇 단어 카드</button>
     <button class="pri" onclick="rdStartQuiz()">✏️ 챕터 시험</button>
-    <button class="nx" id="rrNext" onclick="rdNextChapter()">다음 장 →</button>
+    <div class="rd-nav">
+      <button id="rrPrev" onclick="rdPrevChapter()">← 이전 장</button>
+      <button class="nx" id="rrNext" onclick="rdNextChapter()">다음 장 →</button>
+    </div>
   </div>
 </div>
 
@@ -1677,7 +1703,7 @@ function initPaddle(){
 let OWNED = new Set((()=>{ try{ return JSON.parse(localStorage.getItem('owned_packs')||'[]'); }catch(e){ return []; } })());
 function saveOwned(){ try{ localStorage.setItem('owned_packs', JSON.stringify([...OWNED])); }catch(e){} }
 function isOwned(code){ if(OWNED.has(code)||OWNED.has("ALL")) return true; for(const b of OWNED){ if(BUNDLE_MEMBERS[b] && BUNDLE_MEMBERS[b].includes(code)) return true; } return false; }   // 라이프타임(ALL)+번들 포함
-function grantPack(code){ OWNED.add(code); saveOwned(); renderNav(); }   // 구매 완료 후 호출(추후 서버 연동)
+function grantPack(code){ OWNED.add(code); saveOwned(); renderNav(); renderCatGrid(); }   // 구매 완료 후 호출(추후 서버 연동)
 function isUnlocked(it){ return tierOf(it)!=="paid" || OWNED.has(it.code); }
 function computePrice(n){ n=+n||0; const rate = n<20?40 : n<100?30 : n<200?25 : n<300?20 : 15; return Math.round(n*rate*0.5/100)*100; }  // 런칭 50% 할인
 function priceOf(it){ if(PACK_TO_BUNDLE[it.code] && BUNDLE_PRICE[PACK_TO_BUNDLE[it.code]]) return BUNDLE_PRICE[PACK_TO_BUNDLE[it.code]]+" · 그룹전체"; return "₩"+computePrice(it.n).toLocaleString(); }
@@ -1698,9 +1724,58 @@ function show(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.r
 function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1800); }
 
 // ── 네비게이터 렌더 ──
+// ═══ 홈 카테고리 격자 ═══
+// ★ IA 원칙: 홈은 "격자 아이콘"만. 탭·아코디언 없음(스크롤이 두 겹이 되어 조작이 어려웠음).
+//   격자 한 칸 = 카테고리 → 누르면 그 카테고리의 팩 목록(secScreen) 한 장으로 펼쳐진다.
+//   팩이 늘어도 홈은 그대로. 신규 팩은 NAV에, 신규 카테고리는 아래 CGRID에만 추가할 것.
+const CGRID = [
+  {ic:"🔤", ko:"글자",        sub:"히라가나·가타카나", sec:"kana",     grp:[""]},
+  {ic:"🈳", ko:"50음도표",    sub:"눌러서 발음",       act:()=>openChart()},
+  {ic:"🧸", ko:"어린이 카드",  sub:"그림 뒤집기",       act:()=>openKids(), kids:true},
+  {ic:"🌱", ko:"기초 필수",    sub:"숫자·요일·가족",    sec:"kana",     grp:["기초 필수"]},
+  {ic:"🍎", ko:"주제·생활",    sub:"동물·음식·직업",    sec:"kana",     grp:["주제·생활"]},
+  {ic:"🈶", ko:"JLPT 한자",   sub:"N5~N1",            sec:"kanji",    grp:["자격시험 JLPT"]},
+  {ic:"📗", ko:"JLPT 어휘",   sub:"N5~N1 빈칸",        sec:"vocab",    grp:["JLPT 실전 어휘 · 빈칸(끼워넣기)"]},
+  {ic:"🧳", ko:"상황·장면",    sub:"여행·회사·병원",    sec:"vocab",    grp:["상황·장면별"]},
+  {ic:"🔬", ko:"분야·전문",    sub:"뉴스·의학·법률",    sec:"vocab",    grp:["분야·주제별"]},
+  {ic:"📚", ko:"독서 빈출",    sub:"소설·평론",         sec:"vocab",    grp:["책 빈도별"]},
+  {ic:"🅰", ko:"가타카나 심화", sub:"和製英語·줄임말",   sec:"vocab",    grp:["가타카나 마스터·빈칸","특화·빈칸"]},
+  {ic:"📝", ko:"통문장·문법",  sub:"예문·조사·문형",    sec:"sentence", grp:["*"], sec2:"grammar", grp2:["*"]},
+];
+function cgGroups(c){
+  const pick=(sec,names)=> (NAV[sec]||[]).filter(g=> names.includes("*") || names.includes(g.ko));
+  let gs = c.sec ? pick(c.sec, c.grp) : [];
+  if(c.sec2) gs = gs.concat(pick(c.sec2, c.grp2));
+  return gs;
+}
+function cgCount(c){ return cgGroups(c).reduce((n,g)=>n+g.items.length,0); }
+function cgFree(c){ return cgGroups(c).some(g=>g.items.some(it=>tierOf(it)!=="paid")); }
+function renderCatGrid(){
+  const box=$("catGrid"); if(!box) return;
+  box.innerHTML = CGRID.map((c,i)=>{
+    const n = c.act ? 0 : cgCount(c);
+    const sub = n ? `${n}팩` : c.sub;
+    const free = c.act ? true : cgFree(c);
+    return `<button class="cg${c.kids?" kids":""}" onclick="cgOpen(${i})">
+      ${free?'<span class="fr">무료</span>':''}
+      <i>${c.ic}</i><b>${c.ko}</b><s>${sub}</s></button>`;
+  }).join("");
+}
+function cgOpen(i){
+  const c=CGRID[i];
+  if(c.act) return c.act();
+  curSecCat=c;
+  $("secTitle").textContent = `${c.ic} ${c.ko}`;
+  $("secCount").textContent = `${cgCount(c)}팩`;
+  renderNav();
+  show("secScreen"); window.scrollTo(0,0);
+}
+let curSecCat=null;
+
 function renderNav(){
-  const groups=NAV[curTab]; const box=$("catList"); box.innerHTML="";
-  if(curTab==="kana"){   // 50음도표 바로가기 (무료)
+  const groups = curSecCat ? cgGroups(curSecCat) : (NAV[curTab]||[]);
+  const box=$("catList"); if(!box) return; box.innerHTML="";
+  if(false){   // 50음도표는 이제 격자 한 칸으로 뺐다
     const cd=document.createElement("div"); cd.className="cat chart-entry";
     cd.innerHTML=`<div class="txt"><div class="k">50음도표 · 한 번에 끝내기</div><div class="j jp">五十音図 · 누르면 발음이 나와요</div></div>
       <div class="meta"><span class="badge free">무료</span></div><span class="arrow">›</span>`;
@@ -1743,8 +1818,7 @@ function renderNav(){
 }
 function navCollapsed(){ try{ return JSON.parse(localStorage.getItem('nav_collapsed')||'{}'); }catch(e){ return {}; } }
 function saveNavCollapsed(s){ try{ localStorage.setItem('nav_collapsed', JSON.stringify(s)); }catch(e){} }
-function switchTab(sec,btn){
-  { const kb=$("kdBar"); if(kb) kb.style.display = (sec==="kana")?"flex":"none"; } curTab=sec; document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("on")); btn.classList.add("on"); renderNav(); }
+function switchTab(sec){ curTab=sec; renderNav(); }   // 탭 UI는 격자로 대체됨(호환용)
 
 let previewMode=false; // 유료 미보유 카테고리 20장 무료 체험 중 여부
 async function pickCat(it){
@@ -3340,10 +3414,18 @@ function rdNextChapter(){
   if(rdChapCur+1 < b.chapters.length){ openChapter(rdChapCur+1); window.scrollTo(0,0); }
   else { toast("마지막 장이에요 🎊"); rdBackToBook(); }
 }
+function rdPrevChapter(){
+  const b=rdBookCur; if(!b) return;
+  rdStopPlay();
+  if(rdChapCur>0){ openChapter(rdChapCur-1); window.scrollTo(0,0); }
+  else { toast("첫 장이에요"); }
+}
 function rdSyncNextBtn(){
-  const b=rdBookCur, el=$("rrNext"); if(!b||!el) return;
+  const b=rdBookCur, el=$("rrNext"), pv=$("rrPrev"); if(!b||!el) return;
   const last = rdChapCur+1 >= b.chapters.length;
   el.textContent = last ? "📚 목록으로" : `다음 장 → (${rdChapCur+2}/${b.chapters.length})`;
+  if(pv){ pv.disabled = rdChapCur===0;
+    pv.textContent = rdChapCur===0 ? "← 이전 장" : `← 이전 장 (${rdChapCur}/${b.chapters.length})`; }
 }
 
 let _rdPlayTok=0, _rdPlaying=false;
@@ -3438,16 +3520,12 @@ function openWordPop(w,r,si){
 function wpFit(){
   const p=$("wordPop"); if(!p||!p.classList.contains("on")) return;
   const vv=window.visualViewport;
-  if(!vv || vv.scale<=1.02){
-    p.classList.remove("fx"); p.style.cssText=""; return;
-  }
-  p.classList.add("fx");
-  const w=Math.min(vv.width*0.92, 420);
-  p.style.left = (vv.offsetLeft + (vv.width-w)/2) + "px";
+  if(!vv || vv.scale<=1.02){ p.style.left=""; p.style.top=""; p.style.width=""; p.style.maxHeight=""; return; }
+  // 핀치줌 중: 보이는 영역(visual viewport) 한가운데로 직접 좌표를 잡는다
+  const w=Math.min(vv.width*0.9, 430);
   p.style.width = w+"px";
-  p.style.right = "auto";
-  p.style.bottom = "auto";
-  p.style.top = (vv.offsetTop + Math.max(8, vv.height*0.10)) + "px";
+  p.style.left = (vv.offsetLeft + vv.width/2) + "px";
+  p.style.top  = (vv.offsetTop  + vv.height/2) + "px";
   p.style.maxHeight = (vv.height*0.8)+"px";
 }
 if(window.visualViewport){
@@ -4247,6 +4325,7 @@ async function initApp(){
   const mb=$("muteBtn"); if(mb && MUTED) mb.textContent="🔇 소리 끔";
   initPaddle();
   await loadData();
+  renderCatGrid();
   renderNav();
   renderDaily();
   renderCollBar();
@@ -4258,8 +4337,9 @@ async function initApp(){
   loadBooks().then(renderRdBar);
   renderSpTile();
   renderKdTile();
-  { const kb=$("kdBar"); if(kb) kb.style.display="flex"; }   // 초기 탭 = 기초
 }
+// 설정에서 뒤로 = 왔던 카테고리 목록으로 (없으면 홈)
+function backToCats(){ show(curSecCat ? "secScreen" : "home"); }
 initApp();
 </script>
 </body>
