@@ -515,12 +515,15 @@
 .rd-s.ropen .ro{display:block}
 .rd-s.open .ko{display:block}
 .rd-s.cur{background:var(--soft);border-radius:9px}
-/* 따라읽기 — 소리 나는 부분만 밝게 (karaoke) */
-.rd-k{border-radius:6px;padding:1px 0;transition:background .12s,color .12s}
-.rd-s.cur .rd-k{color:#9b9184}
-.rd-s.cur .rd-k.said{color:var(--ink)}
-.rd-s.cur .rd-k.now{background:var(--accent);color:#fff;box-shadow:0 0 0 3px var(--accent)}
-.rd-s.cur .rd-k.now rt{color:#ffe7dd}
+/* 따라읽기 — 밑줄로 짚는다. 배경 박스는 후리가나(rt) 자리를 침범해 겹쳐 보여서 폐기. */
+.rd-k{padding-bottom:2px;border-bottom:3px solid transparent;
+  transition:color .12s,border-color .12s}
+.rd-s.cur .rd-k{color:#b5aca0}                       /* 아직 안 읽은 곳: 흐리게 */
+.rd-s.cur .rd-k rt{color:#cec5b9}
+.rd-s.cur .rd-k.said{color:var(--ink)}               /* 지나간 곳: 진하게 */
+.rd-s.cur .rd-k.said rt{color:var(--accent)}
+.rd-s.cur .rd-k.now{color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
+.rd-s.cur .rd-k.now rt{color:var(--accent)}
 .rd-s ruby rt{font-size:.5em;color:var(--accent);font-weight:600}
 .rd-noruby ruby rt{visibility:hidden}
 .rd-noruby ruby.peek rt{visibility:visible}          /* 감춘 상태에서 탭한 단어만 보이기 */
