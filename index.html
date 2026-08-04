@@ -110,7 +110,11 @@
   .badge.free{color:var(--free);background:#eaf7ef}
   .badge.lock{color:#fff;background:var(--lock)}
   .badge.soon{color:#c98a00;background:#fff6e0}
-  .cat .arrow{color:#ccc;font-size:18px;flex-shrink:0}
+  .vc-go{flex:0 0 auto;width:36px;height:36px;border-radius:11px;border:1px solid var(--line);
+  background:var(--soft);font-size:15px;cursor:pointer;margin-right:2px}
+.vc-go:active{background:var(--line)}
+.cat.locked .vc-go,.cat.soon .vc-go{display:none}
+.cat .arrow{color:#ccc;font-size:18px;flex-shrink:0}
   .cat.locked .arrow,.cat.soon .arrow{opacity:.3}
 
   /* ─── 설정 ─── */
@@ -1006,7 +1010,7 @@
         <button data-t="8">8초</button><button data-t="0">없음</button>
       </div>
     </div>
-    <button class="start alt" onclick="openVocab()">📖 단어장 먼저 보기</button>
+    <button class="start alt" onclick="openVocab('setup')">📖 단어장 먼저 보기</button>
     <button class="start" onclick="startQuiz()">✏️ 테스트 시작 →</button>
   </div>
 </div>
@@ -1014,7 +1018,7 @@
 <!-- ═══ 단어장 (팩 전체 보기) ═══ -->
 <div class="screen" id="vcScreen">
   <div class="top">
-    <button class="back" onclick="show('setup')">‹</button>
+    <button class="back" onclick="vcBack()">‹</button>
     <span class="title" id="vcTitle">단어장</span>
     <span class="count" id="vcCount"></span>
   </div>
@@ -2095,8 +2099,12 @@ function renderNav(){
       else badge = '<span class="badge soon">준비중</span>';
       el.innerHTML=`<div class="txt"><div class="k">${it.ko}</div><div class="j jp">${it.jp}</div></div>
         <div class="meta"><span class="num">${it.n}${it.sent?"문장":"자"}</span>${badge}</div>
+        <button class="vc-go" title="단어장 보기">📖</button>
         <span class="arrow">›</span>`;
       el.onclick=()=>pickCat(it);
+      // 목록에서 곧바로 단어장으로 (테스트 설정을 거치지 않아도 되게)
+      const vg=el.querySelector(".vc-go");
+      if(vg) vg.onclick=async e=>{ e.stopPropagation(); await pickCat(it,true); };
       wrap.appendChild(el);
     });
     box.appendChild(gd);
@@ -2107,7 +2115,7 @@ function saveNavCollapsed(s){ try{ localStorage.setItem('nav_collapsed', JSON.st
 function switchTab(sec){ curTab=sec; renderNav(); }   // 탭 UI는 격자로 대체됨(호환용)
 
 let previewMode=false; // 유료 미보유 카테고리 20장 무료 체험 중 여부
-async function pickCat(it){
+async function pickCat(it, toVocab){
   const paid = tierOf(it)==="paid";
   const owned = paid && isOwned(it.code);
   const have = (DATA[it.code]||[]).length;
@@ -2143,6 +2151,7 @@ async function pickCat(it){
   const sf=$("segFlip"); if(sf) [...sf.children].forEach(b=>b.classList.toggle("on", +b.dataset.f===(CONF.flip|0)));
   const sc=$("segCount"); if(sc) [...sc.children].forEach(b=>b.classList.toggle("on", +b.dataset.n===(CONF.count|0)));
   const st=$("segTime"); if(st) [...st.children].forEach(b=>b.classList.toggle("on", +b.dataset.t===(CONF.time|0)));
+  if(toVocab){ openVocab("secScreen"); return; }        // 목록의 📖 버튼으로 들어온 경우
   show("setup");
 }
 
@@ -2706,8 +2715,11 @@ function renderWbBar(){
 // 박 대표: "단어장 없이 문제만 있으니 학습 효과가 떨어진다"
 // 외울 곳이 있어야 시험이 의미가 있다. 그래서 테스트 전에 훑어보는 화면을 둔다.
 let vcSort=0, vcHide=0;   // sort 0=원래 순서 1=가나다(뜻) / hide 0=보임 1=뜻 가림
-function openVocab(){
+let _vcFrom="setup";
+function vcBack(){ show(_vcFrom); }
+function openVocab(from){
   if(!curCat) return;
+  if(from) _vcFrom=from;
   $("vcTitle").textContent = curCat.ko;
   show("vcScreen"); window.scrollTo(0,0);
   $("vcQ").value="";
