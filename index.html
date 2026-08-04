@@ -127,6 +127,37 @@
   .seg{display:flex;gap:9px;flex-wrap:wrap}
   .seg button{flex:1;min-width:60px;padding:15px;border:1.5px solid var(--line);border-radius:14px;background:#fff;font-weight:800;font-size:15px;cursor:pointer;color:var(--sub);transition:.15s}
   .seg button.on{border-color:var(--ink);color:var(--ink);background:var(--soft)}
+  .start.alt{background:var(--card);color:var(--ink);border:1.5px solid var(--line);box-shadow:none;font-size:15.5px;padding:15px;margin-bottom:9px}
+  .start.alt:active{background:var(--soft)}
+  /* ─── 단어장 ─── */
+  .vc-bar{display:flex;gap:8px;padding:10px 16px 4px;align-items:center}
+  .vc-bar input{flex:1;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--card);
+    font-size:13.5px;font-family:inherit;color:var(--ink);outline:none}
+  .vc-bar input:focus{border-color:var(--accent)}
+  .vc-bar button{flex:0 0 auto;padding:11px 13px;border:1px solid var(--line);background:var(--card);
+    border-radius:12px;font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+  .vc-bar button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .vc-list{padding:6px 16px 26px;display:flex;flex-direction:column;gap:7px}
+  .vc-row{border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden;transition:.15s}
+  .vc-row.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--rr-bg)}
+  .vc-hd{display:flex;align-items:center;gap:11px;padding:13px 13px;cursor:pointer}
+  .vc-hd .n{flex:0 0 30px;font-size:11px;font-weight:800;color:var(--sub);text-align:right}
+  .vc-hd .f{flex:0 0 auto;max-width:38%;font-size:19px;font-weight:800;letter-spacing:-.3px;
+    font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;line-height:1.3}
+  .vc-hd .b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .vc-hd .r{font-size:12.5px;color:var(--accent);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vc-hd .m{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vc-hd .sp{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+    background:var(--soft);font-size:14px;cursor:pointer;color:var(--ink)}
+  .vc-hd .wb{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+    background:var(--card);font-size:13px;cursor:pointer}
+  .vc-hd .wb.on{background:var(--miss-bg);border-color:var(--miss)}
+  .vc-ex{display:none;padding:0 14px 13px 54px;border-top:1px solid var(--line);margin-top:-1px}
+  .vc-row.open .vc-ex{display:block;padding-top:11px}
+  .vc-ex .e{font-size:15px;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;line-height:1.6}
+  .vc-ex .y{font-size:12.5px;color:var(--accent);margin-top:3px}
+  .vc-ex .k{font-size:12.5px;color:var(--sub);margin-top:3px}
+  .vc-note{padding:10px 16px;font-size:12.5px;color:var(--sub);text-align:center}
   .start{padding:19px;border-radius:18px;background:var(--ink);color:#fff;border:none;font-size:17px;font-weight:800;cursor:pointer;letter-spacing:-.3px;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:.15s}
   .start:active{transform:scale(.98)}
 
@@ -975,7 +1006,28 @@
         <button data-t="8">8초</button><button data-t="0">없음</button>
       </div>
     </div>
-    <button class="start" onclick="startQuiz()">테스트 시작 →</button>
+    <button class="start alt" onclick="openVocab()">📖 단어장 먼저 보기</button>
+    <button class="start" onclick="startQuiz()">✏️ 테스트 시작 →</button>
+  </div>
+</div>
+
+<!-- ═══ 단어장 (팩 전체 보기) ═══ -->
+<div class="screen" id="vcScreen">
+  <div class="top">
+    <button class="back" onclick="show('setup')">‹</button>
+    <span class="title" id="vcTitle">단어장</span>
+    <span class="count" id="vcCount"></span>
+  </div>
+  <div class="vc-bar">
+    <input id="vcQ" type="search" placeholder="표기·읽기·뜻으로 찾기" oninput="renderVocab()" autocomplete="off">
+    <button id="vcSort" onclick="vcToggleSort()">순서</button>
+    <button id="vcHide" onclick="vcToggleHide()">뜻 가리기</button>
+  </div>
+  <div class="vc-note" id="vcNote" style="display:none"></div>
+  <div class="vc-list" id="vcList"></div>
+  <div class="rd-foot" style="padding:4px 16px 26px">
+    <button onclick="vcSpeakAll()" id="vcPlay">🔊 전체 듣기</button>
+    <button class="pri" onclick="show('setup')">✏️ 테스트 하러 가기</button>
   </div>
 </div>
 
@@ -2650,6 +2702,86 @@ function renderWbBar(){
   if(tile) tile.classList.toggle("hot", n>0);
 }
 
+// ══════════ 📖 단어장 — 팩 전체를 목록으로 ══════════
+// 박 대표: "단어장 없이 문제만 있으니 학습 효과가 떨어진다"
+// 외울 곳이 있어야 시험이 의미가 있다. 그래서 테스트 전에 훑어보는 화면을 둔다.
+let vcSort=0, vcHide=0;   // sort 0=원래 순서 1=가나다(뜻) / hide 0=보임 1=뜻 가림
+function openVocab(){
+  if(!curCat) return;
+  $("vcTitle").textContent = curCat.ko;
+  show("vcScreen"); window.scrollTo(0,0);
+  $("vcQ").value="";
+  renderVocab();
+}
+function vcToggleSort(){ vcSort=1-vcSort; $("vcSort").textContent=vcSort?"가나다":"순서"; $("vcSort").classList.toggle("on",!!vcSort); renderVocab(); }
+function vcToggleHide(){ vcHide=1-vcHide; $("vcHide").classList.toggle("on",!!vcHide); renderVocab(); }
+function vcCards(){
+  let a=(DATA[curCat.code]||[]).slice();
+  if(vcSort) a.sort((x,y)=>String(x.ko||"").localeCompare(String(y.ko||""),"ko"));
+  const q=($("vcQ").value||"").trim();
+  if(q) a=a.filter(c=>(c.front||"").indexOf(q)>=0||(c.ko||"").indexOf(q)>=0||(c.romaji||"").indexOf(q)>=0
+                      ||(c.ex||"").indexOf(q)>=0||(c.exk||"").indexOf(q)>=0);
+  return a;
+}
+function renderVocab(){
+  const a=vcCards(), wb=getWB();
+  $("vcCount").textContent=a.length+"개";
+  const note=$("vcNote");
+  if(previewMode){ note.style.display="block";
+    note.innerHTML=`🎁 미리보기 <b>10장</b>만 보입니다 · 전체 ${curCat.n}장 <b>${priceOf(curCat)}</b>
+      <button class="buy-mini" onclick="openBuy(curCat)">구매</button>`; }
+  else note.style.display="none";
+  const esc=s=>String(s||"").replace(/'/g,"\\'");
+  $("vcList").innerHTML = a.length ? a.map((c,i)=>{
+    const key=curCat.code+"|"+c.front, inWb=!!wb[key];
+    const sent=!!c.sent;
+    const disp = sent ? (c.ex||c.front) : c.front;                 // 문장팩은 예문이 본체
+    const read = sent ? (c.exy||"") : (c.romaji||"");
+    const mean = sent ? (c.exk||c.ko||"") : (c.ko||"");
+    const say  = c.speak||c.front;
+    const hasEx = !sent && c.ex;
+    return `<div class="vc-row" id="vc${i}">
+      <div class="vc-hd" ${hasEx?`onclick="vcOpen(${i},event)"`:""}>
+        <span class="n">${i+1}</span>
+        <span class="f">${disp}</span>
+        <span class="b">${read?`<span class="r">${read}</span>`:""}
+          <span class="m" style="${vcHide?'filter:blur(5px)':''}">${mean}</span></span>
+        <button class="sp" onclick="event.stopPropagation();speak('${esc(say)}')" aria-label="발음">🔊</button>
+        <button class="wb${inWb?" on":""}" onclick="event.stopPropagation();vcWb('${esc(c.front)}',this)" aria-label="오답노트">📕</button>
+      </div>
+      ${hasEx?`<div class="vc-ex"><div class="e">${c.ex}</div>
+        <div class="y">${c.exy||""}</div><div class="k">${c.exk||""}</div></div>`:""}
+    </div>`;
+  }).join("") : `<div class="vc-note">찾는 단어가 없어요</div>`;
+}
+// 전체 듣기 — 위에서부터 차례로 읽어 준다 (통근·설거지하며 듣기)
+let _vcTok=0, _vcOn=false;
+async function vcSpeakAll(){
+  if(_vcOn){ _vcTok++; _vcOn=false; $("vcPlay").textContent="🔊 전체 듣기";
+             document.querySelectorAll(".vc-row.cur").forEach(e=>e.classList.remove("cur")); return; }
+  const a=vcCards(); if(!a.length) return;
+  const my=++_vcTok; _vcOn=true; $("vcPlay").textContent="⏸ 멈춤";
+  for(let i=0;i<a.length;i++){
+    if(my!==_vcTok) return;
+    const el=$("vc"+i);
+    document.querySelectorAll(".vc-row.cur").forEach(e=>e.classList.remove("cur"));
+    if(el){ el.classList.add("cur"); el.scrollIntoView({block:"center",behavior:"smooth"}); }
+    await speakP(a[i].speak||a[i].front);
+    if(my!==_vcTok) return;
+    await new Promise(r=>setTimeout(r,220));
+  }
+  _vcOn=false; $("vcPlay").textContent="🔊 전체 듣기";
+  document.querySelectorAll(".vc-row.cur").forEach(e=>e.classList.remove("cur"));
+}
+function vcOpen(i,e){ const el=$("vc"+i); if(!el) return; el.classList.toggle("open");
+  if(el.classList.contains("open")){ const c=vcCards()[i]; if(c&&c.exy) speak(c.exy); } }
+function vcWb(front,btn){
+  const w=getWB(), k=curCat.code+"|"+front;
+  if(w[k]){ delete w[k]; btn.classList.remove("on"); toast("오답노트에서 뺐어요"); }
+  else { w[k]={n:1,t:Date.now(),manual:1}; btn.classList.add("on"); toast(`📕 「${front}」 담았어요`); }
+  saveWB(w); renderWbBar();
+}
+
 // ── 오답노트에 직접 추가 (틀린 적 없어도 담고 싶은 단어) ──
 function wbSearch(){
   const q=($("wbQ").value||"").trim();
@@ -3051,6 +3183,7 @@ function show(id){
   if(typeof svTimer!=="undefined" && id!=="svScreen") clearInterval(svTimer);
   if(id!=="spScreen" && typeof spRec!=="undefined" && spRec && spRecOn){ try{spRec.stop();}catch(e){} spRecOn=false; }
   if(typeof rdStopPlay==="function" && id!=="rdRead") rdStopPlay();
+  if(id!=="vcScreen" && typeof _vcTok!=="undefined"){ _vcTok++; _vcOn=false; }
   if(typeof closeWordPop==="function" && id!=="rdRead") closeWordPop();
   if(id!=="quizScreen"){ stopQuiz(); repToken++; repRunning=false; const P=$("repPanel"); if(P) P.style.display="none";
                           if(typeof hideNextBtn==="function") hideNextBtn(); }   // 퀴즈 이탈 시 타이머·발음·예약 콜백 전부 정지
