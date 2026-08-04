@@ -3749,15 +3749,25 @@ function renderRdResume(){
   el.onclick=()=>{ rdBookCur=L.book; openChapter(L.k); };
 }
 function renderRdBar(){
-  const el=$("tRd"); if(!el||!BOOKS) return;
-  let d=0,t=0; BOOKS.forEach(b=>{ const p=rdBookProg(b); d+=p.d; t+=p.t; });
-  el.textContent = d ? `${d}/${t}장` : "5세부터";
-  const tile=$("tileRd"); if(tile) tile.classList.toggle("new", d>0 && d<t);
+  const el=$("tRd"); if(!el) return;
+  let d=0,t=0;
+  if(BOOKS){ BOOKS.forEach(b=>{ const p=rdBookProg(b); d+=p.d; t+=p.t; }); }
+  else{ const st=rdState();                       // 책 데이터를 아직 안 받았어도 진도는 보여 준다
+        for(const k in st){ if(k[0]==="_") continue; d+=((st[k]||{}).done||[]).length; } }
+  el.textContent = d ? (t? `${d}/${t}장` : `${d}장 읽음`) : "5세부터";
+  const tile=$("tileRd"); if(tile) tile.classList.toggle("new", d>0 && (!t || d<t));
 }
+// ⚠ books.json이 3.6MB로 커졌다. 예전엔 cache:"no-store" 라 읽기 화면을 열 때마다
+//    전량을 다시 받았다. no-cache 는 ETag로 재검증만 하므로 안 바뀌었으면 304(0바이트).
+let _booksLoading=null;
 async function loadBooks(){
   if(BOOKS) return BOOKS;
-  try{ const r=await fetch("books.json",{cache:"no-store"}); if(r.ok) BOOKS=await r.json(); }catch(e){}
-  return BOOKS;
+  if(_booksLoading) return _booksLoading;
+  _booksLoading=(async()=>{
+    try{ const r=await fetch("books.json",{cache:"no-cache"}); if(r.ok) BOOKS=await r.json(); }catch(e){}
+    _booksLoading=null; return BOOKS;
+  })();
+  return _booksLoading;
 }
 // {표기|읽기} → <ruby>
 function rdRubyHtml(t){
@@ -3844,6 +3854,7 @@ function rdReading(t){ return String(t).replace(/\{[^|{}]+\|([^|{}]+)\}/g,'$1');
 let rdLvFilter=0;                       // 0=전체, 1~5=단계
 async function openRead(){
   show("rdScreen");
+  if(!BOOKS) $("rdList").innerHTML='<div style="text-align:center;color:var(--sub);padding:44px 0;font-size:13.5px">📚 작품을 불러오는 중…</div>';
   const bs=await loadBooks();
   if(!bs||!bs.length){ $("rdList").innerHTML='<div style="text-align:center;color:var(--sub);padding:40px 0">읽기 자료를 불러오는 중…</div>'; return; }
   $("rdFilter").innerHTML = [[0,"전체"],[1,"1단계"],[2,"2단계"],[3,"3단계"],[4,"4단계"],[5,"5단계"]]
@@ -5235,7 +5246,7 @@ async function initApp(){
   renderWrBar();
   renderCjBar();
   renderRwTile();
-  loadBooks().then(renderRdBar);
+  renderRdBar();          // ⚠ 시작 시 books.json(3.6MB)을 받지 않는다. 진도는 localStorage로 충분.
   renderSpTile();
   renderKdTile();
 }
