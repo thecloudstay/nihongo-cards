@@ -66,6 +66,13 @@
   /* ─── 카테고리 격자 (탭+아코디언 대체) ─── */
   .sec-h{font-size:12.5px;font-weight:800;color:var(--sub);padding:18px 20px 8px;letter-spacing:.2px}
   .cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 16px 26px}
+  .cgrid.cg4{grid-template-columns:repeat(2,1fr);gap:11px;padding-bottom:14px}
+  .cgrid.cg4 .cg{min-height:132px;gap:6px;padding:20px 10px 18px}
+  .cgrid.cg4 .cg i{font-size:36px}
+  .cgrid.cg4 .cg b{font-size:17px}
+  .cgrid.cg4 .cg s{font-size:11.5px}
+  .tile.sm{min-height:0;padding:12px 6px}
+  .tile.sm i{font-size:19px} .tile.sm b{font-size:12.5px} .tile.sm s{font-size:10px}
   .sec-tools{display:flex;gap:8px;padding:12px 16px 2px;flex-wrap:wrap}
   .sec-tools button{flex:1 1 calc(50% - 4px);display:flex;align-items:center;gap:7px;justify-content:center;
     padding:12px 8px;border:1px solid var(--line);background:var(--card);border-radius:14px;
@@ -945,16 +952,13 @@
     <div><div class="dc-tt" id="dcTitle">오늘의 10문제</div><div class="dc-sub" id="dcSub">전국 동일 문제 · 매일 0시 갱신</div></div>
     <div class="dc-streak" id="dcStreak"></div>
   </div>
+  <div class="sec-h">무엇부터 해볼까요?</div>
+  <div class="cgrid cg4" id="catGrid"></div>
   <div class="tiles" id="homeTiles">
-    <button class="tile" onclick="openWriting()"><i>✍️</i><b>쓰기</b><s id="tWr">따라쓰기</s></button>
-    <button class="tile" id="tileRd" onclick="openRead()"><span class="dot"></span><i>📖</i><b>책읽기</b><s id="tRd">5세부터</s></button>
-    <button class="tile" onclick="openSpeak()"><span class="dot"></span><i>🗣</i><b>말하기</b><s id="tSp">따라 말하기</s></button>
-    <button class="tile" onclick="openGames()"><i>🎮</i><b>게임</b><s id="tTa">7가지</s></button>
-    <button class="tile" onclick="openConj()"><i>🔁</i><b>동사 활용</b><s id="tCj">ます·て</s></button>
-    <button class="tile" id="tileWb" onclick="openWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
+    <button class="tile sm" id="tileWb" onclick="openWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
+    <button class="tile sm" onclick="openGames()"><i>🎮</i><b>게임</b><s id="tTa">8가지</s></button>
+    <button class="tile sm" id="tileRd" onclick="openRead()"><span class="dot"></span><i>📚</i><b>책읽기</b><s id="tRd">5세부터</s></button>
   </div>
-  <div class="sec-h">📇 단어장 — 무엇을 외울까요?</div>
-  <div class="cgrid" id="catGrid"></div>
   <div class="legal-links"><a href="privacy.html">개인정보처리방침</a> · <a href="terms.html">이용약관·환불정책</a></div>
 </div>
 
@@ -2014,20 +2018,32 @@ function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("sho
 // ★ IA 원칙: 홈은 "격자 아이콘"만. 탭·아코디언 없음(스크롤이 두 겹이 되어 조작이 어려웠음).
 //   격자 한 칸 = 카테고리 → 누르면 그 카테고리의 팩 목록(secScreen) 한 장으로 펼쳐진다.
 //   팩이 늘어도 홈은 그대로. 신규 팩은 NAV에, 신규 카테고리는 아래 CGRID에만 추가할 것.
+// ★ IA 최종: 홈은 **4칸** — 읽기 / 쓰기 / 말하기 / 어린이.
+//   박 대표 지시: "메인 화면은 4칸으로. 읽기·쓰기·말하기·어린이용"
+//   각 칸 = 그 축의 허브. 도구(tools)와 단어팩(그룹)을 한 화면에 같이 놓는다.
 const CGRID = [
-  {ic:"🔤", ko:"글자",     sub:"히라가나·가타카나", sec:"kana", grp:[""],
-   tools:[["🈳","50음도표","openChart()"],["🖼","그림 연상","openMnemonic()"],
-          ["🔍","숨은그림찾기","openHidden()"],["✍️","글자 쓰기","openWriting('hiragana')"]]},
-  {ic:"📗", ko:"단어",     sub:"기초·JLPT·상황·분야", sec:"kana", grp:["기초 필수","주제·생활"],
-   more:[["kanji",["자격시험 JLPT"]],["vocab",["JLPT 실전 어휘 · 빈칸(끼워넣기)","상황·장면별",
-          "분야·주제별","책 빈도별","가타카나 마스터·빈칸","특화·빈칸"]]],
-   tools:[["✍️","한자 쓰기","openWriting('N5')"],["🎮","단어 게임","openGames()"]]},
-  {ic:"📝", ko:"문장 암기", sub:"수험·여행·비즈니스", sec:"sentence", grp:["*"],
-   tools:[["🧩","문장 만들기","openSb()"],["🗣","말하기","openSpeak()"]]},
-  {ic:"📐", ko:"문법 카드", sub:"조사·부사·활용·문형", sec:"grammar", grp:["*"],
-   tools:[["🔁","동사 활용","openConj()"]]},
-  {ic:"🧸", ko:"어린이 카드", sub:"그림 뒤집기",  act:()=>openKids(), kids:true},
-  {ic:"📖", ko:"책읽기",    sub:"5세부터 원서",   act:()=>openRead()},
+  {ic:"📖", ko:"읽기", sub:"원서 · 단어 · 문장 · 문법",
+   sec:"kana", grp:["","기초 필수","주제·생활"],
+   more:[["kanji",["자격시험 JLPT"]],
+         ["vocab",["JLPT 실전 어휘 · 빈칸(끼워넣기)","상황·장면별","분야·주제별","책 빈도별",
+                   "가타카나 마스터·빈칸","특화·빈칸"]],
+         ["sentence",["*"]], ["grammar",["*"]]],
+   tools:[["📚","책읽기 (원서)","openRead()"],["🈳","50음도표","openChart()"],
+          ["🖼","그림으로 외우기","openMnemonic()"],["🎮","단어 게임","openGames()"]]},
+
+  {ic:"✍️", ko:"쓰기", sub:"손글씨 · 획순",
+   tools:[["🔤","글자 쓰기 (히라·가타)","openWriting('hiragana')"],
+          ["🈶","한자 쓰기 (N5~N1)","openWriting('N5')"],
+          ["🧩","문장 만들기","openSb()"],["🔁","동사 활용","openConj()"]]},
+
+  {ic:"🗣", ko:"말하기", sub:"발음 채점 · 청해",
+   tools:[["🎤","따라 말하기 (발음 채점)","openSpeak()"],
+          ["🎧","청해 연습","openListenPick()"],
+          ["🔗","짝 연결","openMt()"]]},
+
+  {ic:"🧸", ko:"어린이", sub:"6~7세 · 그림으로", kids:true,
+   tools:[["🃏","그림 낱말카드","openKids()"],["🔍","숨은그림찾기","openHidden()"],
+          ["🖼","그림 히라가나","openMnemonic()"],["🈳","50음도표","openChart()"]]},
 ];
 function cgGroups(c){
   const pick=(sec,names)=> (NAV[sec]||[]).filter(g=> names.includes("*") || names.includes(g.ko));
@@ -2054,7 +2070,7 @@ function cgOpen(i){
   if(c.act) return c.act();
   curSecCat=c;
   $("secTitle").textContent = `${c.ic} ${c.ko}`;
-  $("secCount").textContent = `${cgCount(c)}팩`;
+  const _n=cgCount(c); $("secCount").textContent = _n ? `${_n}팩` : "";
   // 카테고리 안에 그 분야의 도구(게임·쓰기·표 등)를 함께 놓는다 — 흩어져 있으면 못 찾는다
   $("secTools").innerHTML = (c.tools||[]).map(([ic,label,fn])=>
     `<button onclick="${fn}"><i>${ic}</i>${label}</button>`).join("");
@@ -2066,6 +2082,10 @@ let curSecCat=null;
 function renderNav(){
   const groups = curSecCat ? cgGroups(curSecCat) : (NAV[curTab]||[]);
   const box=$("catList"); if(!box) return; box.innerHTML="";
+  if(curSecCat && !curSecCat._listen && !groups.length){      // 도구만 있는 칸(쓰기·말하기·어린이)
+    box.innerHTML='<div style="text-align:center;color:var(--sub);padding:26px 4px;font-size:13px;line-height:1.7">위에서 하고 싶은 걸 골라 보세요 👆</div>';
+    return;
+  }
   if(false){   // 50음도표는 이제 격자 한 칸으로 뺐다
     const cd=document.createElement("div"); cd.className="cat chart-entry";
     cd.innerHTML=`<div class="txt"><div class="k">50음도표 · 한 번에 끝내기</div><div class="j jp">五十音図 · 누르면 발음이 나와요</div></div>
@@ -2709,6 +2729,34 @@ function renderWbBar(){
   const n=Object.keys(getWB()).length;
   t.textContent = n ? n+"개" : "없음";
   if(tile) tile.classList.toggle("hot", n>0);
+}
+
+// 🎧 청해 연습 — 오디오가 있는 팩을 골라 청해 모드로 바로 시작
+function openListenPick(){
+  const cand=[];
+  for(const s in NAV) NAV[s].forEach(g=>g.items.forEach(it=>{
+    if(tierOf(it)==="paid" && !isOwned(it.code)) return;
+    if((DATA[it.code]||[]).length) cand.push(it);
+  }));
+  if(!cand.length){ toast("청해 가능한 팩이 없어요"); return; }
+  curSecCat={ic:"🎧",ko:"청해 연습",_listen:1};
+  $("secTitle").textContent="🎧 청해 연습";
+  $("secCount").textContent=cand.length+"팩";
+  $("secTools").innerHTML='<button onclick="toast(\'팩을 고르면 바로 🎧청해로 시작해요\')"><i>🎧</i>소리만 듣고 맞히기</button>';
+  const box=$("catList");
+  box.innerHTML=cand.map((it,i)=>`<div class="cat" onclick="pickListen(${i})">
+     <div class="txt"><div class="k">${it.ko}</div><div class="j jp">${it.jp}</div></div>
+     <div class="meta"><span class="num">${(DATA[it.code]||[]).length}</span></div>
+     <span class="arrow">›</span></div>`).join("");
+  _listenPool=cand;
+  show("secScreen"); window.scrollTo(0,0);
+}
+let _listenPool=[];
+async function pickListen(i){
+  const it=_listenPool[i]; if(!it) return;
+  CONF.mode="listen";
+  await pickCat(it);
+  [...$("segType").children].forEach(b=>b.classList.toggle("on",b.dataset.m==="listen"));
 }
 
 // ══════════ 📖 단어장 — 팩 전체를 목록으로 ══════════
