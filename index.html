@@ -2021,15 +2021,33 @@ function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("sho
 // ★ IA 최종: 홈은 **4칸** — 읽기 / 쓰기 / 말하기 / 어린이.
 //   박 대표 지시: "메인 화면은 4칸으로. 읽기·쓰기·말하기·어린이용"
 //   각 칸 = 그 축의 허브. 도구(tools)와 단어팩(그룹)을 한 화면에 같이 놓는다.
+// ★ IA: 홈 4칸 — 읽기 / 쓰기 / 말하기 / 초보자 패키지
+//   박 대표 지시: "히라가나·가타카나 암기 등은 모두 초보자 코너로. 이름은 초보자 패키지로,
+//   초급 관련된 건 거기 다 넣어라." → 처음 시작하는 사람은 그 칸 하나만 보면 된다.
+const BEGINNER = ["hiragana","katakana","KSIM",                    // 글자
+                  "num","week","time","body","dir","color","family","weather","greet","ask",  // 기초 필수
+                  "shape","country","animal","nature","job","food", // 주제·생활
+                  "N5","V5","S1","GP"];                             // 첫 JLPT·문장·조사
 const CGRID = [
-  {ic:"📖", ko:"읽기", sub:"원서 · 단어 · 문장 · 문법",
+  {ic:"🧒", ko:"초보자 패키지", sub:"글자부터 첫 단어까지", kids:true,
    sec:"kana", grp:["","기초 필수","주제·생활"],
    more:[["kanji",["자격시험 JLPT"]],
-         ["vocab",["JLPT 실전 어휘 · 빈칸(끼워넣기)","상황·장면별","분야·주제별","책 빈도별",
+         ["vocab",["JLPT 실전 어휘 · 빈칸(끼워넣기)"]],
+         ["sentence",["통문장 암기 · 수험(빈칸)"]],
+         ["grammar",["*"]]],
+   only:BEGINNER,
+   tools:[["🈳","50음도표","openChart()"],["🖼","그림으로 외우기","openMnemonic()"],
+          ["🔍","숨은그림찾기","openHidden()"],["🃏","그림 낱말카드","openKids()"],
+          ["✍️","글자 쓰기","openWriting('hiragana')"]]},
+
+  {ic:"📖", ko:"읽기", sub:"JLPT · 상황 · 원서",
+   sec:"kanji", grp:["자격시험 JLPT"],
+   more:[["vocab",["JLPT 실전 어휘 · 빈칸(끼워넣기)","상황·장면별","분야·주제별","책 빈도별",
                    "가타카나 마스터·빈칸","특화·빈칸"]],
          ["sentence",["*"]], ["grammar",["*"]]],
-   tools:[["📚","책읽기 (원서)","openRead()"],["🈳","50음도표","openChart()"],
-          ["🖼","그림으로 외우기","openMnemonic()"],["🎮","단어 게임","openGames()"]]},
+   not:BEGINNER,
+   tools:[["📚","책읽기 (원서 49편)","openRead()"],["🎮","단어 게임","openGames()"],
+          ["📕","오답노트","openWrongbook()"]]},
 
   {ic:"✍️", ko:"쓰기", sub:"손글씨 · 획순",
    tools:[["🔤","글자 쓰기 (히라·가타)","openWriting('hiragana')"],
@@ -2040,16 +2058,18 @@ const CGRID = [
    tools:[["🎤","따라 말하기 (발음 채점)","openSpeak()"],
           ["🎧","청해 연습","openListenPick()"],
           ["🔗","짝 연결","openMt()"]]},
-
-  {ic:"🧸", ko:"어린이", sub:"6~7세 · 그림으로", kids:true,
-   tools:[["🃏","그림 낱말카드","openKids()"],["🔍","숨은그림찾기","openHidden()"],
-          ["🖼","그림 히라가나","openMnemonic()"],["🈳","50음도표","openChart()"]]},
 ];
 function cgGroups(c){
   const pick=(sec,names)=> (NAV[sec]||[]).filter(g=> names.includes("*") || names.includes(g.ko));
   let gs = c.sec ? pick(c.sec, c.grp) : [];
   if(c.sec2) gs = gs.concat(pick(c.sec2, c.grp2));
   (c.more||[]).forEach(([sec,names])=>{ gs = gs.concat(pick(sec,names)); });
+  // only / not — 그룹 안에서 팩 단위로 골라낸다 (초급만 / 초급 빼고)
+  if(c.only || c.not){
+    gs = gs.map(g=>({...g, items:g.items.filter(it=>
+          c.only ? c.only.includes(it.code) : !c.not.includes(it.code))}))
+           .filter(g=>g.items.length);
+  }
   return gs;
 }
 function cgCount(c){ return cgGroups(c).reduce((n,g)=>n+g.items.length,0); }
