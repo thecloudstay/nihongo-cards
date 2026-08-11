@@ -39,6 +39,14 @@
     --rg:#d9a520; --rg2:#eec95f; --rg-d:#b3871a; --rg-bg:#faf1d8; --rg-ink:#5f4a08;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  /* ⚠ v5.3 — 버튼·입력창은 기본이 Arial이라 앱 폰트를 상속하지 않는다.
+       전수조사에서 160개 넘는 요소가 Arial로 렌더되고 있었다(한글은 맑은고딕 폴백).
+       한 줄로 전 화면 서체가 통일된다. 개별 규칙의 font-family:inherit 은 이제 불필요.
+       ⚠ font-size는 상속시키지 말 것 — 크기를 지정하지 않은 버튼이 커져 레이아웃이 밀린다. */
+  button,input,select,textarea{font-family:inherit}
+  button{cursor:pointer}
+  /* 이모지는 플랫폼 컬러 이모지 폰트를 명시해야 흑백·두부(□)로 깨지지 않는다 */
+  .emo,.cg i,.sec-tools button i,.gh-i,.tile i{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
   html,body{height:100%}
   body{background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
@@ -73,10 +81,15 @@
   .cgrid.cg4 .cg s{font-size:11.5px}
   .tile.sm{min-height:0;padding:12px 6px}
   .tile.sm i{font-size:19px} .tile.sm b{font-size:12.5px} .tile.sm s{font-size:10px}
-  .sec-tools{display:flex;gap:8px;padding:12px 16px 2px;flex-wrap:wrap}
-  .sec-tools button{flex:1 1 calc(50% - 4px);display:flex;align-items:center;gap:7px;justify-content:center;
+  /* ⚠ v5.3 — flex 2열 고정이라 도구가 3개면 마지막 하나만 전체폭으로 늘어나 균형이 깨졌다.
+       개수에 맞춰 열 수를 정하는 grid 로. (n1/n3 은 렌더러가 붙여 준다) */
+  .sec-tools{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px 16px 2px}
+  .sec-tools.n1{grid-template-columns:1fr}
+  .sec-tools.n3{grid-template-columns:repeat(3,1fr);gap:7px}
+  .sec-tools.n3 button{flex-direction:column;gap:4px;font-size:12px;padding:11px 4px}
+  .sec-tools button{display:flex;align-items:center;gap:7px;justify-content:center;min-width:0;
     padding:12px 8px;border:1px solid var(--line);background:var(--card);border-radius:14px;
-    font-size:13px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+    font-size:13px;font-weight:800;color:var(--ink);line-height:1.25;text-align:center}
   .sec-tools button i{font-style:normal;font-size:17px}
   .sec-tools button:active{background:var(--soft)}
   .cg{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 8px 12px;
@@ -126,7 +139,11 @@
 
   /* ─── 설정 ─── */
   .top{display:flex;align-items:center;gap:12px;padding:16px 20px 10px}
-  .top .back{font-size:24px;color:var(--ink);background:none;border:none;cursor:pointer;line-height:1}
+  /* ⚠ v5.3 — 「‹」 하나뿐이라 실제 탭 영역이 8×24px 이었다(손가락으로 누르기 어려움).
+       글자는 그대로 두고 히트박스만 40×40 으로 넓힌다. */
+  .top .back{font-size:24px;color:var(--ink);background:none;border:none;line-height:1;
+    width:40px;height:40px;margin-left:-9px;display:flex;align-items:center;justify-content:center;border-radius:12px}
+  .top .back:active{background:var(--soft)}
   .top .title{font-size:16px;font-weight:800}
   .top .title .s{font-size:11px;color:var(--sub);font-weight:600}
   .top .count{margin-left:auto;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
@@ -135,9 +152,17 @@
   .setup-cat .k{font-size:30px;font-weight:900;letter-spacing:-.5px}
   .setup-cat .j{font-size:15px;color:var(--sub);margin-top:5px}
   .row .lab{font-size:14px;color:var(--sub);font-weight:700;margin-bottom:10px}
-  .seg{display:flex;gap:9px;flex-wrap:wrap}
-  .seg button{flex:1;min-width:60px;padding:15px;border:1.5px solid var(--line);border-radius:14px;background:#fff;font-weight:800;font-size:15px;cursor:pointer;color:var(--sub);transition:.15s}
-  .seg button.on{border-color:var(--ink);color:var(--ink);background:var(--soft)}
+  /* ⚠ v5.3 — flex+min-width:60px 이라 「뜻 맞히기」 같은 긴 라벨이 2줄로 접혀
+       행 높이가 55px / 77px 로 들쭉날쭉했다. 균등 grid + 라벨 길이에 따라 열 수를 자동 결정. */
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .seg.c2{grid-template-columns:repeat(2,1fr)}
+  .seg.c3{grid-template-columns:repeat(3,1fr)}
+  .seg.c5{grid-template-columns:repeat(5,1fr);gap:6px}
+  .seg button{min-width:0;padding:14px 4px;border:1.5px solid var(--line);border-radius:14px;background:#fff;
+    font-weight:800;font-size:15px;color:var(--sub);transition:.15s;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+  .seg.c5 button{font-size:14px}
+  .seg button.on{border-color:var(--ink);color:#fff;background:var(--ink);box-shadow:0 2px 6px rgba(43,39,35,.18)}
   .start.alt{background:var(--card);color:var(--ink);border:1.5px solid var(--line);box-shadow:none;font-size:15.5px;padding:15px;margin-bottom:9px}
   .start.alt:active{background:var(--soft)}
   /* ─── 단어장 ─── */
@@ -526,18 +551,23 @@
 
 /* ══ 원서 읽기 ══ */
 .rd-lv{display:flex;flex-direction:column;gap:9px;padding:12px 16px 20px}
-.rd-book{display:flex;gap:12px;align-items:center;padding:13px 14px;border:1px solid var(--line);
+.rd-book{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);
   background:var(--card);border-radius:15px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink)}
 .rd-book:active{transform:scale(.99);background:var(--soft)}
 .rd-book .lvb{flex:0 0 44px;height:44px;border-radius:12px;display:flex;flex-direction:column;
   align-items:center;justify-content:center;font-weight:900;font-size:15px;background:var(--soft);color:var(--accent)}
 .rd-book .lvb small{font-size:8.5px;font-weight:700;color:var(--sub)}
 .rd-book .bi{flex:1;min-width:0}
-.rd-book .bt{font-size:16px;font-weight:800}
-.rd-book .ba{font-size:11.5px;color:var(--sub);margin-top:1px}
-.rd-book .bd{font-size:11.5px;color:var(--sub);margin-top:4px;line-height:1.45}
+/* ⚠ v5.3 — bt/ba/bd/rd-prog 가 전부 <span>(inline)이라 제목·원제·소개·진도바가
+     한 줄로 이어 흐르고 진도바는 아예 안 보였다. 반드시 block 으로 쌓는다. */
+.rd-book .bt,.rd-book .ba,.rd-book .bd{display:block}
+.rd-book .bt{font-size:16px;font-weight:800;line-height:1.3;letter-spacing:-.3px}
+.rd-book .ba{font-size:11.5px;color:var(--sub);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-book .bd{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rd-book .bp{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--ok)}
-.rd-prog{height:4px;border-radius:3px;background:var(--line);margin-top:6px;overflow:hidden}
+.rd-prog{display:block;height:4px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
 .rd-prog i{display:block;height:100%;background:var(--ok);border-radius:3px}
 .rd-chaps{padding:8px 16px 20px;display:flex;flex-direction:column;gap:7px}
 .rd-chap{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);
@@ -552,7 +582,12 @@
 .rd-hd .a{font-size:12px;color:var(--sub);margin-top:2px}
 .rd-hd .d{font-size:12.5px;color:var(--sub);margin-top:8px;line-height:1.55;text-align:left;
   background:var(--soft);padding:11px 13px;border-radius:12px}
-.rd-tools{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:8px 16px 4px}
+/* ⚠ v5.3 — 가운데 정렬 flex-wrap 이라 2번째 줄이 들쭉날쭉하고
+     짝이어야 할 「가﹣ / 가﹢」가 서로 다른 줄로 찢어졌다. 좌정렬 + 스테퍼 묶음. */
+.rd-tools{display:flex;gap:6px;justify-content:flex-start;align-items:center;flex-wrap:wrap;padding:10px 16px 4px}
+.rd-fs{display:inline-flex;gap:0;margin-left:auto;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card)}
+.rd-fs button{border:none!important;border-radius:0!important;padding:7px 12px}
+.rd-fs button+button{border-left:1px solid var(--line)!important}
 .rd-tools button{padding:7px 12px;border:1px solid var(--line);background:var(--card);border-radius:16px;
   font-size:12px;font-weight:700;color:var(--sub);cursor:pointer}
 .rd-tools button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -695,8 +730,11 @@
   background:var(--card);border-radius:16px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink)}
 .gh-card:active{transform:scale(.99);background:var(--soft)}
 .gh-card .ic{flex:0 0 46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:23px}
-.gh-card .tt{font-size:15.5px;font-weight:800}
-.gh-card .ds{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.45}
+/* ⚠ v5.3 — tt/ds 가 <span>(inline)이라 게임 이름과 설명이 한 줄로 이어 붙었다
+     (「타임어택 60초60초 안에 몇 점?…」). 읽기 목록(.rd-book)과 같은 사고. */
+.gh-card .tt,.gh-card .ds{display:block}
+.gh-card .tt{font-size:15.5px;font-weight:800;letter-spacing:-.3px}
+.gh-card .ds{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.45}
 .gh-card .bs{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--ok);white-space:nowrap}
 .gh-card.soon{opacity:.5}
 .gh-h{font-size:12px;font-weight:800;color:var(--sub);padding:8px 2px 0}
@@ -813,9 +851,11 @@
 .sp-nosr{margin:12px 16px 0;padding:12px 14px;border-radius:12px;background:var(--soft);
   font-size:12.5px;color:var(--sub);line-height:1.6;display:none}
 /* 읽기 목록 섹션 헤더 */
-.rd-filter{display:flex;gap:6px;padding:12px 16px 2px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.rd-filter button{flex:0 0 auto;padding:7px 14px;border:1px solid var(--line);background:var(--card);
-  border-radius:16px;font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+/* ⚠ v5.3 — overflow-x:auto 인데 6개 버튼이 32px 넘쳐 목록 한가운데 가로 스크롤바가 보였다.
+     6열 grid 한 줄로 정리한다. */
+.rd-filter{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:12px 16px 2px}
+.rd-filter button{min-width:0;padding:8px 2px;border:1px solid var(--line);background:var(--card);
+  border-radius:16px;font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden}
 .rd-filter button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .rd-resume{display:flex;align-items:center;gap:12px;margin:12px 16px 2px;padding:14px 16px;
   border-radius:16px;background:var(--ink);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.14)}
@@ -989,16 +1029,16 @@
       </div>
     </div>
     <div class="row" id="typeRow" style="display:none"><div class="lab">문제 유형</div>
-      <div class="seg" id="segType">
+      <div class="seg c2" id="segType">
         <button data-m="meaning" class="on">뜻 맞히기</button>
         <button data-m="reading">읽기 맞히기</button>
         <button data-m="listen">🎧 청해</button>
-        <button data-m="write">표기</button>
+        <button data-m="write">한자 표기</button>
       </div>
     </div>
     <div class="row"><div class="lab">틀렸을 때 반복 <span style="font-weight:600;color:var(--sub);font-size:12px">음성으로</span></div>
-      <div class="seg" id="segRep">
-        <button data-r="0" class="on">안 함</button><button data-r="1">1회</button>
+      <div class="seg c5" id="segRep">
+        <button data-r="0" class="on">안함</button><button data-r="1">1회</button>
         <button data-r="2">2회</button><button data-r="3">3회</button><button data-r="5">5회</button>
       </div>
     </div>
@@ -1254,9 +1294,11 @@
     <button id="rrKo" onclick="rdToggleKo()">한국어</button>
     <button id="rrRo" onclick="rdToggleRo()" style="display:none">ローマ字</button>
     <button onclick="rdPlayAll()" id="rrPlay">🔊 이어 듣기</button>
-    <button onclick="rdFont(-1)" title="글자 작게">가﹣</button>
-    <button onclick="rdFont(1)" id="rrFs" title="글자 크게">가﹢</button>
     <button id="rrKa" onclick="rdToggleKara()">🎤 따라읽기</button>
+    <span class="rd-fs">
+      <button onclick="rdFont(-1)" title="글자 작게">가﹣</button>
+      <button onclick="rdFont(1)" id="rrFs" title="글자 크게">가﹢</button>
+    </span>
   </div>
   <div class="rd-body" id="rrBody"></div>
   <div class="rd-foot">
@@ -1454,8 +1496,8 @@
         <button data-t="3">3초</button><button data-t="5" class="on">5초</button>
         <button data-t="8">8초</button><button data-t="0">없음</button></div></div>
     <div class="row"><div class="lab">틀리면 반복</div>
-      <div class="seg" id="wbSegR">
-        <button data-r="0" class="on">안 함</button><button data-r="1">1회</button>
+      <div class="seg c5" id="wbSegR">
+        <button data-r="0" class="on">안함</button><button data-r="1">1회</button>
         <button data-r="2">2회</button><button data-r="3">3회</button><button data-r="5">5회</button></div></div>
   </div>
   <div class="wb-list" id="wbList"></div>
@@ -2046,7 +2088,7 @@ const CGRID = [
                    "가타카나 마스터·빈칸","특화·빈칸"]],
          ["sentence",["*"]], ["grammar",["*"]]],
    not:BEGINNER,
-   tools:[["📚","책읽기 (원서 49편)","openRead()"],["🎮","단어 게임","openGames()"],
+   tools:[["📚","책읽기 원서","openRead()"],["🎮","단어 게임","openGames()"],
           ["📕","오답노트","openWrongbook()"]]},
 
   {ic:"✍️", ko:"쓰기", sub:"손글씨 · 획순",
@@ -2092,7 +2134,11 @@ function cgOpen(i){
   $("secTitle").textContent = `${c.ic} ${c.ko}`;
   const _n=cgCount(c); $("secCount").textContent = _n ? `${_n}팩` : "";
   // 카테고리 안에 그 분야의 도구(게임·쓰기·표 등)를 함께 놓는다 — 흩어져 있으면 못 찾는다
-  $("secTools").innerHTML = (c.tools||[]).map(([ic,label,fn])=>
+  const _tl=(c.tools||[]);
+  // 도구 개수에 맞춰 열 수를 잡는다(2·4개→2열, 3·5·6개→3열, 1개→1열)
+  const _st=$("secTools");
+  _st.className = "sec-tools" + (_tl.length===1?" n1" : (_tl.length%2 && _tl.length>1)||_tl.length>4 ? " n3" : "");
+  _st.innerHTML = _tl.map(([ic,label,fn])=>
     `<button onclick="${fn}"><i>${ic}</i>${label}</button>`).join("");
   renderNav();
   show("secScreen"); window.scrollTo(0,0);
@@ -3102,7 +3148,8 @@ function renderDaily(){
   el.style.display="flex";
   const s=dailyState(), today=kstDate(0);
   const streak=(s.last===today||s.last===kstDate(-1))?(s.streak||0):0;
-  $("dcStreak").innerHTML = streak>0 ? `🔥 ${streak}일<small>연속</small>` : `#${dailyNo()}<small>오늘</small>`;
+  // ⚠ v5.3 — 예전엔 여기에도 `#${dailyNo()}` 를 찍어 제목의 "오늘의 10문제 #22" 와 번호가 겹쳤다.
+  $("dcStreak").innerHTML = streak>0 ? `🔥 ${streak}일<small>연속</small>` : `▶<small>시작</small>`;
   if(s.last===today){
     el.classList.add("done-today");
     $("dcTitle").textContent="오늘의 10문제 완료!";
