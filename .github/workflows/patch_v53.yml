@@ -10,9 +10,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: apply v5.3 layout patches
         run: |
-          cat > /tmp/patch.py <<'PYEOF'
+          python3 - <<'PYEOF'
           import io,json,sys
-          P=json.load(io.open('/tmp/p.json',encoding='utf-8'))
+          P=json.load(io.open('_patch_v53.json',encoding='utf-8'))
           s=io.open('index.html',encoding='utf-8').read()
           pos=0
           for i,(a,b) in enumerate(P):
@@ -24,14 +24,11 @@ jobs:
           io.open('index.html','w',encoding='utf-8').write(s)
           print('applied',len(P),'patches ->',len(s),'chars')
           PYEOF
-          cat > /tmp/p.json <<'JSONEOF'
-          __PATCHES__
-          JSONEOF
-          python3 /tmp/patch.py
-      - name: commit
+      - name: cleanup + commit
         run: |
+          rm -f _patch_v53.json .github/workflows/patch_v53.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add -A
           git commit -m "fix(ui): v5.3 레이아웃 정리 — 버튼 폰트 상속 · 목록/게임카드 세로 적층 · 세그먼트 grid · 가로 스크롤바 제거 · 탭 영역 40px"
           git push
