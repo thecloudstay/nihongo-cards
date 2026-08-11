@@ -1,0 +1,37 @@
+name: patch-v53
+on: workflow_dispatch
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: apply v5.3 layout patches
+        run: |
+          cat > /tmp/patch.py <<'PYEOF'
+          import io,json,sys
+          P=json.load(io.open('/tmp/p.json',encoding='utf-8'))
+          s=io.open('index.html',encoding='utf-8').read()
+          pos=0
+          for i,(a,b) in enumerate(P):
+              k=s.find(a,pos)
+              if k<0:
+                  sys.exit('FAIL patch #%d :: %s' % (i,a[:60]))
+              s=s[:k]+b+s[k+len(a):]
+              pos=k+len(b)
+          io.open('index.html','w',encoding='utf-8').write(s)
+          print('applied',len(P),'patches ->',len(s),'chars')
+          PYEOF
+          cat > /tmp/p.json <<'JSONEOF'
+          __PATCHES__
+          JSONEOF
+          python3 /tmp/patch.py
+      - name: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix(ui): v5.3 레이아웃 정리 — 버튼 폰트 상속 · 목록/게임카드 세로 적층 · 세그먼트 grid · 가로 스크롤바 제거 · 탭 영역 40px"
+          git push
