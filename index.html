@@ -1294,6 +1294,7 @@
     <button id="rrKo" onclick="rdToggleKo()">한국어</button>
     <button id="rrRo" onclick="rdToggleRo()" style="display:none">ローマ字</button>
     <button onclick="rdPlayAll()" id="rrPlay">🔊 이어 듣기</button>
+    <button id="rrCont" onclick="rdToggleCont()">🔂 장별</button>
     <button id="rrKa" onclick="rdToggleKara()">🎤 따라읽기</button>
     <span class="rd-fs">
       <button onclick="rdFont(-1)" title="글자 작게">가﹣</button>
@@ -4036,7 +4037,7 @@ function openChapter(k){
   $("rrRo").style.display = hasRo ? "" : "none";
   $("rrRo").classList.toggle("on",rdRo);
   if(hasRo && rdRo) body.querySelectorAll(".rd-s").forEach(e=>e.classList.add("ropen"));
-  rdStopPlay(); rdSyncNextBtn(); rdApplyFont(); rdTouch(b.id,k);
+  rdStopPlay(); rdSyncNextBtn(); rdSyncContBtn(); rdApplyFont(); rdTouch(b.id,k);
   show("rdRead");
 }
 function rdTapSentence(e,i){
@@ -4112,29 +4113,72 @@ function rdSyncNextBtn(){
     pv.textContent = rdChapCur===0 ? "← 이전 장" : `← 이전 장 (${rdChapCur}/${b.chapters.length})`; }
 }
 
-let _rdPlayTok=0, _rdPlaying=false;
+// ── 이어 듣기 ──────────────────────────────────────────────
+//  v5.4: 장 끝에서 멈추지 않고 **책 끝까지** 이어 읽는 「연속」 모드 추가.
+//   · 장별(🔂) — 이 장만 읽고 멈춤 (예전 동작)
+//   · 연속(🔁) — 장이 끝나면 다음 장을 자동으로 열고 계속 읽음
+//  둘 다 「⏸ 멈춤」으로 언제든 즉시 중단. 멈춘 자리(장)는 이어보기에 기록된다.
+let _rdPlayTok=0, _rdPlaying=false, _rdAuto=false;
+let rdCont = (()=>{ try{ return localStorage.getItem("rd_cont")==="1"; }catch(e){ return false; } })();
+function rdSyncContBtn(){
+  const b=$("rrCont"); if(!b) return;
+  b.classList.toggle("on", rdCont);
+  b.textContent = rdCont ? "🔁 연속" : "🔂 장별";
+  b.title = rdCont ? "책 끝까지 이어서 읽습니다" : "이 장만 읽고 멈춥니다";
+}
+function rdToggleCont(){
+  rdCont=!rdCont;
+  try{ localStorage.setItem("rd_cont", rdCont?"1":"0"); }catch(e){}
+  rdSyncContBtn();
+  toast(rdCont ? "🔁 책 끝까지 이어서 읽어요" : "🔂 이 장만 읽고 멈춰요");
+}
 async function rdPlayAll(){
   if(_rdPlaying){ rdStopPlay(); return; }         // ⚠ 예전엔 다시 누르면 두 번째 재생이 겹쳐 소리가 끊겼음
-  const c=rdBookCur.chapters[rdChapCur];
+  const bk=rdBookCur; if(!bk) return;
   const my=++_rdPlayTok; _rdPlaying=true;
-  const els=[...$("rrBody").querySelectorAll(".rd-s")];
-  $("rrPlay").textContent="⏸ 멈춤";
-  for(let i=0;i<c.s.length;i++){
-    if(my!==_rdPlayTok){ return; }
-    rdKaraClear();
-    els.forEach(e=>{ e.classList.remove("cur"); if(rdKoMode==="auto") e.classList.remove("open"); });
-    els[i].classList.add("cur");
-    if(rdKoMode==="auto") els[i].classList.add("open");     // 따라 읽으며 뜻이 같이 뜬다
-    els[i].scrollIntoView({block:"center",behavior:"smooth"});
-    const pr = speakP(rdReading(c.s[i].jp));
-    setTimeout(()=>rdKaraRun(els[i]), 80);        // 오디오가 재생을 시작한 뒤 진행률을 읽는다
-    await pr;
+  const label=()=> $("rrPlay").textContent =
+    (rdCont && bk.chapters.length>1) ? `⏸ 멈춤 (${rdChapCur+1}/${bk.chapters.length}장)` : "⏸ 멈춤";
+  label();
+  while(true){
+    const c=bk.chapters[rdChapCur];
+    const els=[...$("rrBody").querySelectorAll(".rd-s")];
+    for(let i=0;i<c.s.length;i++){
+      if(my!==_rdPlayTok){ return; }
+      rdKaraClear();
+      els.forEach(e=>{ e.classList.remove("cur"); if(rdKoMode==="auto") e.classList.remove("open"); });
+      els[i].classList.add("cur");
+      if(rdKoMode==="auto") els[i].classList.add("open");     // 따라 읽으며 뜻이 같이 뜬다
+      els[i].scrollIntoView({block:"center",behavior:"smooth"});
+      const pr = speakP(rdReading(c.s[i].jp));
+      setTimeout(()=>rdKaraRun(els[i]), 80);        // 오디오가 재생을 시작한 뒤 진행률을 읽는다
+      await pr;
+      if(my!==_rdPlayTok) return;
+      await new Promise(r=>setTimeout(r,180));
+    }
+    // ── 장 끝 ──
+    if(!rdCont || rdChapCur+1 >= bk.chapters.length) break;
     if(my!==_rdPlayTok) return;
-    await new Promise(r=>setTimeout(r,180));
+    _rdAuto=true;                 // openChapter 안의 rdStopPlay 가 재생을 끊지 않도록
+    openChapter(rdChapCur+1);
+    _rdAuto=false;
+    window.scrollTo(0,0);
+    label();
+    await new Promise(r=>setTimeout(r,700));   // 새 장이 그려질 때까지 잠깐 쉼
+    if(my!==_rdPlayTok) return;
   }
+  const done = rdChapCur+1 >= bk.chapters.length;
   rdStopPlay();
+  if(rdCont && done) toast("📖 책을 끝까지 다 읽었어요 🎊");
 }
 function rdStopPlay(){
+  // 연속 재생 중 장을 자동으로 넘기는 순간에는 재생을 끊지 않고 하이라이트만 정리한다
+  if(_rdAuto){
+    rdKaraClear();
+    const bd=$("rrBody");
+    if(bd) bd.querySelectorAll(".rd-s.cur").forEach(e=>{
+      e.classList.remove("cur"); if(rdKoMode==="auto") e.classList.remove("open"); });
+    return;
+  }
   _rdPlayTok++; _rdPlaying=false; rdKaraClear();
   try{ const a=_getAudioEl(); if(a){ a.pause(); } }catch(e){}
   try{ speechSynthesis.cancel(); }catch(e){}
