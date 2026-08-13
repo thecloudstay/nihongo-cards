@@ -1,0 +1,31 @@
+name: patch-v55
+on: workflow_dispatch
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: apply v5.5 NAV patch
+        run: |
+          python3 - <<'PYEOF'
+          import io,json,sys
+          P=json.load(io.open('_patch_v55.json',encoding='utf-8'))
+          s=io.open('index.html',encoding='utf-8').read()
+          for i,(a,b) in enumerate(P):
+              if s.count(a)!=1:
+                  sys.exit('FAIL patch #%d (found %d) :: %s' % (i,s.count(a),a[:70]))
+              s=s.replace(a,b,1)
+          io.open('index.html','w',encoding='utf-8').write(s)
+          print('applied',len(P),'patches ->',len(s),'chars')
+          PYEOF
+      - name: cleanup + commit
+        run: |
+          rm -f _patch_v55.json .github/workflows/patch_v55.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat(cards): 신규 4팩 등록 — 경어 100 · 오노마토페 100 · N5문형 70 · N4문형 80"
+          git push
