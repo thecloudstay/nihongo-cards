@@ -1,0 +1,31 @@
+name: patch-v57
+on: workflow_dispatch
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: apply v5.7 patch
+        run: |
+          python3 - <<'PYEOF'
+          import io,json,sys
+          P=json.load(io.open('_patch_v57.json',encoding='utf-8'))
+          s=io.open('index.html',encoding='utf-8').read()
+          for i,(a,b) in enumerate(P):
+              if s.count(a)!=1:
+                  sys.exit('FAIL patch #%d (found %d) :: %s' % (i,s.count(a),a[:70]))
+              s=s.replace(a,b,1)
+          io.open('index.html','w',encoding='utf-8').write(s)
+          print('applied',len(P),'patches ->',len(s),'chars')
+          PYEOF
+      - name: cleanup + commit
+        run: |
+          rm -f _patch_v57.json .github/workflows/patch_v57.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat(read): 읽기 끝나면 맨 위로 · 작품 검색/정렬(짧은순·단계순·긴순) · 홈에 원서 편수 표시"
+          git push
