@@ -1800,14 +1800,18 @@ const NAV = {
     {ko:"JLPT 급별 문형",jp:"級別文型",items:[
       {code:"G5",ko:"N5 문형",jp:"N5 文型",n:70,ready:false,tier:"free",sent:true},
       {code:"G4",ko:"N4 문형",jp:"N4 文型",n:80,ready:false,tier:"free",sent:true},
+      {code:"G3",ko:"N3 문형",jp:"N3 文型",n:90,ready:false,tier:"free",sent:true},
     ]},
   ],
 };
 // v5.4 신규 팩은 기존 섹션 안에 넣는다 — NAV 최상위에 새 섹션을 만들면
 //   CGRID(홈 4칸)가 참조하지 않아 화면에 아예 안 나온다.
 NAV.vocab.push({ko:"실전 표현 · 빈칸",jp:"実用表現",items:[
+  {code:"TRAVEL",ko:"여행 실전 회화",jp:"旅行会話",n:120,ready:false,tier:"paid",sent:true},
   {code:"KEIGO",ko:"경어(존경·겸양)",jp:"敬語",n:100,ready:false,tier:"paid",sent:true},
-  {code:"ONO",ko:"오노마토페(의성어·의태어)",jp:"オノマトペ",n:100,ready:false,tier:"paid",sent:true},
+  {code:"BIZ",ko:"비즈니스 일본어",jp:"ビジネス日本語",n:100,ready:false,tier:"paid",sent:true},
+  {code:"ONO",ko:"오노마토페 기초",jp:"オノマトペ・基礎",n:100,ready:false,tier:"paid",sent:true},
+  {code:"ONO2",ko:"오노마토페 심화",jp:"オノマトペ・応用",n:80,ready:false,tier:"paid",sent:true},
 ]});
 
 // ══ 실제 카드 데이터 (지금은 hira_seion만) ══
