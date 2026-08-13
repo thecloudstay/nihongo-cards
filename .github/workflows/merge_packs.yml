@@ -1,0 +1,54 @@
+name: merge-packs
+on: workflow_dispatch
+
+# packs/*.json (신규 카드팩)을 cards_all.json 과 cards_free.json 에 병합한다.
+#  · 이미 들어 있는 category 는 건너뛴다(멱등).
+#  · 유료팩은 cards_free 에 앞 10장만 미리보기로 넣는다(기존 PREVIEW_N=10 규칙).
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: merge
+        run: |
+          python3 - <<'PYEOF'
+          import io,json,glob,os,sys
+          PREVIEW=10
+          allp='cards_all.json'; freep='cards_free.json'
+          A=json.load(io.open(allp,encoding='utf-8'))
+          F=json.load(io.open(freep,encoding='utf-8'))
+          have={r.get('category') for r in A}
+          added=[]
+          for f in sorted(glob.glob('packs/*.json')):
+              rows=json.load(io.open(f,encoding='utf-8'))
+              cat=rows[0]['category']
+              if cat in have:
+                  print('skip (이미 있음):',cat); continue
+              # 키를 cards_all 스키마에 맞춘다
+              keys=list(A[0].keys())
+              norm=[{k:r.get(k,'') for k in keys} for r in rows]
+              A+=norm
+              tier=rows[0].get('tier','paid')
+              F+= norm if tier=='free' else norm[:PREVIEW]
+              added.append(f'{cat}({len(rows)}장,{tier})')
+              have.add(cat)
+          if not added:
+              print('추가할 팩 없음'); sys.exit(0)
+          json.dump(A,io.open(allp,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+          json.dump(F,io.open(freep,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+          cats=len({r.get('category') for r in A})
+          print('추가:',', '.join(added))
+          print(f'cards_all {len(A)}장 / {cats}카테고리 · cards_free {len(F)}장')
+          io.open('/tmp/msg.txt','w',encoding='utf-8').write(
+              'content: 카드팩 병합 — '+', '.join(added)+f' (총 {len(A)}장 {cats}카테고리)')
+          PYEOF
+      - name: commit
+        run: |
+          if [ ! -f /tmp/msg.txt ]; then echo "변경 없음"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cards_all.json cards_free.json
+          git commit -F /tmp/msg.txt
+          git push
