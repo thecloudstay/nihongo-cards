@@ -1,0 +1,350 @@
+  catch(e){ $("spHint").textContent="다시 눌러주세요"; }
+}
+// ── 채점: 가나 정규화 후 유사도 ──
+function spNorm(t){
+  let x=String(t||"").replace(/[\s、。「」『』・！？!?,.]/g,"");
+  // 가타카나 → 히라가나
+  x=x.replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+  // 장음·촉음 통일(인식기가 흔히 흘림)
+  x=x.replace(/ー/g,"").replace(/っ/g,"");
+  return x;
+}
+function spSim(a,b){
+  a=spNorm(a); b=spNorm(b);
+  if(!a||!b) return 0;
+  const m=a.length, n=b.length;
+  const d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    d[i][j]=Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return Math.max(0, 1 - d[m][n]/Math.max(m,n));
+}
+function spGrade(alts){
+  if(!spQ) return;
+  const targets=[spQ.read, rdPlain(spQ.jp)];
+  let best=0, heard=alts[0]||"";
+  alts.forEach(a=>targets.forEach(t=>{ const v=spSim(a,t); if(v>best){ best=v; heard=a; } }));
+  const score=Math.round(best*100);
+  spTot++; spSum+=score;
+  const pass=score>=70;
+  if(pass){ spStreak++; if(spStreak>spBest()){ spBestSet(spStreak); $("spBest").textContent=spStreak; } try{sfx("ok");}catch(e){} }
+  else { spStreak=0; try{sfx("no");}catch(e){} }
+  $("spCount").textContent=spTot+"문장";
+  $("spAvg").textContent=Math.round(spSum/spTot)+"점";
+  $("spStreak").textContent=spStreak;
+  const res=$("spRes");
+  res.className="sp-res show "+(score>=85?"good":score>=60?"soso":"bad");
+  $("spScore").textContent=score+"점";
+  $("spHeard").innerHTML=`들린 말: <b>${heard}</b>`;
+  $("spDiff").innerHTML=spDiffHtml(heard, spQ.read);
+  $("spHint").textContent = score>=85?"👏 아주 좋아요!" : score>=60?"거의 맞아요 — 한 번 더!" : "🔊 원어민 발음을 다시 듣고 따라해보세요";
+}
+function spDiffHtml(heard, target){
+  const h=spNorm(heard), t=spNorm(target);
+  let out="", hi=0;
+  for(const ch of t){
+    if(hi<h.length && h[hi]===ch){ out+=`<span class="hit">${ch}</span>`; hi++; }
+    else out+=`<span class="miss">${ch}</span>`;
+  }
+  return out;
+}
+function spPlay(){ if(spQ) speak(spQ.read); }
+function spPlaySlow(){
+  if(!spQ) return;
+  try{ speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(spQ.read); u.lang="ja-JP"; u.rate=0.55;
+    if(!_jaVoice)_jaVoice=pickJaVoice(); if(_jaVoice)u.voice=_jaVoice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function spToggleRuby(){ spRuby=!spRuby; $("spRubyBtn").classList.toggle("on",spRuby); spRender(); }
+function spToggleKo(){ spKoOn=!spKoOn; $("spKoBtn").classList.toggle("on",spKoOn); $("spKo").style.display=spKoOn?"block":"none"; }
+function spRender(){
+  if(!spQ) return;
+  $("spJp").innerHTML = spRuby ? rdRubyHtml(spQ.jp) : rdPlain(spQ.jp);
+  $("spRo").textContent = spQ.ro || "";
+  $("spKo").textContent = spQ.ko || "";
+  $("spKo").style.display = spKoOn?"block":"none";
+}
+function spNext(){
+  const src=SP_SRC.find(x=>x.k===spSrcK);
+  const pool=src?src.pick():[];
+  if(!pool.length){ $("spJp").textContent="—"; $("spHint").textContent="이 묶음의 문장이 없어요 (다른 묶음을 골라주세요)"; spQ=null; return; }
+  spQ=pool[Math.floor(Math.random()*pool.length)];
+  $("spRes").className="sp-res";
+  $("spHint").textContent = spSRSupported() ? "🎤 를 누르고 따라 말해보세요" : "🔊 듣고 따라 말한 뒤 ✓ 를 눌러주세요";
+  spRender();
+  sched(()=>speak(spQ.read), 250);
+}
+function spSelfOK(){
+  if(!spQ) return;
+  spStreak++; if(spStreak>spBest()){ spBestSet(spStreak); $("spBest").textContent=spStreak; }
+  $("spStreak").textContent=spStreak;
+  try{sfx("ok");}catch(e){}
+  spNext();
+}
+async function openSpeak(){
+  show("spScreen"); await loadBooks();
+  spTot=0; spSum=0; spStreak=0;
+  $("spCount").textContent="0문장"; $("spAvg").textContent="-"; $("spStreak").textContent="0"; $("spBest").textContent=spBest();
+  $("spRubyBtn").classList.toggle("on",spRuby); $("spKoBtn").classList.toggle("on",spKoOn);
+  $("spNoSR").style.display = spSRSupported() ? "none" : "block";
+  $("spLvB").innerHTML=lvBarHtml("spNext"); renderSpSrc(); spNext();
+}
+function renderSpTile(){ const t=$("tSp"); if(!t) return; const b=spBest(); t.textContent = b?`최고 ${b}연속`:"따라 말하기"; }
+
+// ══════════ 🧸 어린이 그림 낱말카드 — 카테고리 → 교시 → 카드 ══════════
+let KIDS=null, KCATS=null, kdCat=null, kdLes=1, kdList=[], kdI=0, kdMode="flip", kdFlipped=false, kdOkN=0, kdLock=false;
+const KD_CHEER=["🎉 좋아요!","👏 잘했어요!","⭐ 정답!","🌟 최고!","🎊 딩동댕!"];
+function kdLog(){ try{ return JSON.parse(localStorage.getItem("kids","kt_best","sv_best")||"{}"); }catch(e){ return {}; } }
+function kdSaveLog(o){ try{ localStorage.setItem("kids","kt_best","sv_best",JSON.stringify(o)); }catch(e){} }
+async function loadKids(){
+  if(KIDS) return KIDS;
+  try{ const r=await fetch("kids.json",{cache:"no-store"});
+    if(r.ok){ const j=await r.json();
+      if(Array.isArray(j)){ KIDS=j; KCATS=null; } else { KIDS=j.cards; KCATS=j.cats; } } }catch(e){}
+  return KIDS;
+}
+function kdCards(cat,les){ return (KIDS||[]).filter(x=>x.cat===cat && (!les || x.lesson===les)); }
+function kdLesDone(cat,les){
+  const lg=kdLog(), c=kdCards(cat,les);
+  if(!c.length) return false;
+  return c.filter(x=>lg[x.id]).length >= Math.ceil(c.length*0.8);   // 80% 이상 보면 완료
+}
+function kdCatProg(cat){
+  const lg=kdLog(), c=kdCards(cat);
+  return {seen:c.filter(x=>lg[x.id]).length, tot:c.length};
+}
+async function openKids(){
+  show("kcScreen"); await loadKids();
+  if(!KIDS){ toast("카드를 불러오지 못했어요"); return; }
+  if(!KCATS){ kdCat=null; kdList=KIDS.slice(); kdOpenCards("전체",0); return; }   // 구버전 폴백
+  $("kcTot").textContent=KIDS.length+"장";
+  $("kcGrid").innerHTML=KCATS.map(c=>{
+    const p=kdCatProg(c.tag); const pct=p.tot?Math.round(p.seen/p.tot*100):0;
+    return `<button class="kc" onclick="kdOpenCat('${c.tag}')">
+      <i>${c.emoji}</i><b>${c.label}</b>
+      <s>${c.lessons.length}교시 · ${c.total}장</s>
+      <span class="bar"><i style="width:${pct}%">.</i></span></button>`;
+  }).join("");
+}
+function kdOpenCat(tag){
+  const c=KCATS.find(x=>x.tag===tag); if(!c) return;
+  kdCat=tag;
+  $("klTitle").textContent=c.label;
+  $("klT").textContent=`${c.emoji} ${c.label}`;
+  const p=kdCatProg(tag);
+  $("klS").textContent=`${c.total}장 · ${c.lessons.length}교시 · 지금까지 ${p.seen}장 봤어요`;
+  $("klList").innerHTML=c.lessons.map(l=>{
+    const dn=kdLesDone(tag,l.n);
+    return `<button class="kl ${dn?'done':''}" onclick="kdOpenLesson('${tag}',${l.n})">
+      <span class="no">${dn?'✓':l.n}</span>
+      <span class="ti"><b>${l.n}교시</b><s>카드 ${l.count}장${l.sim?` · ✨닮은 말 ${l.sim}개`:""}</s></span>
+      <span class="ar">${dn?'🏅':'›'}</span></button>`;
+  }).join("");
+  show("klScreen");
+}
+function kdOpenLesson(tag,les){
+  kdCat=tag; kdLes=les;
+  const c=KCATS.find(x=>x.tag===tag);
+  kdOpenCards(`${c.emoji} ${c.label} ${les}교시`, les);
+}
+function kdOpenCards(title,les){
+  kdList = les ? kdCards(kdCat,les) : (kdList.length?kdList:KIDS.slice());
+  kdI=0; kdOkN=0; $("kdOk").textContent="0";
+  $("kdTitle").textContent=title;
+  kdMode="flip"; kdSetMode("flip");
+  show("kdScreen");
+}
+function kdBack(){ if(KCATS&&kdCat) kdOpenCat(kdCat); else show("home"); }
+const KD_MODES=[{k:"flip",ko:"🃏 뒤집기"},{k:"quizJp",ko:"🇯🇵 일본어"},{k:"quizKo",ko:"🇰🇷 뜻"},{k:"sim",ko:"✨ 닮은 말"}];
+function renderKdModes(){
+  $("kdModes").innerHTML=KD_MODES.map(m=>`<button class="${m.k===kdMode?'on':''}" onclick="kdSetMode('${m.k}')">${m.ko}</button>`).join("");
+}
+function kdPool(){
+  const base=kdList.length?kdList:(KIDS||[]);
+  return kdMode==="sim" ? base.filter(x=>x.sim===1) : base;
+}
+function kdSetMode(m){
+  const pool0 = m==="sim" ? (kdList.length?kdList:(KIDS||[])).filter(x=>x.sim===1) : null;
+  if(m==="sim" && pool0 && !pool0.length){ toast("이 교시엔 닮은 말이 없어요"); return; }
+  kdMode=m; kdI=0; renderKdModes();
+  const quiz=(m==="quizJp"||m==="quizKo");
+  $("kdFlipWrap").style.display = quiz?"none":"block";
+  $("kdQuizWrap").style.display = quiz?"block":"none";
+  quiz ? kdQuizNext() : kdRender();
+}
+function kdRender(){
+  const pool=kdPool(); if(!pool.length) return;
+  if(kdI<0) kdI=pool.length-1; if(kdI>=pool.length) kdI=0;
+  const c=pool[kdI];
+  kdFlipped=false; $("kdCard").classList.remove("flip");
+  $("kdEmoji").textContent=c.emoji; $("kdEmoji2").textContent=c.emoji;
+  $("kdJp").textContent=c.jp; $("kdRd").textContent=c.r; $("kdKo").textContent=c.ko;
+  const sm=$("kdSm");
+  if(c.sim && c.simNote){ sm.textContent="✨ "+c.simNote; sm.style.display="block"; }
+  else sm.style.display="none";
+  $("kdSimBadge").innerHTML = c.sim ? '<span class="kd-sim">✨ 한국어랑 소리가 닮았어요</span>' : "";
+  $("kdPos").textContent=`${kdI+1} / ${pool.length}`;
+  $("kdLearned").textContent=Object.keys(kdLog()).length;
+}
+function kdFlip(){
+  const pool=kdPool(); if(!pool.length) return;
+  kdFlipped=!kdFlipped;
+  $("kdCard").classList.toggle("flip",kdFlipped);
+  if(kdFlipped){
+    const c=pool[kdI]; speak(c.r);
+    const lg=kdLog(); lg[c.id]=(lg[c.id]|0)+1; kdSaveLog(lg);
+    $("kdLearned").textContent=Object.keys(lg).length;
+  }
+}
+function kdGo(d){ kdI+=d; kdRender(); }
+let kdQ=null;
+function kdQuizNext(){
+  let pool=kdPool();
+  if(pool.length<4) pool=(KIDS||[]);                       // 보기 4개 확보용
+  if(pool.length<4) return;
+  const base=kdPool(); const c=(base.length?base:pool)[Math.floor(Math.random()*(base.length||pool.length))];
+  const useJp=(kdMode==="quizJp");
+  const others=shuffle(pool.filter(x=>x.id!==c.id)).slice(0,3);
+  const opts=shuffle([c,...others]);
+  kdQ={c,opts,useJp}; kdLock=false;
+  $("kdQEmoji").textContent=c.emoji;
+  $("kdQAsk").textContent = useJp ? "이 그림은 일본어로?" : "이 그림의 뜻은?";
+  $("kdQOpts").innerHTML=opts.map((o,i)=>`<button onclick="kdPick(${i})">${useJp?o.jp:o.ko}</button>`).join("");
+  $("kdCheer").textContent="";
+  speak(c.r);
+}
+function kdPick(i){
+  if(kdLock||!kdQ) return; kdLock=true;
+  const btns=[...$("kdQOpts").querySelectorAll("button")];
+  const ci=kdQ.opts.findIndex(o=>o.id===kdQ.c.id);
+  btns.forEach(b=>b.disabled=true); btns[ci].classList.add("ok");
+  if(i===ci){
+    kdOkN++; $("kdOk").textContent=kdOkN;
+    $("kdCheer").textContent=KD_CHEER[Math.floor(Math.random()*KD_CHEER.length)];
+    const lg=kdLog(); lg[kdQ.c.id]=(lg[kdQ.c.id]|0)+1; kdSaveLog(lg);
+    $("kdLearned").textContent=Object.keys(lg).length;
+    try{sfx("ok");}catch(e){}
+  }else{ btns[i].classList.add("no"); $("kdCheer").textContent="🙂 다시 해볼까요?"; try{sfx("no");}catch(e){} }
+  speak(kdQ.c.r);
+  sched(kdQuizNext, 1500);
+}
+
+// ══════════ 🃏 카르타 (짝 맞추기 뒤집기) ══════════
+const KT_LV=[{k:6,ko:"쉬움 (6쌍)",col:3},{k:8,ko:"보통 (8쌍)",col:4},{k:10,ko:"어려움 (10쌍)",col:4}];
+let ktPairs=6, ktCards=[], ktOpen=[], ktHit=0, ktTry=0, ktLock=false, ktT0=0, ktTimer=null;
+function ktBest(){ try{ return JSON.parse(localStorage.getItem("kt_best")||"{}"); }catch(e){ return {}; } }
+function ktBestSet(o){ try{ localStorage.setItem("kt_best",JSON.stringify(o)); }catch(e){} }
+function renderKtLv(){
+  $("ktLv").innerHTML=KT_LV.map(l=>`<button class="${l.k===ktPairs?'on':''}" onclick="ktSetLv(${l.k})">${l.ko}</button>`).join("");
+}
+function ktSetLv(k){ ktPairs=k; renderKtLv(); ktNew(); }
+function ktSrc(){
+  const out=[]; const seen=new Set();
+  for(const k in DATA) for(const c of (DATA[k]||[])){
+    if(!c.front||!c.ko||c.front.length>6) continue;
+    if(gLv!=="all" && c.level && c.level!==gLv) continue;
+    const ko=mtClean(c.ko); if(!ko||ko.length>7||seen.has(ko)) continue;
+    seen.add(ko); out.push({w:c.front,ko,say:c.speak||c.front});
+  }
+  return out;
+}
+function ktNew(){
+  clearInterval(ktTimer);
+  const src=ktSrc();
+  if(src.length<ktPairs){ toast("데이터를 불러오는 중이에요"); return; }
+  const pick=shuffle(src).slice(0,ktPairs);
+  ktCards=shuffle(pick.flatMap((p,i)=>[{i,t:"jp",v:p.w,say:p.say},{i,t:"ko",v:p.ko,say:p.say}]));
+  ktOpen=[]; ktHit=0; ktTry=0; ktLock=false; ktT0=Date.now();
+  const col=KT_LV.find(l=>l.k===ktPairs).col;
+  const g=$("ktGrid"); g.style.gridTemplateColumns=`repeat(${col},1fr)`;
+  g.innerHTML=ktCards.map((c,i)=>`<div class="kt-c" id="kt${i}" onclick="ktTap(${i})">
+    <div class="kt-in"><div class="kt-f">🃏</div><div class="kt-b">${c.v}</div></div></div>`).join("");
+  $("ktPair").textContent="0"; $("ktTry").textContent="0"; $("ktCheer").textContent="";
+  const b=ktBest()[ktPairs]; $("ktBest").textContent = b? `${b}초` : "-";
+  ktTimer=setInterval(()=>{ $("ktTime").textContent=Math.floor((Date.now()-ktT0)/1000)+"초"; },250);
+}
+function ktTap(i){
+  if(ktLock) return;
+  const el=$("kt"+i);
+  if(el.classList.contains("open")||el.classList.contains("gone")) return;
+  el.classList.add("open"); ktOpen.push(i);
+  speak(ktCards[i].say);
+  if(ktOpen.length<2) return;
+  ktTry++; $("ktTry").textContent=ktTry; ktLock=true;
+  const [a,b]=ktOpen;
+  const ok = ktCards[a].i===ktCards[b].i && ktCards[a].t!==ktCards[b].t;
+  if(ok){
+    $("kt"+a).classList.add("hit"); $("kt"+b).classList.add("hit");
+    sched(()=>{ $("kt"+a).classList.add("gone"); $("kt"+b).classList.add("gone"); },420);
+    ktHit++; $("ktPair").textContent=ktHit; try{sfx("ok");}catch(e){}
+    ktOpen=[]; ktLock=false;
+    if(ktHit>=ktPairs){
+      clearInterval(ktTimer);
+      const sec=Math.floor((Date.now()-ktT0)/1000);
+      const bs=ktBest(); const prev=bs[ktPairs];
+      if(!prev||sec<prev){ bs[ktPairs]=sec; ktBestSet(bs); $("ktBest").textContent=sec+"초"; $("ktCheer").textContent=`🏆 신기록! ${sec}초`; }
+      else $("ktCheer").textContent=`🎉 완성! ${sec}초 · ${ktTry}번 뒤집기`;
+    }
+  }else{
+    try{sfx("no");}catch(e){}
+    sched(()=>{ $("kt"+a).classList.remove("open"); $("kt"+b).classList.remove("open"); ktOpen=[]; ktLock=false; },760);
+  }
+}
+function openKarta(){ show("ktScreen"); $("ktLvB").innerHTML=lvBarHtml("ktNew"); renderKtLv(); ktNew(); }
+
+// ══════════ ❤️ 서바이벌 ══════════
+const SV_STAGE=[
+  {n:1,ko:"기초",   cats:["hiragana","katakana","num","week","time","body","dir","color","family","greet","ask"], sec:8},
+  {n:2,ko:"N5",     cats:["N5","V5","S1","KIDS"], sec:7},
+  {n:3,ko:"N4",     cats:["N4","V4","S2"], sec:6},
+  {n:4,ko:"N3",     cats:["N3","V3","S3","VERB"], sec:5},
+  {n:5,ko:"N2",     cats:["N2","V2","S4","KATA2"], sec:5},
+  {n:6,ko:"N1",     cats:["N1","V1","S5","WASEI"], sec:4},
+];
+let svLife=3, svScore=0, svQ=null, svLock=false, svTimer=null, svLeft=0, svStage=0;
+function svBest(){ return parseInt(localStorage.getItem("sv_best")||"0",10)||0; }
+function svBestSet(v){ try{ localStorage.setItem("sv_best",String(v)); }catch(e){} }
+function svPool(st){
+  const out=[];
+  SV_STAGE[st].cats.forEach(c=>(DATA[c]||[]).forEach(x=>{
+    if(x.front&&x.ko&&x.front.length<=10) out.push(x);
+  }));
+  return out;
+}
+const SV_LV2STAGE={all:0,N5:1,N4:2,N3:3,N2:4,N1:5};
+let svStage0=0;
+function svStart(){
+  svStage0=SV_LV2STAGE[gLv]||0;
+  svLife=3; svScore=0; svStage=svStage0;
+  $("svOver").style.display="none"; $("svPlay").style.display="block";
+  $("svBest").textContent=svBest();
+  svNext();
+}
+function svRenderLife(){ $("svLife").textContent="❤️".repeat(svLife)+"🖤".repeat(3-svLife); }
+function svNext(){
+  clearInterval(svTimer);
+  svStage=Math.min(SV_STAGE.length-1, svStage0+Math.floor(svScore/5));
+  const st=SV_STAGE[svStage];
+  let pool=svPool(svStage);
+  if(pool.length<4){ for(let i=0;i<=svStage&&pool.length<4;i++) pool=pool.concat(svPool(i)); }
+  if(pool.length<4){ toast("데이터를 불러오는 중이에요"); return; }
+  const c=pool[Math.floor(Math.random()*pool.length)];
+  const others=shuffle(pool.filter(x=>x.ko!==c.ko)).slice(0,3);
+  const opts=shuffle([c,...others]);
+  svQ={c,opts};
+  svRenderLife();
+  $("svCount").textContent=svScore+"문제";
+  $("svScoreN").textContent=svScore;
+  $("svLv").textContent=`${st.n}단계 · ${st.ko} · ${st.sec}초`;
+  const g=$("svGlyph"); g.textContent=c.front; g.classList.toggle("sm", c.front.length>3);
+  $("svSub").textContent = c.sent? "빈칸에 알맞은 말은?" : "뜻을 고르세요";
+  $("svOpts").innerHTML=opts.map((o,i)=>`<button onclick="svPick(${i})">${o.ko}</button>`).join("");
+  svLock=false;
+  svLeft=st.sec*1000;
+  const t0=Date.now();
+  svTimer=setInterval(()=>{
+    const el=st.sec*1000-(Date.now()-t0);
+    $("svBar").style.width=Math.max(0,el/(st.sec*1000)*100)+"%";
+    if(el<=0){ clearInterval(svTimer); svHit(false); }
