@@ -1,0 +1,350 @@
+// ── 번들 중심 판매(07-17): 팩 클릭 → 소속 그룹 번들 체크아웃, 번들 보유 시 그룹 전체 잠금해제 ──
+const BUNDLE_MEMBERS = {
+  BUNDLE_THEME:["shape","country","animal","nature","job","food"],
+  BUNDLE_V:["V5","V4","V3","V2","V1"],
+  BUNDLE_S:["S1","S2","S3","S4","S5","ST","SB","SD"],
+  BUNDLE_G:["GP","GADV","GV","GADJ","GF"],
+  BUNDLE_B:["B1","B2","B3","B4","B5","B6","B7","B8","B9","B10","B11","B12","B13","B14"],
+  BUNDLE_A:["A1","A2","A3","A4","A5","A6","A7"],
+  BUNDLE_C:["C1","C2","C3","C4"],
+  BUNDLE_N:["N4","N3","N2","N1"]
+};
+// 신규 번들=50% 런칭가 / 기존 번들(B·A·N·C·ALL)=기존 Paddle 가격(이미 저렴)에 일치
+const BUNDLE_PRICE = { BUNDLE_THEME:"₩4,800", BUNDLE_V:"₩9,800", BUNDLE_S:"₩16,100", BUNDLE_G:"₩4,800", BUNDLE_B:"₩16,900", BUNDLE_A:"₩8,900", BUNDLE_C:"₩4,900", BUNDLE_N:"₩5,900", ALL:"₩19,900" };
+const PACK_TO_BUNDLE = (()=>{ const m={}; for(const b in BUNDLE_MEMBERS) BUNDLE_MEMBERS[b].forEach(c=>m[c]=b); return m; })();
+let _paddleReady=false;
+function initPaddle(){
+  try{
+    if(window.Paddle && !_paddleReady){
+      Paddle.Initialize({ token: PADDLE_CLIENT_TOKEN, eventCallback: function(ev){
+        if(ev && ev.name==="checkout.completed"){
+          toast("결제 완료! 입력하신 이메일로 라이선스 키가 발송됩니다 📧 [내 구매]에서 로그인하세요");
+        }
+      }});
+      _paddleReady=true;
+    }
+  }catch(e){}
+}
+// 보유팩: 결제 완료(서버 entitlement) 또는 로컬 저장. 지금은 기기 localStorage.
+let OWNED = new Set((()=>{ try{ return JSON.parse(localStorage.getItem('owned_packs')||'[]'); }catch(e){ return []; } })());
+function saveOwned(){ try{ localStorage.setItem('owned_packs', JSON.stringify([...OWNED])); }catch(e){} }
+function isOwned(code){ if(OWNED.has(code)||OWNED.has("ALL")) return true; for(const b of OWNED){ if(BUNDLE_MEMBERS[b] && BUNDLE_MEMBERS[b].includes(code)) return true; } return false; }   // 라이프타임(ALL)+번들 포함
+function grantPack(code){ OWNED.add(code); saveOwned(); renderNav(); renderCatGrid(); }   // 구매 완료 후 호출(추후 서버 연동)
+function isUnlocked(it){ return tierOf(it)!=="paid" || OWNED.has(it.code); }
+function computePrice(n){ n=+n||0; const rate = n<20?40 : n<100?30 : n<200?25 : n<300?20 : 15; return Math.round(n*rate*0.5/100)*100; }  // 런칭 50% 할인
+function priceOf(it){ if(PACK_TO_BUNDLE[it.code] && BUNDLE_PRICE[PACK_TO_BUNDLE[it.code]]) return BUNDLE_PRICE[PACK_TO_BUNDLE[it.code]]+" · 그룹전체"; return "₩"+computePrice(it.n).toLocaleString(); }
+function openBuy(it){
+  initPaddle();
+  const priceId = PRICE_IDS[PACK_TO_BUNDLE[it.code]] || PRICE_IDS[it.code];
+  if(priceId && window.Paddle && _paddleReady){
+    const opts = { items:[{ priceId: priceId, quantity:1 }], settings:{ locale:"ko" } };
+    if(LIC && LIC.email) opts.customer = { email: LIC.email };
+    try{ Paddle.Checkout.open(opts); return; }catch(e){}
+  }
+  const url = CHECKOUT_URL[it.code];
+  if(url){ window.open(url, "_blank"); toast(`${it.ko} 결제창을 열었어요`); }
+  else { toast(`${it.ko} — ${priceOf(it)} · 결제 준비 중`); }
+}
+
+function show(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $(id).classList.add(id==="done"?"on":"on"); if(id==="done"){$("done").classList.add("on");} }
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1800); }
+
+// ── 네비게이터 렌더 ──
+// ═══ 홈 카테고리 격자 ═══
+// ★ IA 원칙: 홈은 "격자 아이콘"만. 탭·아코디언 없음(스크롤이 두 겹이 되어 조작이 어려웠음).
+//   격자 한 칸 = 카테고리 → 누르면 그 카테고리의 팩 목록(secScreen) 한 장으로 펼쳐진다.
+//   팩이 늘어도 홈은 그대로. 신규 팩은 NAV에, 신규 카테고리는 아래 CGRID에만 추가할 것.
+// ★ IA 최종: 홈은 **4칸** — 읽기 / 쓰기 / 말하기 / 어린이.
+//   박 대표 지시: "메인 화면은 4칸으로. 읽기·쓰기·말하기·어린이용"
+//   각 칸 = 그 축의 허브. 도구(tools)와 단어팩(그룹)을 한 화면에 같이 놓는다.
+// ★ IA: 홈 4칸 — 읽기 / 쓰기 / 말하기 / 초보자 패키지
+//   박 대표 지시: "히라가나·가타카나 암기 등은 모두 초보자 코너로. 이름은 초보자 패키지로,
+//   초급 관련된 건 거기 다 넣어라." → 처음 시작하는 사람은 그 칸 하나만 보면 된다.
+const BEGINNER = ["hiragana","katakana","KSIM",                    // 글자
+                  "num","week","time","body","dir","color","family","weather","greet","ask",  // 기초 필수
+                  "shape","country","animal","nature","job","food", // 주제·생활
+                  "N5","V5","S1","GP","G5"];                        // 첫 JLPT·문장·조사·N5문형
+const CGRID = [
+  {ic:"🧒", ko:"초보자 패키지", sub:"글자부터 첫 단어까지", kids:true,
+   sec:"kana", grp:["","기초 필수","주제·생활"],
+   more:[["kanji",["자격시험 JLPT"]],
+         ["vocab",["JLPT 실전 어휘 · 빈칸(끼워넣기)"]],
+         ["sentence",["통문장 암기 · 수험(빈칸)"]],
+         ["grammar",["*"]]],
+   only:BEGINNER,
+   tools:[["🈳","50음도표","openChart()"],["🖼","그림으로 외우기","openMnemonic()"],
+          ["🔍","숨은그림찾기","openHidden()"],["🃏","그림 낱말카드","openKids()"],
+          ["✍️","글자 쓰기","openWriting('hiragana')"]]},
+
+  {ic:"📖", ko:"읽기", sub:"JLPT · 상황 · 원서",
+   sec:"kanji", grp:["자격시험 JLPT"],
+   more:[["vocab",["JLPT 실전 어휘 · 빈칸(끼워넣기)","상황·장면별","분야·주제별","책 빈도별",
+                   "가타카나 마스터·빈칸","특화·빈칸","실전 표현 · 빈칸"]],
+         ["sentence",["*"]], ["grammar",["*"]]],
+   not:BEGINNER,
+   tools:[["📚","책읽기 원서","openRead()"],["🎮","단어 게임","openGames()"],
+          ["📕","오답노트","openWrongbook()"]]},
+
+  {ic:"✍️", ko:"쓰기", sub:"손글씨 · 획순",
+   tools:[["🔤","글자 쓰기 (히라·가타)","openWriting('hiragana')"],
+          ["🈶","한자 쓰기 (N5~N1)","openWriting('N5')"],
+          ["🧩","문장 만들기","openSb()"],["🔁","동사 활용","openConj()"]]},
+
+  {ic:"🗣", ko:"말하기", sub:"발음 채점 · 청해",
+   tools:[["🎤","따라 말하기 (발음 채점)","openSpeak()"],
+          ["🎧","청해 연습","openListenPick()"],
+          ["🔗","짝 연결","openMt()"]]},
+];
+function cgGroups(c){
+  const pick=(sec,names)=> (NAV[sec]||[]).filter(g=> names.includes("*") || names.includes(g.ko));
+  let gs = c.sec ? pick(c.sec, c.grp) : [];
+  if(c.sec2) gs = gs.concat(pick(c.sec2, c.grp2));
+  (c.more||[]).forEach(([sec,names])=>{ gs = gs.concat(pick(sec,names)); });
+  // only / not — 그룹 안에서 팩 단위로 골라낸다 (초급만 / 초급 빼고)
+  if(c.only || c.not){
+    gs = gs.map(g=>({...g, items:g.items.filter(it=>
+          c.only ? c.only.includes(it.code) : !c.not.includes(it.code))}))
+           .filter(g=>g.items.length);
+  }
+  return gs;
+}
+function cgCount(c){ return cgGroups(c).reduce((n,g)=>n+g.items.length,0); }
+function cgFree(c){ return cgGroups(c).some(g=>g.items.some(it=>tierOf(it)!=="paid")); }
+function renderCatGrid(){
+  const box=$("catGrid"); if(!box) return;
+  box.innerHTML = CGRID.map((c,i)=>{
+    const n = c.act ? 0 : cgCount(c);
+    const sub = n ? `${n}팩` : c.sub;
+    const free = c.act ? true : cgFree(c);
+    return `<button class="cg${c.kids?" kids":""}" onclick="cgOpen(${i})">
+      ${free?'<span class="fr">무료</span>':''}
+      <i>${c.ic}</i><b>${c.ko}</b><s>${sub}</s></button>`;
+  }).join("");
+}
+function cgOpen(i){
+  const c=CGRID[i];
+  if(c.act) return c.act();
+  curSecCat=c;
+  $("secTitle").textContent = `${c.ic} ${c.ko}`;
+  const _n=cgCount(c); $("secCount").textContent = _n ? `${_n}팩` : "";
+  // 카테고리 안에 그 분야의 도구(게임·쓰기·표 등)를 함께 놓는다 — 흩어져 있으면 못 찾는다
+  const _tl=(c.tools||[]);
+  // 도구 개수에 맞춰 열 수를 잡는다(2·4개→2열, 3·5·6개→3열, 1개→1열)
+  const _st=$("secTools");
+  _st.className = "sec-tools" + (_tl.length===1?" n1" : (_tl.length%2 && _tl.length>1)||_tl.length>4 ? " n3" : "");
+  _st.innerHTML = _tl.map(([ic,label,fn])=>
+    `<button onclick="${fn}"><i>${ic}</i>${label}</button>`).join("");
+  renderNav();
+  show("secScreen"); window.scrollTo(0,0);
+}
+let curSecCat=null;
+
+function renderNav(){
+  const groups = curSecCat ? cgGroups(curSecCat) : (NAV[curTab]||[]);
+  const box=$("catList"); if(!box) return; box.innerHTML="";
+  if(curSecCat && !curSecCat._listen && !groups.length){      // 도구만 있는 칸(쓰기·말하기·어린이)
+    box.innerHTML='<div style="text-align:center;color:var(--sub);padding:26px 4px;font-size:13px;line-height:1.7">위에서 하고 싶은 걸 골라 보세요 👆</div>';
+    return;
+  }
+  if(false){   // 50음도표는 이제 격자 한 칸으로 뺐다
+    const cd=document.createElement("div"); cd.className="cat chart-entry";
+    cd.innerHTML=`<div class="txt"><div class="k">50음도표 · 한 번에 끝내기</div><div class="j jp">五十音図 · 누르면 발음이 나와요</div></div>
+      <div class="meta"><span class="badge free">무료</span></div><span class="arrow">›</span>`;
+    cd.onclick=()=>openChart();
+    box.appendChild(cd);
+  }
+  groups.forEach(g=>{
+    const gd=document.createElement("div"); gd.className="grp";
+    let wrap=gd;
+    // ⚠ 아코디언은 없앴다. 격자 한 칸이 이미 "대주제"이므로, 안에서 또 접으면
+    //   들어오자마자 아무것도 안 보이고 스크롤도 어색해진다(박 대표 지적).
+    //   그룹이 2개 이상일 때만 접히지 않는 소제목을 얹는다.
+    if(g.ko && groups.length>1){
+      const h=document.createElement("div"); h.className="grp-h plain";
+      h.innerHTML=`<span class="k">${g.ko}</span><span class="j jp">${g.jp}</span>`;
+      gd.appendChild(h);
+      wrap=document.createElement("div"); wrap.className="grp-items"; gd.appendChild(wrap);
+    }
+    g.items.forEach(it=>{
+      const el=document.createElement("div");
+      const paid = tierOf(it)==="paid";
+      const owned = paid && isOwned(it.code);
+      // 무료인데 데이터 없는 것만 비활성(준비중). 유료는 항상 클릭 가능(구매/열기).
+      el.className="cat"+((!paid && !it.ready)?" soon":"");
+      const have = (DATA[it.code]||[]).length;
+      let badge;
+      if(owned) badge = '<span class="badge free">보유</span>';
+      else if(paid) badge = have ? `<span class="badge lock">🔒 ${priceOf(it)} · 10장 무료</span>` : '<span class="badge soon">준비중</span>';
+      else if(it.ready) badge = '<span class="badge free">무료</span>';
+      else badge = '<span class="badge soon">준비중</span>';
+      el.innerHTML=`<div class="txt"><div class="k">${it.ko}</div><div class="j jp">${it.jp}</div></div>
+        <div class="meta"><span class="num">${it.n}${it.sent?"문장":"자"}</span>${badge}</div>
+        <button class="vc-go" title="단어장 보기">📖</button>
+        <span class="arrow">›</span>`;
+      el.onclick=()=>pickCat(it);
+      // 목록에서 곧바로 단어장으로 (테스트 설정을 거치지 않아도 되게)
+      const vg=el.querySelector(".vc-go");
+      if(vg) vg.onclick=async e=>{ e.stopPropagation(); await pickCat(it,true); };
+      wrap.appendChild(el);
+    });
+    box.appendChild(gd);
+  });
+}
+function navCollapsed(){ try{ return JSON.parse(localStorage.getItem('nav_collapsed')||'{}'); }catch(e){ return {}; } }
+function saveNavCollapsed(s){ try{ localStorage.setItem('nav_collapsed', JSON.stringify(s)); }catch(e){} }
+function switchTab(sec){ curTab=sec; renderNav(); }   // 탭 UI는 격자로 대체됨(호환용)
+
+let previewMode=false; // 유료 미보유 카테고리 20장 무료 체험 중 여부
+async function pickCat(it, toVocab){
+  const paid = tierOf(it)==="paid";
+  const owned = paid && isOwned(it.code);
+  const have = (DATA[it.code]||[]).length;
+  if(!paid && !it.ready){ toast("곧 준비됩니다"); return; }            // 무료 준비중
+  if(paid && !owned){                                                 // 유료 미보유 → 미리보기 20장
+    if(!have){ toast("곧 준비됩니다"); return; }
+    previewMode=true;
+  } else previewMode=false;
+  if(paid && owned && have<=20){                                      // 보유 유료 → 전체 100장 지연 로딩
+    const ok = await loadPaidCategory(it);
+    if(!ok){ toast("구매 복원(이메일+키)이 필요하거나 서버 응답에 실패했어요"); return; }
+  }
+  if(!(DATA[it.code]||[]).length){ toast("데이터 준비 중입니다"); return; }
+  curCat=it;
+  $("setupK").textContent=it.ko; $("setupJ").textContent=it.jp;
+  const sentPack = !!it.sent;
+  $("typeRow").style.display = isKanjiCat() ? "block" : "none";
+  [...$("segType").children].forEach(b=>{
+    const bm=b.dataset.m;
+    b.style.display = sentPack ? ((bm==="meaning"||bm==="listen")?"":"none") : "";
+    if(bm==="meaning") b.textContent = sentPack ? "빈칸 채우기" : "뜻 맞히기";
+  });
+  if(sentPack && (CONF.mode==="reading"||CONF.mode==="write")){
+    CONF.mode="meaning";
+    [...$("segType").children].forEach(b=>b.classList.toggle("on",b.dataset.m==="meaning"));
+  }
+  const pv=$("previewNote");
+  if(pv){
+    pv.style.display = previewMode ? "block" : "none";
+    if(previewMode) pv.innerHTML=`🎁 미리보기 <b>10장 무료 체험</b> 중 · 전체 ${it.n}장 잠금해제 <b>${priceOf(it)}</b> <button class="buy-mini" onclick="openBuy(curCat)">구매</button>`;
+  }
+  const sr=$("segRep"); if(sr) [...sr.children].forEach(b=>b.classList.toggle("on", +b.dataset.r===(CONF.rep|0)));
+  const sf=$("segFlip"); if(sf) [...sf.children].forEach(b=>b.classList.toggle("on", +b.dataset.f===(CONF.flip|0)));
+  const sc=$("segCount"); if(sc) [...sc.children].forEach(b=>b.classList.toggle("on", +b.dataset.n===(CONF.count|0)));
+  const st=$("segTime"); if(st) [...st.children].forEach(b=>b.classList.toggle("on", +b.dataset.t===(CONF.time|0)));
+  if(toVocab){ openVocab("secScreen"); return; }        // 목록의 📖 버튼으로 들어온 경우
+  show("setup");
+}
+
+// ── 설정 세그 ──
+$("segCount").addEventListener("click",e=>{ if(e.target.dataset.n!==undefined){[...$("segCount").children].forEach(b=>b.classList.remove("on")); e.target.classList.add("on"); CONF.count=+e.target.dataset.n;}});
+$("segTime").addEventListener("click",e=>{ if(e.target.dataset.t!==undefined){[...$("segTime").children].forEach(b=>b.classList.remove("on")); e.target.classList.add("on"); CONF.time=+e.target.dataset.t;}});
+$("segRep").addEventListener("click",e=>{ if(e.target.dataset.r!==undefined){[...$("segRep").children].forEach(b=>b.classList.remove("on")); e.target.classList.add("on"); CONF.rep=+e.target.dataset.r;}});
+$("segType").addEventListener("click",e=>{ if(e.target.dataset.m){[...$("segType").children].forEach(b=>b.classList.remove("on")); e.target.classList.add("on"); CONF.mode=e.target.dataset.m;}});
+$("segFlip").addEventListener("click",e=>{ if(e.target.dataset.f!==undefined){[...$("segFlip").children].forEach(b=>b.classList.remove("on")); e.target.classList.add("on"); CONF.flip=+e.target.dataset.f;}});
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function startQuiz(){
+  reviewRound=0; dailyMode=false; wbMode=false; results=[]; combo=0; saveConf();
+  let pool=DATA[curCat.code];
+  if(CONF.mode==="listen"){
+    pool = curCat.sent ? pool.filter(hasSentAudio) : pool.filter(hasAudio);
+    if(pool.length<4){ toast("이 팩은 청해 음성 준비 중이에요 — 다른 유형으로 풀어주세요"); return; }
+  }
+  const n = CONF.count===0 ? pool.length : Math.min(CONF.count,pool.length);
+  deck=shuffle(pool).slice(0,n);
+  qi=0;correct=0;misses=[];
+  $("qtitle").textContent = isSent() ? `${curCat.ko} · ${qMode()==="listen"?"🎧청해":"빈칸"}` : (isKanjiCat() ? `${curCat.ko} · ${({meaning:"뜻",reading:"읽기",listen:"🎧청해",write:"표기"})[qMode()]||"뜻"}` : `${curCat.ko} 읽기`);
+  $("scoreTot").textContent=deck.length;
+  show("quizScreen"); loadQ();
+}
+
+function loadQ(){
+  repToken++; repRunning=false; { const P=$("repPanel"); if(P) P.style.display="none"; }
+  answered=false;paused=false;
+  const q=deck[qi]; const g=$("glyph");
+  const m=qMode();
+  g.classList.remove("listen"); g.onclick=null;
+  if(isSent() && m==="listen" && !dailyMode){
+    g.classList.remove("cloze","small"); g.classList.add("listen");
+    g.textContent="🔊"; g.onclick=()=>speak(q.exy);
+  }
+  else if(isSent()){ g.textContent=clozeText(q); g.classList.add("cloze"); g.classList.remove("small"); }
+  else if(m==="listen" && !dailyMode){
+    g.classList.remove("cloze","small"); g.classList.add("listen");
+    g.textContent="🔊"; g.onclick=()=>speak(q.speak);
+  }
+  else if(m==="write" && !dailyMode && isKanjiCat()){
+    g.classList.remove("cloze"); g.textContent=q.romaji||q.front; g.classList.toggle("small",(q.romaji||"").length>1);
+  }
+  else { g.classList.remove("cloze"); g.textContent=q.front; g.classList.toggle("small",q.front.length>1); }
+  $("count").textContent = taMode ? `${taScore.toLocaleString()}점` : `${qi+1} / ${deck.length}`;
+  updateComboBadge();
+  $("example").className="example"; $("example").innerHTML="";
+  const pool = (dailyMode||taMode) ? DAILY_POOL : (wbMode ? (DATA[deck[qi]._cat]||DAILY_POOL) : DATA[curCat.code]);
+  let wrongs;
+  if(m==="reading" && !dailyMode && isKanjiCat()){
+    const vars=shuffle(readingVariants(q.romaji)).slice(0,3).map((v,i)=>({front:"__v"+i, romaji:v, ko:"", speak:""}));
+    wrongs = vars.length>=3 ? vars : vars.concat(shuffle(pool.filter(x=>x.front!==q.front && x.romaji!==q.romaji)).slice(0,3-vars.length));
+  } else {
+    wrongs=shuffle(pool.filter(x=>x.front!==q.front)).slice(0,3);
+  }
+  const opts=shuffle([q,...wrongs]);
+  const box=$("opts");box.className="opts";box.innerHTML="";
+  opts.forEach(o=>{const b=document.createElement("button");b.className="opt";b.textContent=optText(o);b.dataset.front=o.front;b.onclick=()=>choose(b,o,q);box.appendChild(b);});
+  // 문제가 뜰 때 발음: 읽기 맞히기 모드는 답이 노출되므로 제외, 그 외(뜻모드·카나)는 바로 발음
+  if(m==="listen" && !dailyMode){ sched(()=>speak(isSent()? q.exy : q.speak), 300); }
+  else if(!(isKanjiCat() && (m==="reading"||m==="write")) && !isSent()){ sched(()=>speak(q.speak), 250); }
+  startTimer();
+}
+function startTimer(){
+  if(taMode) return;                 // 타임어택은 전역 60초 타이머가 관리
+  clearInterval(timerId);
+  const confTime = dailyMode ? 5 : CONF.time;
+  if(confTime===0){$("tbar").style.width="100%";$("tlabel").textContent="∞";return;}
+  const secs = isSent() ? Math.max(confTime,8) : (qMode()==="listen" ? Math.max(confTime,5) : confTime);   // 문장(cloze)은 읽을 시간 최소 8초 보장
+  const total=secs*1000, t0=performance.now();
+  $("tbar").style.width="100%";
+  timerId=setInterval(()=>{ if(paused){return;}
+    const left=Math.max(0,total-(performance.now()-t0));
+    $("tbar").style.width=(left/total*100)+"%";
+    $("tlabel").textContent="0:0"+Math.ceil(left/1000);
+    if(left<=0){clearInterval(timerId);timeUp();}
+  },50);
+}
+function choose(btn,o,q){
+  if(answered)return; answered=true; clearInterval(timerId);
+  const box=$("opts");box.classList.add("locked");
+  const ok = o.front===q.front;
+  results.push(ok);
+  if(ok){btn.classList.add("correct");correct++; combo++; collectCard(q); bonusDrop(); if(wbMode) wbRemove(q); }
+  else{btn.classList.add("wrong");combo=0;misses.push(q); wbAdd(q);[...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");});}
+  [...box.children].forEach(b=>{if(!b.classList.contains("correct")&&!b.classList.contains("wrong"))b.classList.add("dim");});
+  if(qMode()==="listen" && !dailyMode){ const g=$("glyph"); g.classList.remove("listen"); g.onclick=null;
+    if(isSent()){ g.textContent=q.ex; g.classList.add("cloze"); }
+    else { g.textContent=q.front; g.classList.toggle("small",q.front.length>1); } }
+  updateComboBadge();
+  sfx(ok?"ok":"fail");
+  if(taMode){                                   // 타임어택: 즉시 다음 문제 + 점수
+    taCount++;
+    if(ok){ const gain=100+combo*20; taScore+=gain; taMax=Math.max(taMax,combo); taPop("+"+gain+(combo>=3?" 🔥x"+combo:"")); }
+    sched(nextQ, ok ? 250 : 650);
+    return;
+  }
+  const showEx = isKanjiCat() && q.ex;
+  if(showEx) showExample(q);
+  if(!ok && (CONF.rep|0)>0){ sched(()=>runRepeat(q), 420); return; }   // 틀린 문장 N회 반복 학습
+  sched(()=>speak(showEx ? q.exy : q.speak), ok ? 550 : 500); // 효과음 후 발음 (예문 우선)
+  schedNext(showEx ? 3200 : 1300);                            // 예문 재생이 잘리지 않게 여유
+}
+function timeUp(){
+  if(answered)return; answered=true; combo=0; updateComboBadge(); misses.push(deck[qi]); results.push(false); wbAdd(deck[qi]);
+  const q=deck[qi]; const box=$("opts");box.classList.add("locked");
+  [...box.children].forEach(b=>{if(b.dataset.front===q.front)b.classList.add("correct");else b.classList.add("dim");});
+  if(qMode()==="listen" && !dailyMode){ const g=$("glyph"); g.classList.remove("listen"); g.onclick=null;
+    if(isSent()){ g.textContent=q.ex; g.classList.add("cloze"); }
+    else { g.textContent=q.front; g.classList.toggle("small",q.front.length>1); } }
+  sfx("fail");
+  const showEx = isKanjiCat() && q.ex;
+  if(showEx) showExample(q);
+  if((CONF.rep|0)>0){ sched(()=>runRepeat(q), 380); return; }
