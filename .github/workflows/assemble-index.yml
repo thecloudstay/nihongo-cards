@@ -1,6 +1,10 @@
 name: assemble-index
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/assemble-index.yml'
 
 jobs:
   assemble:
