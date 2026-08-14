@@ -1,0 +1,350 @@
+    + [["short","짧은 순"],["lv","단계순"],["long","긴 순"]]
+      .map(([v,t])=>`<button class="${v===rdSort?'on':''}" onclick="rdSetSort('${v}')">${t}</button>`).join("");
+}
+let _rdQT=null;
+function rdSetQuery(v){
+  rdQuery=v.trim();
+  clearTimeout(_rdQT); _rdQT=setTimeout(()=>renderRdList(),160);   // 타이핑 중 매 글자 렌더 방지
+}
+function rdSetSort(v){
+  rdSort=v;
+  document.querySelectorAll("#rdSort button").forEach(b=>b.classList.toggle("on", b.textContent===({short:"짧은 순",lv:"단계순",long:"긴 순"})[v]));
+  renderRdList();
+}
+function rdSents(b){ return b.chapters.reduce((a,c)=>a+c.s.length,0); }
+function renderRdList(){
+  const bs=BOOKS||[]; const wrap=$("rdList");
+  const sec=(list,label)=> list.length? `<div class="rd-sec">${label}</div>`+list.map(([b,i])=>{
+      const p=rdBookProg(b); const pct=Math.round(p.d/p.t*100);
+      const kd=b.kind==="original"?'<span class="kd">창작</span>':"";
+      const dn=p.d>=p.t?'<span class="kd" style="background:var(--ok-bg);color:var(--ok)">완독</span>':"";
+      return `<button class="rd-book" onclick="openBook(${i})">
+        <span class="lvb">${b.lv}<small>단계</small></span>
+        <span class="bi"><span class="bt">${b.title_ko}${kd}${dn}</span>
+          <span class="ba">${[b.title,b.author_ko,b.lvName].filter(Boolean).join(" · ")}</span>
+          <span class="bd">${b.intro_ko}</span>
+          <span class="rd-prog"><i style="width:${pct}%"></i></span></span>
+        <span class="bp">${p.d?p.d+"/"+p.t:""}</span></button>`;
+    }).join("") : "";
+  const q=rdQuery.toLowerCase();
+  let idx=bs.map((b,i)=>[b,i]).filter(([b])=> (!rdLvFilter || b.lv===rdLvFilter) &&
+    (!q || [b.title_ko,b.title,b.author_ko,b.author,b.intro_ko].filter(Boolean)
+             .some(t=>String(t).toLowerCase().includes(q))));
+  idx.sort((A,B)=> rdSort==="lv" ? (A[0].lv-B[0].lv || rdSents(A[0])-rdSents(B[0]))
+                 : rdSort==="long" ? rdSents(B[0])-rdSents(A[0])
+                 : rdSents(A[0])-rdSents(B[0]));
+  const html =
+    sec(idx.filter(([b])=>b.kind!=="original"), "📚 일본 명작 (저작권 만료작)") +
+    sec(idx.filter(([b])=>b.kind==="original"), "✒️ 창작 소설");
+  wrap.innerHTML = html || '<div style="text-align:center;color:var(--sub);padding:34px 0;font-size:13.5px">이 단계에는 아직 작품이 없어요</div>';
+}
+function openBook(i){
+  rdBookCur=BOOKS[i];
+  const b=rdBookCur;
+  $("rbTitle").textContent=b.title_ko; $("rbT").textContent=b.title;
+  $("rbA").textContent=[b.author, b.author_ko&&b.author?`(${b.author_ko})`:b.author_ko, b.lvName].filter(Boolean).join(" · ");
+  $("rbD").textContent=b.intro_ko;
+  $("rbChaps").innerHTML=b.chapters.map((c,k)=>{
+    const dn=rdDone(b.id,c.n);
+    return `<button class="rd-chap ${dn?'done':''}" onclick="openChapter(${k})">
+      <span class="cn">${dn?'✓':c.n}</span><span class="ct">${c.title_ko}</span>
+      <span class="cs">${dn?'🏅':'›'}</span></button>`;
+  }).join("");
+  show("rdBook");
+}
+function openChapter(k){
+  rdChapCur=k;
+  const b=rdBookCur, c=b.chapters[k];
+  $("rrTitle").textContent=c.title_ko;
+  $("rrPos").textContent=`${k+1} / ${b.chapters.length}`;
+  const body=$("rrBody");
+  body.className="rd-body"+(rdRuby?"":" rd-noruby");
+  body.innerHTML=c.s.map((x,i)=>{
+    const jp = rdChunks(x.jp).map(seg=>
+      `<span class="rd-k" data-m="${rdMora(seg)}">${rdRubyHtml(seg)}</span>`).join("");
+    return `<div class="rd-s ${rdKoMode==="on"?'open':''}" data-i="${i}" onclick="rdTapSentence(event,${i})">
+       <div class="jp">${jp}</div>${x.ro?`<div class="ro">${x.ro}</div>`:""}<div class="ko">${x.ko}</div></div>`;
+  }).join("");
+  rdRubySync();
+  rdKoSync();
+  $("rrKa").classList.toggle("on",rdKara);
+  const hasRo=c.s.some(x=>x.ro);
+  $("rrRo").style.display = hasRo ? "" : "none";
+  $("rrRo").classList.toggle("on",rdRo);
+  if(hasRo && rdRo) body.querySelectorAll(".rd-s").forEach(e=>e.classList.add("ropen"));
+  rdStopPlay(); rdSyncNextBtn(); rdSyncContBtn(); rdApplyFont(); rdTouch(b.id,k);
+  show("rdRead");
+}
+function rdTapSentence(e,i){
+  const t=e.target.closest(".rd-w");
+  if(t){ e.stopPropagation();
+    t.classList.add("peek");                      // 후리가나를 감춘 상태여도 탭한 단어는 읽기가 보이게
+    openWordPop(t.dataset.w, t.dataset.r, i); return; }
+  const el=e.currentTarget;
+  if(rdKoMode==="auto"){ $("rrBody").querySelectorAll(".rd-s.open").forEach(x=>{ if(x!==el) x.classList.remove("open"); }); }
+  el.classList.toggle("open");
+  const c=rdBookCur.chapters[rdChapCur];
+  rdKaraClear();
+  $("rrBody").querySelectorAll(".rd-s.cur").forEach(x=>x.classList.remove("cur"));
+  el.classList.add("cur");
+  speakP(rdReading(c.s[i].jp)).then(()=>{ el.classList.remove("cur"); rdKaraClear(); });
+  setTimeout(()=>rdKaraRun(el), 80);
+}
+function rdToggleRo(){ rdRo=!rdRo; $("rrRo").classList.toggle("on",rdRo);
+  $("rrBody").querySelectorAll(".rd-s").forEach(e=>e.classList.toggle("ropen",rdRo)); }
+function rdRubySync(){ const b=$("rrRuby"); if(b){ b.textContent = rdRuby ? "ふりがな" : "ふりがな 끔"; b.classList.toggle("on",rdRuby); } }
+function rdToggleRuby(){ rdRuby=!rdRuby; rdPrefSet("rd_ruby",rdRuby); rdRubySync();
+  const b=$("rrBody"); b.classList.toggle("rd-noruby",!rdRuby);
+  if(rdRuby) b.querySelectorAll("ruby.peek").forEach(e=>e.classList.remove("peek"));
+  $("rrRuby").classList.toggle("on",rdRuby);
+  toast(rdRuby?"ふりがな 표시":"ふりがな 감춤 — 단어를 탭하면 그 단어만 보여요"); }
+function rdKoSync(){
+  const b=$("rrKo"); if(!b) return;
+  b.textContent = (KO_MODES.find(m=>m[0]===rdKoMode)||KO_MODES[1])[1];
+  b.classList.toggle("on", rdKoMode!=="off");
+}
+function rdToggleKo(){
+  const i=KO_MODES.findIndex(m=>m[0]===rdKoMode);
+  rdKoMode=KO_MODES[(i+1)%KO_MODES.length][0];
+  try{ localStorage.setItem("rd_komode", rdKoMode); }catch(e){}
+  rdKoSync();
+  const els=$("rrBody").querySelectorAll(".rd-s");
+  if(rdKoMode==="on")      els.forEach(e=>e.classList.add("open"));
+  else if(rdKoMode==="off")els.forEach(e=>e.classList.remove("open"));
+  else { els.forEach(e=>e.classList.remove("open"));   // 자동: 읽는 문장만
+         const cur=$("rrBody").querySelector(".rd-s.cur"); if(cur) cur.classList.add("open"); }
+  toast(rdKoMode==="auto" ? "읽는 문장의 뜻만 따라서 보여 줘요"
+       : rdKoMode==="on"  ? "모든 문장에 뜻 표시" : "뜻 숨김 — 문장을 탭하면 보여요");
+}
+
+// ── 글자 크기 (핀치줌 없이도 크게 볼 수 있게) ──
+let rdFs = +(rdPref("rd_fs","17.5")) || 17.5;
+function rdApplyFont(){ const b=$("rrBody"); if(b) b.style.setProperty("--rdfs", rdFs+"px");
+  const t=$("rrFs"); if(t) t.title=`글자 크기 ${Math.round(rdFs)}px`; }
+function rdFont(d){
+  rdFs = Math.min(30, Math.max(14, rdFs + d*1.5));
+  try{ localStorage.setItem("rd_fs", String(rdFs)); }catch(e){}
+  rdApplyFont(); toast(`글자 크기 ${Math.round(rdFs)}`);
+}
+
+// ── 다음 장 (시험 없이 넘어가기) ──
+function rdNextChapter(){
+  const b=rdBookCur; if(!b) return;
+  rdStopPlay();
+  if(rdChapCur+1 < b.chapters.length){ openChapter(rdChapCur+1); window.scrollTo(0,0); }
+  else { toast("마지막 장이에요 🎊"); rdBackToBook(); }
+}
+function rdPrevChapter(){
+  const b=rdBookCur; if(!b) return;
+  rdStopPlay();
+  if(rdChapCur>0){ openChapter(rdChapCur-1); window.scrollTo(0,0); }
+  else { toast("첫 장이에요"); }
+}
+function rdSyncNextBtn(){
+  const b=rdBookCur, el=$("rrNext"), pv=$("rrPrev"); if(!b||!el) return;
+  const last = rdChapCur+1 >= b.chapters.length;
+  el.textContent = last ? "📚 목록으로" : `다음 장 → (${rdChapCur+2}/${b.chapters.length})`;
+  if(pv){ pv.disabled = rdChapCur===0;
+    pv.textContent = rdChapCur===0 ? "← 이전 장" : `← 이전 장 (${rdChapCur}/${b.chapters.length})`; }
+}
+
+// ── 이어 듣기 ──────────────────────────────────────────────
+//  v5.4: 장 끝에서 멈추지 않고 **책 끝까지** 이어 읽는 「연속」 모드 추가.
+//   · 장별(🔂) — 이 장만 읽고 멈춤 (예전 동작)
+//   · 연속(🔁) — 장이 끝나면 다음 장을 자동으로 열고 계속 읽음
+//  둘 다 「⏸ 멈춤」으로 언제든 즉시 중단. 멈춘 자리(장)는 이어보기에 기록된다.
+let _rdPlayTok=0, _rdPlaying=false, _rdAuto=false;
+let rdCont = (()=>{ try{ return localStorage.getItem("rd_cont")==="1"; }catch(e){ return false; } })();
+function rdSyncContBtn(){
+  const b=$("rrCont"); if(!b) return;
+  b.classList.toggle("on", rdCont);
+  b.textContent = rdCont ? "🔁 연속" : "🔂 장별";
+  b.title = rdCont ? "책 끝까지 이어서 읽습니다" : "이 장만 읽고 멈춥니다";
+}
+function rdToggleCont(){
+  rdCont=!rdCont;
+  try{ localStorage.setItem("rd_cont", rdCont?"1":"0"); }catch(e){}
+  rdSyncContBtn();
+  toast(rdCont ? "🔁 책 끝까지 이어서 읽어요" : "🔂 이 장만 읽고 멈춰요");
+}
+async function rdPlayAll(){
+  if(_rdPlaying){ rdStopPlay(); return; }         // ⚠ 예전엔 다시 누르면 두 번째 재생이 겹쳐 소리가 끊겼음
+  const bk=rdBookCur; if(!bk) return;
+  const my=++_rdPlayTok; _rdPlaying=true;
+  const label=()=> $("rrPlay").textContent =
+    (rdCont && bk.chapters.length>1) ? `⏸ 멈춤 (${rdChapCur+1}/${bk.chapters.length}장)` : "⏸ 멈춤";
+  label();
+  while(true){
+    const c=bk.chapters[rdChapCur];
+    const els=[...$("rrBody").querySelectorAll(".rd-s")];
+    for(let i=0;i<c.s.length;i++){
+      if(my!==_rdPlayTok){ return; }
+      rdKaraClear();
+      els.forEach(e=>{ e.classList.remove("cur"); if(rdKoMode==="auto") e.classList.remove("open"); });
+      els[i].classList.add("cur");
+      if(rdKoMode==="auto") els[i].classList.add("open");     // 따라 읽으며 뜻이 같이 뜬다
+      els[i].scrollIntoView({block:"center",behavior:"smooth"});
+      const pr = speakP(rdReading(c.s[i].jp));
+      setTimeout(()=>rdKaraRun(els[i]), 80);        // 오디오가 재생을 시작한 뒤 진행률을 읽는다
+      await pr;
+      if(my!==_rdPlayTok) return;
+      await new Promise(r=>setTimeout(r,180));
+    }
+    // ── 장 끝 ──
+    if(!rdCont || rdChapCur+1 >= bk.chapters.length) break;
+    if(my!==_rdPlayTok) return;
+    _rdAuto=true;                 // openChapter 안의 rdStopPlay 가 재생을 끊지 않도록
+    openChapter(rdChapCur+1);
+    _rdAuto=false;
+    window.scrollTo(0,0);
+    label();
+    await new Promise(r=>setTimeout(r,700));   // 새 장이 그려질 때까지 잠깐 쉼
+    if(my!==_rdPlayTok) return;
+  }
+  const done = rdChapCur+1 >= bk.chapters.length;
+  rdStopPlay();
+  rdToTop();                      // 다 읽었으면 맨 위로 — 다시 읽거나 시험 보러 가기 편하게
+  if(rdCont && done) toast("📖 책을 끝까지 다 읽었어요 🎊");
+}
+// 읽기 끝 → 본문 맨 위로. 페이지 스크롤과 본문 스크롤 양쪽을 다 올린다
+//  (기기·화면에 따라 스크롤 주체가 달라서 한쪽만 올리면 그대로 남아 있는 경우가 있다)
+function rdToTop(){
+  try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(e){ window.scrollTo(0,0); }
+  const b=$("rrBody"); if(b && b.scrollTop) { try{ b.scrollTo({top:0,behavior:"smooth"}); }catch(e){ b.scrollTop=0; } }
+  const sc=document.querySelector("#rdRead"); if(sc && sc.scrollTop){ try{ sc.scrollTo({top:0,behavior:"smooth"}); }catch(e){ sc.scrollTop=0; } }
+}
+function rdStopPlay(){
+  // 연속 재생 중 장을 자동으로 넘기는 순간에는 재생을 끊지 않고 하이라이트만 정리한다
+  if(_rdAuto){
+    rdKaraClear();
+    const bd=$("rrBody");
+    if(bd) bd.querySelectorAll(".rd-s.cur").forEach(e=>{
+      e.classList.remove("cur"); if(rdKoMode==="auto") e.classList.remove("open"); });
+    return;
+  }
+  _rdPlayTok++; _rdPlaying=false; rdKaraClear();
+  try{ const a=_getAudioEl(); if(a){ a.pause(); } }catch(e){}
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const b=$("rrPlay"); if(b) b.textContent="🔊 이어 듣기";
+  // 재생이 끊겼을 때 회색 하이라이트가 남아 "희미한 회색 박스"로 보이던 문제
+  const body=$("rrBody");
+  if(body) body.querySelectorAll(".rd-s.cur").forEach(e=>{
+    e.classList.remove("cur"); if(rdKoMode==="auto") e.classList.remove("open"); });
+}
+// ── 단어 팝업 ──
+// ⚠ "뜻 정보 없음"이 너무 자주 뜨던 원인: 표기(w) 완전일치만 찾았기 때문.
+//    한 번만 색인(Map)을 만들어 두고 표기·읽기·한자 낱글자까지 단계적으로 훑는다.
+let _wpW="", _rdIdx=null;
+function rdBuildIndex(){
+  if(_rdIdx) return _rdIdx;
+  const byW=new Map(), byR=new Map(), byK=new Map();   // 표기 / 읽기 / 한자1글자
+  const put=(m,k,v)=>{ if(k&&v&&!m.has(k)) m.set(k,v); };
+  if(BOOKS) for(const b of BOOKS) for(const ch of b.chapters) for(const x of (ch.words||[])){
+    put(byW,x.w,x.ko); put(byR,x.r,x.ko);
+  }
+  for(const k in DATA) for(const card of (DATA[k]||[])){
+    const ko=card.ko; if(!ko || card.sent) continue;      // 문장카드는 단어 뜻이 아니므로 제외
+    put(byW,card.front,ko);
+    // 비(非)카나 카드는 romaji 필드에 "읽기(가나)"가 들어 있다 (rowToCard 참고)
+    if(card.romaji && /[ぁ-ヿ]/.test(card.romaji)) String(card.romaji).split("/").forEach(x=>put(byR,x.trim(),ko));
+    if(card.front && card.front.length===1) put(byK,card.front,ko);
+  }
+  return (_rdIdx={byW,byR,byK});
+}
+const rdTrim = s => String(s||"").replace(/[はがをにへでとものやかなねよぞぜさこそあうえおっ]+$/,"");
+function rdLookup(w,r){
+  const I=rdBuildIndex();
+  // 1) 현재 챕터 단어장 (문맥상 가장 정확)
+  const c=rdBookCur&&rdBookCur.chapters[rdChapCur];
+  if(c&&c.words){
+    let h=c.words.find(x=>x.w===w) || c.words.find(x=>x.r===r)
+       || c.words.find(x=>x.w&&w&&(x.w.indexOf(w)>=0||w.indexOf(x.w)>=0));
+    if(h) return h.ko;
+  }
+  // 2) 표기 → 3) 읽기 → 4) 송가나 뗀 표기
+  return I.byW.get(w) || (r&&I.byR.get(r)) || I.byW.get(rdTrim(w)) || null;
+}
+// 뜻을 못 찾았을 때: 한자를 낱글자로 쪼개 뜻을 붙여 준다 (建築 → 建 세우다 · 築 쌓다)
+function rdKanjiHint(w){
+  const I=rdBuildIndex();
+  const out=[];
+  for(const ch of String(w||"")){
+    if(!/[一-鿿]/.test(ch)) continue;
+    const ko=I.byK.get(ch)||I.byW.get(ch);
+    if(ko) out.push(`${ch} ${String(ko).split(/[,，·]/)[0].trim()}`);
+  }
+  return out.length? out.join(" · ") : "";
+}
+function openWordPop(w,r,si){
+  _wpW=r||w;
+  $("wpW").textContent=w; $("wpR").textContent=r||"";
+  const ko=rdLookup(w,r);
+  const hint=ko?"":rdKanjiHint(w);
+  $("wpK").textContent = ko || hint || "이 단어의 뜻은 아직 사전에 없어요";
+  $("wpK").style.color = ko ? "" : "var(--sub)";
+  // 문맥 — 그 단어가 들어있는 문장의 한국어 번역을 함께 보여 준다
+  const cx=$("wpCx"); const c=rdBookCur&&rdBookCur.chapters[rdChapCur];
+  const s = (c && si!=null) ? c.s[si] : null;
+  if(s && s.ko){
+    cx.innerHTML = `<b>이 문장에서</b><br>${s.ko}` + (!ko&&hint?`<br><span style="opacity:.75">한자 뜻: ${hint}</span>`:"");
+    cx.style.display="";
+  } else cx.style.display="none";
+  $("wordPop").classList.add("on"); $("wordBd").classList.add("on");
+  wpFit();
+  speak(r||w);
+}
+// 확대(pinch-zoom) 상태에서는 fixed 요소가 화면 밖으로 나가 ✕조차 안 보였음 →
+// visualViewport 기준으로 보이는 영역 안에 직접 좌표를 잡아 준다.
+function wpFit(){
+  const p=$("wordPop"); if(!p||!p.classList.contains("on")) return;
+  const vv=window.visualViewport;
+  if(!vv || vv.scale<=1.02){ p.style.left=""; p.style.top=""; p.style.width=""; p.style.maxHeight=""; return; }
+  // 핀치줌 중: 보이는 영역(visual viewport) 한가운데로 직접 좌표를 잡는다
+  const w=Math.min(vv.width*0.9, 430);
+  p.style.width = w+"px";
+  p.style.left = (vv.offsetLeft + vv.width/2) + "px";
+  p.style.top  = (vv.offsetTop  + vv.height/2) + "px";
+  p.style.maxHeight = (vv.height*0.8)+"px";
+}
+if(window.visualViewport){
+  visualViewport.addEventListener("resize",wpFit);
+  visualViewport.addEventListener("scroll",wpFit);
+}
+function closeWordPop(){ $("wordPop").classList.remove("on"); $("wordBd").classList.remove("on"); }
+function wpSpeak(){ speak(_wpW); }
+// ── 단어 카드: 그 챕터 단어로 4지선다 ──
+function rdWordCards(){
+  const b=rdBookCur, c=b.chapters[rdChapCur];
+  const pool=b.chapters.flatMap(x=>x.words);
+  rqList=shuffle(c.words).map(w=>{
+    const others=shuffle(pool.filter(x=>x.ko!==w.ko)).slice(0,3).map(x=>x.ko);
+    return {ask:`<span style="font-size:26px;font-weight:800">${w.w}</span><br><span style="font-size:14px;color:var(--accent)">${w.r}</span><br><span style="font-size:13px;color:var(--sub);font-weight:600">이 단어의 뜻은?</span>`,
+            opts:shuffle([w.ko,...others]), a:w.ko, say:w.r, why:`${w.w}（${w.r}）— ${w.ko}`};
+  });
+  rdRunQuiz("📇 단어 카드", false);
+}
+// ── 챕터 시험: 빈칸 + 내용이해 ──
+function rdStartQuiz(){
+  const c=rdBookCur.chapters[rdChapCur];
+  const cz=c.cloze.map(z=>({ask:`<span style="font-size:12px;color:var(--sub);font-weight:700">빈칸에 알맞은 말은?</span><br><span style="font-size:18px;line-height:1.7">${z.jp}</span><br><span style="font-size:12.5px;color:var(--sub);margin-top:6px;display:inline-block">${z.ko}</span>`,
+      opts:z.opts, a:z.a, say:z.a, why:z.ko}));
+  const qz=c.quiz.map(q=>({ask:`<span style="font-size:12px;color:var(--sub);font-weight:700">내용 이해</span><br><span style="font-size:17px;line-height:1.7">${q.q}</span><br><span style="font-size:12.5px;color:var(--sub);margin-top:6px;display:inline-block">${q.q_ko}</span>`,
+      opts:q.opts, a:q.a, say:q.a, why:q.q_ko}));
+  rqList=[...shuffle(cz), ...shuffle(qz)];
+  rdRunQuiz("✏️ 챕터 시험", true);
+}
+function rdRunQuiz(title, markDone){
+  rdStopPlay();
+  rqI=0; rqOk=0; rqLock=false; rqList._mark=markDone;
+  $("rqTitle").textContent=title;
+  $("rqRes").style.display="none";
+  show("rdQuiz"); rqRender();
+}
+function rqRender(){
+  const q=rqList[rqI];
+  $("rqCount").textContent=`${rqI+1} / ${rqList.length}`;
+  $("rqAsk").innerHTML=q.ask;
+  $("rqOpts").innerHTML=q.opts.map((o,i)=>`<button onclick="rqPick(${i})">${o}</button>`).join("");
+  $("rqFb").innerHTML=""; $("rqNextWrap").style.display="none"; rqLock=false;
+}
+function rqPick(i){
