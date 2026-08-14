@@ -26,3 +26,325 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 <style>
+  :root{
+    /* ── 톤앤매너: 따뜻한 종이 위의 먹색, 액센트는 주홍 하나 ── */
+    --ink:#2b2723; --sub:#96908a; --line:#ece7e0; --bg:#faf8f4; --soft:#f3efe9;
+    --card:#ffffff;
+    --ok:#2fae72; --ok2:#5cc795; --ok-bg:#e9f6ef; --ok-bd:#b5dfc9;
+    --miss:#e05a43; --miss-bg:#fbefec; --miss-bd:#f0c5ba;
+    --accent:#ff7a59; --accent2:#ffa184; --free:#2fae72; --lock:#b8b2aa;
+    /* 게임 레어도 4색 (저채도 통일) */
+    --rr:#5b8def; --rr-d:#3d6fd6; --rr-bg:#ecf1fc;
+    --rs:#9a6fd0; --rs-d:#8153c2; --rs-bg:#f2ecfa;
+    --rg:#d9a520; --rg2:#eec95f; --rg-d:#b3871a; --rg-bg:#faf1d8; --rg-ink:#5f4a08;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  /* ⚠ v5.3 — 버튼·입력창은 기본이 Arial이라 앱 폰트를 상속하지 않는다.
+       전수조사에서 160개 넘는 요소가 Arial로 렌더되고 있었다(한글은 맑은고딕 폴백).
+       한 줄로 전 화면 서체가 통일된다. 개별 규칙의 font-family:inherit 은 이제 불필요.
+       ⚠ font-size는 상속시키지 말 것 — 크기를 지정하지 않은 버튼이 커져 레이아웃이 밀린다. */
+  button,input,select,textarea{font-family:inherit}
+  button{cursor:pointer}
+  /* 이모지는 플랫폼 컬러 이모지 폰트를 명시해야 흑백·두부(□)로 깨지지 않는다 */
+  .emo,.cg i,.sec-tools button i,.gh-i,.tile i{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+    display:flex;flex-direction:column;min-height:100dvh;
+    max-width:520px;margin:0 auto;width:100%;box-shadow:0 0 0 1px var(--line)}
+  .screen{display:none;flex-direction:column;flex:1;min-height:100dvh}
+  .screen.on{display:flex}
+  .jp{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+
+  /* ─── 홈 / 네비게이터 ─── */
+  .home-hd{padding:34px 24px 20px;position:relative}
+  .hd-actions{position:absolute;top:14px;right:18px;display:flex;gap:7px;z-index:5}
+  .home-hd .app{font-size:32px;font-weight:900;letter-spacing:-.8px}
+  .home-hd .app .en{font-size:14px;color:var(--sub);font-weight:600;margin-top:6px;letter-spacing:.5px}
+  .tabs{display:flex;gap:4px;padding:0 12px 14px;border-bottom:1px solid var(--line);overflow-x:auto}
+  .tabs button{flex:1 0 auto;padding:12px 9px;border:none;background:none;font-size:15px;font-weight:800;color:var(--sub);white-space:nowrap;
+    border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-15px;transition:.15s}
+  .tabs button .s{display:block;font-size:12px;font-weight:600;margin-top:3px;opacity:.7}
+  .tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+  /* ⚠ 예전엔 .list 가 flex:1 + overflow-y:auto 라 홈 안에 스크롤 영역이 하나 더 생겼다.
+       바깥(페이지)과 안쪽(목록)이 각각 스크롤돼 "스크롤이 잘 안 된다"는 증상의 원인.
+       → 홈은 페이지 한 겹만 스크롤한다. */
+  .list{padding:8px 18px 40px}
+
+  /* ═══ v6.0 YOMI — 책 중심 홈 ═══
+       읽던 책 → 오늘 읽을 책 → 서재 → 내 기록 → (아래) 더 연습하기 */
+  .home-hd .app{letter-spacing:1px}
+  /* 이어서 읽기 — 읽던 게 있으면 최상단. 읽던 곳을 못 찾는 게 이탈 1순위였다 */
+  .rsm{display:flex;align-items:center;gap:12px;margin:6px 16px 2px;padding:14px 16px;
+    background:var(--ink);color:#fff;border:none;border-radius:16px;width:calc(100% - 32px);
+    text-align:left;box-shadow:0 4px 14px rgba(43,39,35,.2)}
+  .rsm:active{transform:scale(.99)}
+  .rsm .p{flex:0 0 38px;height:38px;border-radius:50%;background:rgba(255,255,255,.16);
+    display:flex;align-items:center;justify-content:center;font-size:16px}
+  .rsm .x{flex:1;min-width:0}
+  .rsm .x b{display:block;font-size:14.5px;font-weight:800}
+  .rsm .x s{display:block;text-decoration:none;font-size:12px;opacity:.82;margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rsm .a{opacity:.55;font-size:18px}
+  /* 오늘 읽을 책 — 날짜 시드로 매일 바뀐다. 돌아올 이유. */
+  .tb{display:flex;flex-direction:column;gap:0;margin:0 16px;padding:18px 18px 16px;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;width:calc(100% - 32px);
+    text-align:left;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+  .tb:active{background:var(--soft)}
+  .tb .lv{display:inline-block;align-self:flex-start;font-size:10.5px;font-weight:800;color:var(--accent);
+    background:#fff1ec;padding:3px 9px;border-radius:20px;margin-bottom:9px}
+  .tb .t{font-size:21px;font-weight:900;letter-spacing:-.6px;line-height:1.25}
+  .tb .jp2{font-size:12.5px;color:var(--sub);margin-top:4px}
+  .tb .d{font-size:13px;color:#4b5563;margin-top:9px;line-height:1.55;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .tb .m{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;color:var(--sub);font-weight:700}
+  .tb .go{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--accent)}
+  /* 서재 */
+  .lib-open{display:flex;align-items:center;gap:12px;margin:14px 16px 0;padding:14px 16px;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;width:calc(100% - 32px);text-align:left}
+  .lib-open:active{background:var(--soft)}
+  .lib-open .li{font-size:20px}
+  .lib-open .lt{flex:1;min-width:0}
+  .lib-open .lt b{display:block;font-size:15px;font-weight:800}
+  .lib-open .lt s{display:block;text-decoration:none;font-size:11.5px;color:var(--sub);margin-top:2px}
+  .lib-open .la{color:#ccc;font-size:18px}
+  .lib-lv{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px 16px 0}
+  .lib-lv button{padding:9px 2px;border:1px solid var(--line);background:var(--card);border-radius:12px;
+    font-size:12px;font-weight:800;color:var(--ink)}
+  .lib-lv button:active{background:var(--soft)}
+  .lib-lv button s{display:block;text-decoration:none;font-size:9.5px;color:var(--sub);font-weight:700;margin-top:1px}
+  /* 내 기록 */
+  .my-rec{display:flex;gap:8px;margin:16px 16px 0}
+  .my-rec div{flex:1;text-align:center;padding:11px 4px;background:var(--soft);border-radius:13px}
+  .my-rec b{display:block;font-size:17px;font-weight:900}
+  .my-rec s{display:block;text-decoration:none;font-size:10.5px;color:var(--sub);font-weight:700;margin-top:2px}
+  /* 부가 기능 구역은 한 단계 낮춰 보이게 */
+  .sec-h.more-h{margin-top:10px;border-top:1px solid var(--line);padding-top:22px}
+  .sec-h.more-h span{font-weight:600;color:var(--lock)}
+
+  /* ─── 카테고리 격자 (탭+아코디언 대체) ─── */
+  .sec-h{font-size:12.5px;font-weight:800;color:var(--sub);padding:18px 20px 8px;letter-spacing:.2px}
+  .cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 16px 26px}
+  .cgrid.cg4{grid-template-columns:repeat(2,1fr);gap:11px;padding-bottom:14px}
+  .cgrid.cg4 .cg{min-height:132px;gap:6px;padding:20px 10px 18px}
+  .cgrid.cg4 .cg i{font-size:36px}
+  .cgrid.cg4 .cg b{font-size:17px}
+  .cgrid.cg4 .cg s{font-size:11.5px}
+  .tile.sm{min-height:0;padding:12px 6px}
+  .tile.sm i{font-size:19px} .tile.sm b{font-size:12.5px} .tile.sm s{font-size:10px}
+  /* ⚠ v5.3 — flex 2열 고정이라 도구가 3개면 마지막 하나만 전체폭으로 늘어나 균형이 깨졌다.
+       개수에 맞춰 열 수를 정하는 grid 로. (n1/n3 은 렌더러가 붙여 준다) */
+  .sec-tools{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px 16px 2px}
+  .sec-tools.n1{grid-template-columns:1fr}
+  .sec-tools.n3{grid-template-columns:repeat(3,1fr);gap:7px}
+  .sec-tools.n3 button{flex-direction:column;gap:4px;font-size:12px;padding:11px 4px}
+  .sec-tools button{display:flex;align-items:center;gap:7px;justify-content:center;min-width:0;
+    padding:12px 8px;border:1px solid var(--line);background:var(--card);border-radius:14px;
+    font-size:13px;font-weight:800;color:var(--ink);line-height:1.25;text-align:center}
+  .sec-tools button i{font-style:normal;font-size:17px}
+  .sec-tools button:active{background:var(--soft)}
+  .cg{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 8px 12px;
+    display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:inherit;
+    box-shadow:0 1px 3px rgba(0,0,0,.03);transition:.14s;position:relative;min-height:104px;justify-content:center}
+  .cg:active{background:var(--soft);transform:scale(.97)}
+  .cg i{font-size:26px;font-style:normal;line-height:1}
+  .cg b{font-size:13px;font-weight:800;letter-spacing:-.3px;text-align:center;line-height:1.25}
+  .cg s{font-size:10.5px;color:var(--sub);text-decoration:none;font-weight:600}
+  .cg.kids{background:var(--rg-bg);border-color:var(--rg2)}
+  .cg .fr{position:absolute;top:7px;right:8px;font-size:9px;font-weight:800;color:var(--ok)}
+  .grp{margin-top:20px}
+  .grp{margin-top:26px}
+  .grp-h{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 15px;
+    background:#fff1ec;border-left:5px solid var(--accent);border-radius:12px;
+    cursor:pointer;user-select:none}
+  .grp-h .k{font-size:16px;font-weight:900;color:var(--ink);letter-spacing:-.3px}
+  .grp-h .j{font-size:12px;color:var(--accent);font-weight:700}
+  .grp-h.plain{cursor:default}
+  .grp:first-child{margin-top:6px}
+  .grp-arrow{margin-left:auto;color:var(--accent);font-size:13px;transition:transform .2s}
+  .grp.collapsed .grp-arrow{transform:rotate(-90deg)}
+  .grp.collapsed .grp-items{display:none}
+  .grp.collapsed .grp-h{margin-bottom:0}
+  .cat{display:flex;align-items:center;gap:14px;padding:19px 18px;border:1px solid var(--line);
+    border-radius:18px;margin-bottom:11px;cursor:pointer;background:#fff;transition:.15s;
+    box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .cat:hover{border-color:#d8d2c8;box-shadow:0 4px 14px rgba(0,0,0,.06);transform:translateY(-1px)}
+  .cat:active{background:var(--soft);transform:translateY(0)}
+  .cat.locked,.cat.soon{cursor:default}
+  .cat .txt{flex:1;min-width:0}
+  .cat .txt .k{font-size:18px;font-weight:800;letter-spacing:-.3px}
+  .cat .txt .j{font-size:13px;color:var(--sub);margin-top:3px}
+  .cat.locked .txt .k,.cat.soon .txt .k{color:var(--lock)}
+  .cat .meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+  .cat .num{font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
+  .badge{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:.3px}
+  .badge.free{color:var(--free);background:#eaf7ef}
+  .badge.lock{color:#fff;background:var(--lock)}
+  .badge.soon{color:#c98a00;background:#fff6e0}
+  .vc-go{flex:0 0 auto;width:36px;height:36px;border-radius:11px;border:1px solid var(--line);
+  background:var(--soft);font-size:15px;cursor:pointer;margin-right:2px}
+.vc-go:active{background:var(--line)}
+.cat.locked .vc-go,.cat.soon .vc-go{display:none}
+.cat .arrow{color:#ccc;font-size:18px;flex-shrink:0}
+  .cat.locked .arrow,.cat.soon .arrow{opacity:.3}
+
+  /* ─── 설정 ─── */
+  .top{display:flex;align-items:center;gap:12px;padding:16px 20px 10px}
+  /* ⚠ v5.3 — 「‹」 하나뿐이라 실제 탭 영역이 8×24px 이었다(손가락으로 누르기 어려움).
+       글자는 그대로 두고 히트박스만 40×40 으로 넓힌다. */
+  .top .back{font-size:24px;color:var(--ink);background:none;border:none;line-height:1;
+    width:40px;height:40px;margin-left:-9px;display:flex;align-items:center;justify-content:center;border-radius:12px}
+  .top .back:active{background:var(--soft)}
+  .top .title{font-size:16px;font-weight:800}
+  .top .title .s{font-size:11px;color:var(--sub);font-weight:600}
+  .top .count{margin-left:auto;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
+  .setup-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 24px;gap:22px}
+  .setup-cat{text-align:center;margin-bottom:6px}
+  .setup-cat .k{font-size:30px;font-weight:900;letter-spacing:-.5px}
+  .setup-cat .j{font-size:15px;color:var(--sub);margin-top:5px}
+  .row .lab{font-size:14px;color:var(--sub);font-weight:700;margin-bottom:10px}
+  /* ⚠ v5.3 — flex+min-width:60px 이라 「뜻 맞히기」 같은 긴 라벨이 2줄로 접혀
+       행 높이가 55px / 77px 로 들쭉날쭉했다. 균등 grid + 라벨 길이에 따라 열 수를 자동 결정. */
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .seg.c2{grid-template-columns:repeat(2,1fr)}
+  .seg.c3{grid-template-columns:repeat(3,1fr)}
+  .seg.c5{grid-template-columns:repeat(5,1fr);gap:6px}
+  .seg button{min-width:0;padding:14px 4px;border:1.5px solid var(--line);border-radius:14px;background:#fff;
+    font-weight:800;font-size:15px;color:var(--sub);transition:.15s;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+  .seg.c5 button{font-size:14px}
+  .seg button.on{border-color:var(--ink);color:#fff;background:var(--ink);box-shadow:0 2px 6px rgba(43,39,35,.18)}
+  .start.alt{background:var(--card);color:var(--ink);border:1.5px solid var(--line);box-shadow:none;font-size:15.5px;padding:15px;margin-bottom:9px}
+  .start.alt:active{background:var(--soft)}
+  /* ─── 단어장 ─── */
+  .vc-bar{display:flex;gap:8px;padding:10px 16px 4px;align-items:center}
+  .vc-bar input{flex:1;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--card);
+    font-size:13.5px;font-family:inherit;color:var(--ink);outline:none}
+  .vc-bar input:focus{border-color:var(--accent)}
+  .vc-bar button{flex:0 0 auto;padding:11px 13px;border:1px solid var(--line);background:var(--card);
+    border-radius:12px;font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+  .vc-bar button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .vc-list{padding:6px 16px 26px;display:flex;flex-direction:column;gap:7px}
+  .vc-row{border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden;transition:.15s}
+  .vc-row.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--rr-bg)}
+  .vc-hd{display:flex;align-items:center;gap:11px;padding:13px 13px;cursor:pointer}
+  .vc-hd .n{flex:0 0 30px;font-size:11px;font-weight:800;color:var(--sub);text-align:right}
+  .vc-hd .f{flex:0 0 auto;max-width:38%;font-size:19px;font-weight:800;letter-spacing:-.3px;
+    font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;line-height:1.3}
+  .vc-hd .b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .vc-hd .r{font-size:12.5px;color:var(--accent);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vc-hd .m{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vc-hd .sp{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+    background:var(--soft);font-size:14px;cursor:pointer;color:var(--ink)}
+  .vc-hd .wb{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+    background:var(--card);font-size:13px;cursor:pointer}
+  .vc-hd .wb.on{background:var(--miss-bg);border-color:var(--miss)}
+  .vc-ex{display:none;padding:0 14px 13px 54px;border-top:1px solid var(--line);margin-top:-1px}
+  .vc-row.open .vc-ex{display:block;padding-top:11px}
+  .vc-ex .e{font-size:15px;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;line-height:1.6}
+  .vc-ex .y{font-size:12.5px;color:var(--accent);margin-top:3px}
+  .vc-ex .k{font-size:12.5px;color:var(--sub);margin-top:3px}
+  .vc-note{padding:10px 16px;font-size:12.5px;color:var(--sub);text-align:center}
+  .start{padding:19px;border-radius:18px;background:var(--ink);color:#fff;border:none;font-size:17px;font-weight:800;cursor:pointer;letter-spacing:-.3px;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:.15s}
+  .start:active{transform:scale(.98)}
+
+  /* ─── 퀴즈 ─── */
+  .timer{height:8px;background:var(--line);margin:0 20px;border-radius:8px;overflow:hidden}
+  .timer>i{display:block;height:100%;background:var(--accent);width:100%;border-radius:8px;transition:width .05s linear}
+  .timer-label{text-align:right;font-size:13px;color:var(--sub);margin:6px 20px 0;font-variant-numeric:tabular-nums}
+  .quiz{flex:1;display:flex;flex-direction:column;padding:8px 20px 20px}
+  .glyphwrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:180px}
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+  .glyph{font-size:150px;line-height:1;font-weight:500;animation:pop .18s ease}
+  .glyph.small{font-size:104px}
+  .glyph.cloze{font-size:27px;line-height:1.55;font-weight:700;word-break:keep-all;padding:0 16px;max-width:560px}
+  .example .ansline{font-size:14px;color:var(--ink);font-weight:700;margin-bottom:6px}
+  .example .ansline .y{color:var(--accent);font-weight:600}
+  .example{min-height:44px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s;margin:-6px 0 10px}
+  .example.show{opacity:1}
+  .example .card2{background:var(--soft);border-radius:12px;padding:10px 22px;text-align:center}
+  .example .w{font-size:23px;font-weight:700;line-height:1.2}
+  .example .yrow{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:3px}
+  .example .y{font-size:16px;color:var(--accent);font-weight:600}
+  .example .exspeak{background:none;border:none;cursor:pointer;font-size:15px;padding:0 2px;line-height:1}
+  .example .exspeak:active{transform:scale(.9)}
+  .example .m{font-size:12px;color:var(--sub);margin-top:2px}
+  .opts{display:flex;flex-direction:column;gap:12px}
+  .opt{padding:21px;border:1.5px solid var(--line);border-radius:18px;background:#fff;font-size:21px;font-weight:700;cursor:pointer;text-align:center;transition:.12s;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .opt:hover{border-color:#d8d2c8}
+  .opt:active{background:var(--soft)}
+  .opt.correct{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
+  .opt.wrong{background:var(--miss-bg);border-color:var(--miss-bd);color:var(--miss)}
+  .opt.dim{opacity:.45}
+  .opts.locked .opt{cursor:default}
+  .ctrl{display:flex;align-items:center;justify-content:center;gap:26px;padding:10px 20px calc(18px + env(safe-area-inset-bottom))}
+  .ctrl button{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .ctrl button:active{background:var(--soft)}
+  .ctrl .next{background:var(--ink);border:none}
+  .ctrl .next svg{stroke:#fff}
+  .ctrl button svg{width:24px;height:24px;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ─── 결과 ─── */
+  .done{flex:1;display:none;flex-direction:column;align-items:center;padding:24px 24px 34px;overflow-y:auto}
+  .done.on{display:flex}
+  .scorebox{margin:14px 0 6px}
+  .blob{width:180px;height:162px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:46% 54% 50% 50%/54% 46% 54% 46%;display:flex;align-items:center;justify-content:center}
+  .score{font-size:64px;font-weight:900;color:#fff;letter-spacing:-1px;text-align:center}
+  .score small{display:block;font-size:23px;font-weight:600;opacity:.85;margin-top:-4px}
+  .done .label{font-size:15px;color:var(--sub);margin-bottom:22px;text-align:center}
+  .miss-list{width:100%;max-width:360px}
+  .miss-list h3{font-size:13px;color:var(--sub);margin-bottom:10px;font-weight:700}
+  .mrow{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .mrow .mg{font-size:30px;width:44px;text-align:center}
+  .mrow .ma{font-size:15px;color:var(--sub)}
+  .mrow .ma b{color:var(--ink);font-weight:700}
+  .actions{margin-top:auto;width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px;padding-top:26px}
+  .actions button{padding:19px;border-radius:18px;font-size:16px;font-weight:800;cursor:pointer;border:1.5px solid var(--line);background:#fff;transition:.15s}
+  .actions button:active{transform:scale(.98)}
+  .actions .primary{background:var(--accent);color:#fff;border:none}
+  .actions button:disabled{opacity:.35;cursor:default}
+
+  .restore-link{background:none;border:1px solid #ddd;border-radius:16px;font-size:12px;color:#888;padding:5px 12px;cursor:pointer;margin-top:6px}
+  .restore-link:active{background:var(--soft)}
+  .legal-links{text-align:center;padding:24px 0 8px;font-size:12px;color:var(--lock)}
+  .legal-links a{color:#aaa;text-decoration:none}
+  .preview-note{margin:10px 0;padding:10px 14px;background:#fff7ec;border:1px solid #ffd9a8;border-radius:12px;font-size:13px;color:#7a5320;line-height:1.5}
+  .preview-note .buy-mini{margin-left:6px;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer}
+  /* ─── 50음도표 ─── */
+  .chart-entry{background:var(--soft)}
+  .chart-seg{padding:12px 20px 0}
+  .chart-hint{text-align:center;font-size:13px;color:var(--sub);padding:12px 0 2px}
+  .chart-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;padding:12px 20px 40px;overflow-y:auto}
+  .chart-cell{border:1.5px solid var(--line);border-radius:14px;padding:12px 4px 9px;text-align:center;cursor:pointer;background:#fff;transition:.12s;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .chart-cell .kn{font-size:30px;line-height:1.2}
+  .chart-cell .rm{font-size:11px;color:var(--sub);margin-top:3px}
+  .chart-cell.hit{border-color:var(--accent);background:#fff6f3;transform:scale(.94)}
+  .chart-cell.empty{border:none;background:none;box-shadow:none;cursor:default}
+  /* ─── 내 구매 ─── */
+  .acc-desc{font-size:14px;color:var(--sub);line-height:1.7;margin-bottom:18px}
+  .acc-input{width:100%;padding:16px;border:1.5px solid var(--line);border-radius:14px;font-size:16px;margin-bottom:10px;outline:none}
+  .acc-input:focus{border-color:var(--ink)}
+  .acc-row{display:flex;justify-content:space-between;align-items:center;padding:16px 4px;border-bottom:1px solid var(--line);font-size:15px}
+  .acc-row span{color:var(--sub);font-size:13px}
+  .acc-email{font-weight:800;font-size:16px;border-bottom:2px solid var(--ink)}
+  .acc-out{margin-top:22px;width:100%;padding:15px;border:1.5px solid var(--line);border-radius:14px;background:#fff;color:#c33;font-weight:700;cursor:pointer}
+  .toast{position:fixed;left:50%;bottom:40px;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;font-size:13px;font-weight:600;padding:12px 20px;border-radius:30px;opacity:0;transition:.25s;pointer-events:none;z-index:100}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── 바이럴: 오늘의 10문제 카드 ── */
+.daily-card{margin:14px 16px 2px;padding:14px 16px;border-radius:16px;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:flex;align-items:center;gap:12px;
+  box-shadow:0 4px 14px rgba(255,122,89,.3);transition:transform .12s}
+.daily-card:active{transform:scale(.98)}
+.daily-card .dc-ico{font-size:26px}
+.daily-card .dc-tt{font-weight:800;font-size:15px}
+.daily-card .dc-sub{font-size:12px;opacity:.92;margin-top:2px}
+.daily-card .dc-streak{margin-left:auto;text-align:center;font-weight:800;font-size:15px;white-space:nowrap}
+.daily-card .dc-streak small{display:block;font-weight:600;font-size:10px;opacity:.9}
+.daily-card.done-today{background:linear-gradient(135deg,var(--ok),var(--ok2));box-shadow:0 4px 14px rgba(47,174,114,.28)}
+/* 결과 등급/공유 */
+.rank-label{text-align:center;font-weight:800;font-size:16px;margin:6px 0 2px}
+.share-btn{background:var(--ink);color:#fff}
+.share-btn:active{opacity:.85}
+.daily-note{text-align:center;font-size:12px;color:var(--sub);margin-top:8px}
+/* PWA 설치 배너 */
