@@ -1,0 +1,60 @@
+name: assemble-index
+on:
+  workflow_dispatch:
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Concatenate parts into index.html
+        run: |
+          set -e
+          rm -f index.html
+          for i in $(seq -w 0 16); do
+            f="_deploy_parts/part${i}.txt"
+            if [ ! -f "$f" ]; then echo "MISSING $f"; exit 1; fi
+            cat "$f" >> index.html
+          done
+          wc -c index.html
+          python3 -c "
+          import hashlib
+          data = open('index.html','rb').read()
+          h = hashlib.sha1()
+          h.update(('blob %d\0' % len(data)).encode())
+          h.update(data)
+          print('blob sha1:', h.hexdigest())
+          "
+
+      - name: Verify against original source hash
+        run: |
+          set -e
+          EXPECTED="bb87539ea5c7e420b44b71b81a1d1df3596b8bea"
+          ACTUAL=$(python3 -c "
+          import hashlib
+          data = open('index.html','rb').read()
+          h = hashlib.sha1()
+          h.update(('blob %d\0' % len(data)).encode())
+          h.update(data)
+          print(h.hexdigest())
+          ")
+          echo "expected=$EXPECTED actual=$ACTUAL"
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "HASH MISMATCH — aborting, not committing index.html"
+            exit 1
+          fi
+          echo "HASH MATCH — proceeding"
+
+      - name: Clean up parts and workflow, commit
+        run: |
+          set -e
+          rm -rf _deploy_parts
+          rm -f .github/workflows/assemble-index.yml
+          git config user.name "thecloudstay"
+          git config user.email "thecloudstay@gmail.com"
+          git add -A
+          git commit -m "feat(brand): YOMI 리브랜딩 — 책 중심 홈(오늘 읽을 책·서재·내 기록), 부가기능 하향, 메타/PWA 브랜드 교체"
+          git push
