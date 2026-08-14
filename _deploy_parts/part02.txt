@@ -1,0 +1,350 @@
+  border-radius:12px;font-size:13.5px;font-weight:800;cursor:pointer;color:var(--ink);font-family:inherit}
+.wp .cl{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:var(--ink);cursor:pointer;background:var(--soft);border:1px solid var(--line);z-index:2}
+.wp .cl:active{background:var(--line)}
+/* ─── 히라가나 숨은그림찾기 (6~7세) ─── */
+.hg-top{padding:10px 16px 6px;text-align:center}
+.hg-ask{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.hg-ask .t{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  font-size:38px;color:var(--accent);vertical-align:-6px;margin:0 4px}
+.hg-sub{font-size:12.5px;color:var(--sub);margin-top:3px;font-weight:600}
+.hg-bar{display:flex;gap:7px;justify-content:center;padding:8px 16px 4px;flex-wrap:wrap}
+.hg-bar button{padding:8px 14px;border:1px solid var(--line);background:var(--card);border-radius:15px;
+  font-size:12.5px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+.hg-bar button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hg-stage{position:relative;margin:8px 14px 0;border-radius:20px;overflow:hidden;
+  height:min(58vh,430px);border:2px solid var(--line);touch-action:manipulation;user-select:none}
+.hg-deco{position:absolute;font-size:30px;line-height:1;pointer-events:none;opacity:.92}
+.hg-ch{position:absolute;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  font-weight:800;cursor:pointer;line-height:1;transition:transform .18s,color .18s,text-shadow .18s;
+  -webkit-text-stroke:.5px rgba(255,255,255,.55)}
+.hg-ch.found{color:var(--ok)!important;transform:scale(1.35) rotate(0deg)!important;
+  text-shadow:0 0 14px rgba(90,160,110,.65);pointer-events:none;-webkit-text-stroke:1.5px #fff}
+.hg-ch.hint{animation:hgPulse .7s ease-in-out infinite}
+@keyframes hgPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.hg-ch.bad{animation:hgBad .4s}
+@keyframes hgBad{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.hg-pop{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) scale(.5);opacity:0;
+  font-size:64px;pointer-events:none;transition:.28s}
+.hg-pop.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.hg-foot{display:flex;gap:9px;padding:12px 16px 18px}
+.hg-foot button{flex:1;padding:13px 0;border:none;border-radius:13px;font-size:14px;font-weight:800;
+  background:var(--soft);color:var(--ink);cursor:pointer;font-family:inherit}
+.hg-foot button.pri{background:var(--accent);color:#fff}
+.hg-sc{display:flex;gap:10px;justify-content:center;font-size:12.5px;color:var(--sub);font-weight:700;padding-top:8px}
+.hg-sc b{color:var(--ink)}
+/* ─── 그림으로 외우는 히라가나 (연상 카드) ─── */
+.mn-wrap{padding:10px 16px 0}
+.mn-card{position:relative;border-radius:24px;overflow:hidden;padding:26px 18px 20px;text-align:center;
+  background:var(--card);border:2px solid var(--line);box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.mn-stage{position:relative;height:min(40vh,270px);display:flex;align-items:center;justify-content:center}
+.mn-pic{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:min(46vw,200px);line-height:1;opacity:.5;filter:saturate(1.15)}
+.mn-ch{position:relative;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  font-size:min(40vw,180px);font-weight:800;line-height:1;color:var(--ink);
+  text-shadow:0 2px 0 #fff,0 -2px 0 #fff,2px 0 0 #fff,-2px 0 0 #fff,0 6px 20px rgba(0,0,0,.18)}
+.mn-say{font-size:22px;font-weight:900;margin-top:12px;letter-spacing:-.4px}
+.mn-say .em{font-size:26px;vertical-align:-3px}
+.mn-say b{color:var(--accent)}
+.mn-tip{font-size:13.5px;color:var(--sub);margin-top:7px;font-weight:600;line-height:1.5}
+.mn-ro{display:inline-block;margin-top:10px;padding:5px 14px;border-radius:14px;background:var(--soft);
+  font-size:13px;font-weight:800;color:var(--sub);letter-spacing:.5px}
+.mn-nav{display:flex;gap:9px;padding:14px 16px 8px}
+.mn-nav button{flex:1;padding:14px 0;border:none;border-radius:14px;font-size:14.5px;font-weight:800;
+  background:var(--soft);color:var(--ink);cursor:pointer;font-family:inherit}
+.mn-nav button.pri{background:var(--accent);color:#fff;flex:1.4}
+.mn-nav button:disabled{opacity:.38}
+.mn-rows{display:flex;gap:6px;justify-content:center;padding:8px 14px 2px;flex-wrap:wrap}
+.mn-rows button{padding:7px 12px;border:1px solid var(--line);background:var(--card);border-radius:14px;
+  font-size:12px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+.mn-rows button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mn-q{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px 16px}
+.mn-q button{padding:22px 0;border:2px solid var(--line);background:var(--card);border-radius:18px;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;font-size:42px;font-weight:800;
+  color:var(--ink);cursor:pointer}
+.mn-q button.ok{border-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+.mn-q button.no{border-color:var(--miss);background:var(--miss-bg);opacity:.6}
+/* 챕터 결과 */
+.rd-res{padding:26px 20px;text-align:center}
+.rd-res .em{font-size:46px}
+.rd-res .tt{font-size:20px;font-weight:800;margin-top:8px}
+.rd-res .sc{font-size:14px;color:var(--sub);margin-top:6px}
+.rd-stamp{margin:18px auto 0;width:96px;height:96px;border-radius:50%;border:3px dashed var(--ok);
+  display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--ok);
+  animation:stampIn .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes stampIn{0%{transform:scale(2.2) rotate(-18deg);opacity:0}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+
+/* ══ 게임 허브 ══ */
+.gh{padding:12px 16px 24px;display:flex;flex-direction:column;gap:10px}
+.gh-card{display:flex;gap:13px;align-items:center;padding:15px 15px;border:1px solid var(--line);
+  background:var(--card);border-radius:16px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink)}
+.gh-card:active{transform:scale(.99);background:var(--soft)}
+.gh-card .ic{flex:0 0 46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:23px}
+/* ⚠ v5.3 — tt/ds 가 <span>(inline)이라 게임 이름과 설명이 한 줄로 이어 붙었다
+     (「타임어택 60초60초 안에 몇 점?…」). 읽기 목록(.rd-book)과 같은 사고. */
+.gh-card .tt,.gh-card .ds{display:block}
+.gh-card .tt{font-size:15.5px;font-weight:800;letter-spacing:-.3px}
+.gh-card .ds{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.45}
+.gh-card .bs{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--ok);white-space:nowrap}
+.gh-card.soon{opacity:.5}
+.gh-h{font-size:12px;font-weight:800;color:var(--sub);padding:8px 2px 0}
+/* ══ 문장 만들기 ══ */
+.sb-hint{padding:14px 16px 6px;text-align:center}
+.sb-hint .ko{font-size:15.5px;font-weight:700;line-height:1.5}
+.sb-hint .sub{font-size:11.5px;color:var(--sub);margin-top:5px}
+.sb-slot{min-height:104px;margin:12px 16px 0;padding:12px;border:2px dashed var(--line);border-radius:15px;
+  display:flex;flex-wrap:wrap;gap:7px;align-content:flex-start;background:var(--card)}
+.sb-slot.ok{border-color:var(--ok);border-style:solid;background:var(--ok-bg)}
+.sb-slot.no{border-color:var(--miss);border-style:solid;background:var(--miss-bg);animation:shk .35s}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.sb-pool{margin:14px 16px 0;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:50px}
+.chip{padding:11px 14px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;
+  font-size:17px;font-weight:700;cursor:pointer;color:var(--ink);
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;transition:transform .1s}
+.chip:active{transform:scale(.94)}
+.chip.used{opacity:.25;pointer-events:none}
+.chip.inslot{border-color:var(--accent);background:var(--soft)}
+.sb-ans{margin:12px 16px 0;padding:12px;border-radius:13px;background:var(--ok-bg);border:1px solid var(--ok-bd);
+  font-size:15px;line-height:1.7;display:none;text-align:center}
+.sb-ans.show{display:block}
+.sb-ans .y{color:var(--accent);font-size:13px;display:block;margin-top:4px}
+.sb-bar{display:flex;gap:10px;justify-content:center;font-size:12px;color:var(--sub);font-weight:700;padding:6px 16px 0}
+.sb-bar b{color:var(--ok)}
+/* ══ 짝 연결 ══ */
+.mt-wrap{position:relative;margin:14px 16px 0}
+.mt-svg{position:absolute;inset:0;pointer-events:none;width:100%;height:100%;overflow:visible}
+.mt-svg line{stroke-width:3;stroke-linecap:round}
+.mt-cols{display:grid;grid-template-columns:1fr 1fr;gap:26px;position:relative}
+.mt-col{display:flex;flex-direction:column;gap:9px}
+.mt-item{padding:13px 8px;overflow:hidden;border:1.5px solid var(--line);background:var(--card);border-radius:12px;
+  font-size:15px;font-weight:700;cursor:pointer;color:var(--ink);text-align:center;height:52px;
+  display:flex;align-items:center;justify-content:center;line-height:1.3;transition:all .13s}
+.mt-item.jp{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;font-size:17px}
+.mt-item.sel{border-color:var(--accent);background:var(--soft);transform:scale(1.03)}
+.mt-item.done{border-color:var(--ok);background:var(--ok-bg);color:var(--ok);pointer-events:none}
+.mt-item.bad{animation:shk .35s;border-color:var(--miss);background:var(--miss-bg)}
+.mt-top{padding:12px 16px 2px;display:flex;justify-content:center;gap:14px;font-size:12.5px;font-weight:800;color:var(--sub)}
+.mt-top b{color:var(--ok)}
+
+/* ══ 오답노트 ══ */
+.wb-sum{padding:12px 16px 2px;text-align:center;font-size:13px;color:var(--sub);font-weight:700}
+.wb-sum b{color:var(--miss);font-size:17px}
+.wb-add{padding:10px 16px 2px}
+.wb-add input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:13px;
+  background:var(--card);font-size:14px;font-family:inherit;color:var(--ink);outline:none}
+.wb-add input:focus{border-color:var(--accent)}
+.wb-res{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:230px;overflow-y:auto}
+.wb-res button{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);
+  background:var(--card);border-radius:12px;cursor:pointer;font-family:inherit;text-align:left;width:100%}
+.wb-res button:active{background:var(--soft)}
+.wb-res .f{font-size:16px;font-weight:800;flex:0 0 auto;max-width:40%;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.wb-res .m{flex:1;min-width:0;font-size:12.5px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wb-res .p{flex:0 0 auto;font-size:10.5px;font-weight:800;color:var(--accent)}
+.wb-res .none{color:var(--sub);font-size:12.5px;text-align:center;padding:10px}
+.wb-set{padding:8px 16px 0}
+.wb-set .row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.wb-set .lab{flex:0 0 76px;font-size:12px;font-weight:800;color:var(--sub)}
+.wb-set .seg{flex:1;display:flex;gap:5px;flex-wrap:wrap}
+.wb-set .seg button{flex:1 1 auto;min-width:46px;padding:7px 4px;border:1px solid var(--line);background:var(--card);
+  border-radius:9px;font-size:12px;font-weight:700;color:var(--sub);cursor:pointer}
+.wb-set .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.wb-list{padding:6px 16px 10px;display:flex;flex-direction:column;gap:7px}
+.wb-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);
+  background:var(--card);border-radius:12px}
+.wb-row .fr{flex:0 0 auto;max-width:42%;font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.wb-row .mn{flex:1;min-width:0;font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wb-row .cnt{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--miss);background:var(--miss-bg);
+  padding:3px 7px;border-radius:9px}
+.wb-row .sp,.wb-row .del{flex:0 0 auto;background:none;border:none;cursor:pointer;font-size:15px;padding:2px 4px}
+.wb-row .del{color:var(--sub)}
+.wb-empty{text-align:center;color:var(--sub);padding:46px 20px;font-size:14px;line-height:1.7}
+.wb-foot{padding:6px 16px 24px;display:flex;gap:9px}
+.wb-foot button{flex:1;padding:14px 0;border:none;border-radius:13px;font-size:14.5px;font-weight:800;cursor:pointer;
+  background:var(--soft);color:var(--ink);font-family:inherit}
+.wb-foot button.pri{flex:2;background:var(--miss);color:#fff}
+.wb-foot button:disabled{opacity:.4}
+
+/* ══ 말하기 ══ */
+.sp-top{padding:12px 16px 2px;display:flex;justify-content:center;gap:14px;font-size:12.5px;font-weight:800;color:var(--sub)}
+.sp-top b{color:var(--ok)}
+.sp-card{margin:12px 16px 0;padding:20px 16px;border:1px solid var(--line);background:var(--card);border-radius:16px;text-align:center}
+.sp-jp{font-size:21px;font-weight:700;line-height:1.75;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.sp-jp ruby rt{font-size:.5em;color:var(--accent);font-weight:600}
+.sp-ro{font-size:13px;color:var(--sub);margin-top:8px;letter-spacing:.2px}
+.sp-ko{font-size:14px;color:var(--ink);margin-top:8px;opacity:.75}
+.sp-mic{margin:18px auto 0;width:96px;height:96px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--accent);color:#fff;font-size:38px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 18px rgba(255,122,89,.35);transition:transform .12s}
+.sp-mic:active{transform:scale(.94)}
+.sp-mic.rec{background:var(--miss);animation:pulse 1.1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,90,67,.5)}70%{box-shadow:0 0 0 20px rgba(224,90,67,0)}}
+.sp-mic:disabled{opacity:.45}
+.sp-hint{text-align:center;font-size:12.5px;color:var(--sub);font-weight:700;padding:10px 16px 0;min-height:22px}
+.sp-res{margin:12px 16px 0;padding:14px;border-radius:14px;display:none;text-align:center}
+.sp-res.show{display:block}
+.sp-res.good{background:var(--ok-bg);border:1px solid var(--ok-bd)}
+.sp-res.soso{background:var(--rg-bg);border:1px solid var(--rg2)}
+.sp-res.bad{background:var(--miss-bg);border:1px solid var(--miss-bd)}
+.sp-score{font-size:30px;font-weight:900}
+.sp-res.good .sp-score{color:var(--ok)} .sp-res.soso .sp-score{color:var(--rg-d)} .sp-res.bad .sp-score{color:var(--miss)}
+.sp-heard{font-size:13.5px;margin-top:6px;color:var(--ink)}
+.sp-heard b{font-weight:800}
+.sp-diff{margin-top:8px;font-size:17px;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;line-height:1.7}
+.sp-diff .hit{color:var(--ok)} .sp-diff .miss{color:var(--miss);text-decoration:underline wavy}
+.sp-tools{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;padding:14px 16px 0}
+.sp-tools button{padding:9px 14px;border:1px solid var(--line);background:var(--card);border-radius:11px;
+  font-size:13px;font-weight:700;color:var(--ink);cursor:pointer}
+.sp-tools button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.sp-nosr{margin:12px 16px 0;padding:12px 14px;border-radius:12px;background:var(--soft);
+  font-size:12.5px;color:var(--sub);line-height:1.6;display:none}
+/* 읽기 목록 섹션 헤더 */
+/* ⚠ v5.3 — overflow-x:auto 인데 6개 버튼이 32px 넘쳐 목록 한가운데 가로 스크롤바가 보였다.
+     6열 grid 한 줄로 정리한다. */
+.rd-filter{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;padding:12px 16px 2px}
+/* v5.7 — 104편이라 단계 필터만으로는 못 고른다. 검색 + 정렬을 한 줄에. */
+.rd-sort{display:flex;gap:6px;padding:8px 16px 2px;align-items:center}
+.rd-sort input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:12px;
+  background:var(--card);font-size:13px;color:var(--ink);outline:none}
+.rd-sort input:focus{border-color:var(--accent)}
+.rd-sort button{flex:0 0 auto;padding:8px 10px;border:1px solid var(--line);background:var(--card);
+  border-radius:12px;font-size:12px;font-weight:800;color:var(--sub);white-space:nowrap}
+.rd-sort button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rd-filter button{min-width:0;padding:8px 2px;border:1px solid var(--line);background:var(--card);
+  border-radius:16px;font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden}
+.rd-filter button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rd-resume{display:flex;align-items:center;gap:12px;margin:12px 16px 2px;padding:14px 16px;
+  border-radius:16px;background:var(--ink);color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.rd-resume:active{opacity:.88}
+.rd-resume .ic{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.16);
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex:0 0 auto}
+.rd-resume .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rd-resume .tx b{font-size:14.5px;font-weight:800}
+.rd-resume .tx small{font-size:12px;opacity:.72;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rd-resume .go{font-size:20px;opacity:.6}
+.rd-sec{font-size:12px;font-weight:800;color:var(--sub);padding:10px 2px 2px}
+.rd-book .kd{display:inline-block;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:7px;
+  background:var(--rs-bg);color:var(--rs-d);margin-left:5px;vertical-align:middle}
+
+/* ══ 어린이 그림 낱말카드 ══ */
+.kd-top{padding:10px 16px 2px;display:flex;justify-content:center;gap:14px;font-size:12.5px;font-weight:800;color:var(--sub)}
+.kd-top b{color:var(--ok)}
+.kd-stage{display:flex;flex-direction:column;align-items:center;padding:8px 16px 0}
+.kd-card{position:relative;width:min(80vw,320px);aspect-ratio:3/4;cursor:pointer;
+  perspective:1200px;-webkit-tap-highlight-color:transparent}
+.kd-in{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.9,.3,1)}
+.kd-card.flip .kd-in{transform:rotateY(180deg)}
+.kd-f,.kd-b{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 8px 24px rgba(43,39,35,.13)}
+.kd-f{background:linear-gradient(160deg,#fff 0%,var(--soft) 100%);border:3px solid var(--line)}
+.kd-b{background:linear-gradient(160deg,var(--accent) 0%,var(--accent2) 100%);color:#fff;transform:rotateY(180deg);padding:18px}
+.kd-emoji{font-size:min(30vw,116px);line-height:1}
+.kd-tapme{font-size:13px;font-weight:800;color:var(--sub)}
+.kd-b .jp{font-size:min(11vw,42px);font-weight:800;line-height:1.2;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.kd-b .rd{font-size:19px;font-weight:700;opacity:.95}
+.kd-b .ko{font-size:22px;font-weight:800;margin-top:2px}
+.kd-b .sm{margin-top:10px;background:rgba(255,255,255,.24);border-radius:14px;padding:8px 12px;font-size:12.5px;font-weight:700;line-height:1.5}
+.kd-b .em2{font-size:34px}
+.kd-sim{display:inline-block;margin-top:10px;padding:5px 12px;border-radius:16px;background:var(--rg-bg);
+  color:var(--rg-ink);font-size:12px;font-weight:800}
+.kd-nav{display:flex;gap:9px;justify-content:center;padding:16px 16px 0;width:100%;max-width:340px}
+.kd-nav button{flex:1;padding:14px 0;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;
+  background:var(--soft);color:var(--ink);font-family:inherit}
+.kd-nav button.pri{flex:1.6;background:var(--ok);color:#fff}
+.kd-modes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:10px 16px 2px}
+.kd-modes button{padding:8px 14px;border:1px solid var(--line);background:var(--card);border-radius:18px;
+  font-size:13px;font-weight:800;color:var(--sub);cursor:pointer}
+.kd-modes button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.kd-q{padding:14px 16px 0;text-align:center;font-size:14px;font-weight:800;color:var(--sub)}
+.kd-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:12px 16px 0}
+.kd-opts button{padding:17px 8px;border:2px solid var(--line);background:var(--card);border-radius:15px;
+  font-size:18px;font-weight:800;color:var(--ink);cursor:pointer;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.kd-opts button.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.kd-opts button.no{background:var(--miss-bg);border-color:var(--miss);color:var(--miss)}
+.kd-cheer{text-align:center;font-size:26px;min-height:36px;padding-top:10px}
+
+/* ══ 어린이: 카테고리·교시 ══ */
+.kc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:12px 16px 24px}
+.kc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px 13px;
+  border:1px solid var(--line);background:var(--card);border-radius:18px;cursor:pointer;font-family:inherit;color:var(--ink)}
+.kc:active{transform:scale(.97);background:var(--soft)}
+.kc i{font-style:normal;font-size:34px;line-height:1}
+.kc b{font-size:14.5px;font-weight:800;margin-top:3px}
+.kc s{text-decoration:none;font-size:11px;font-weight:700;color:var(--sub)}
+.kc .bar{width:100%;height:5px;border-radius:3px;background:var(--line);margin-top:7px;overflow:hidden}
+.kc .bar i{display:block;height:100%;background:var(--ok);font-size:0}
+.kl-list{padding:10px 16px 24px;display:flex;flex-direction:column;gap:8px}
+.kl{display:flex;align-items:center;gap:11px;padding:14px 14px;border:1px solid var(--line);
+  background:var(--card);border-radius:15px;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left}
+.kl .no{flex:0 0 34px;height:34px;border-radius:50%;background:var(--soft);color:var(--sub);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900}
+.kl.done .no{background:var(--ok);color:#fff}
+.kl .ti{flex:1}
+.kl .ti b{display:block;font-size:15px;font-weight:800}
+.kl .ti s{text-decoration:none;font-size:11.5px;color:var(--sub);font-weight:700}
+.kl .ar{font-size:17px;color:var(--sub)}
+.kd-head{padding:12px 16px 0;text-align:center}
+.kd-head .t{font-size:17px;font-weight:800}
+.kd-head .s{font-size:12px;color:var(--sub);margin-top:2px}
+/* ══ 🃏 카르타 (짝 맞추기) ══ */
+.kt-top{padding:12px 16px 2px;display:flex;justify-content:center;gap:14px;font-size:12.5px;font-weight:800;color:var(--sub)}
+.kt-top b{color:var(--ok)}
+.kt-grid{display:grid;gap:8px;padding:12px 16px 0}
+.kt-c{position:relative;aspect-ratio:3/4;cursor:pointer;perspective:900px}
+.kt-in{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .38s}
+.kt-c.open .kt-in{transform:rotateY(180deg)}
+.kt-f,.kt-b{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px}
+.kt-f{background:linear-gradient(150deg,var(--ink) 0%,#4a423b 100%);color:#fff;font-size:20px}
+.kt-b{background:var(--card);border:2px solid var(--line);transform:rotateY(180deg);
+  font-size:14px;font-weight:800;line-height:1.25;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.kt-c.hit .kt-b{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.kt-c.gone{opacity:.35;pointer-events:none}
+/* ══ ❤️ 서바이벌 ══ */
+.sv-top{padding:12px 16px 0;display:flex;align-items:center;justify-content:center;gap:16px}
+.sv-life{font-size:22px;letter-spacing:2px}
+.sv-stat{font-size:12.5px;font-weight:800;color:var(--sub)}
+.sv-stat b{color:var(--ok)}
+.sv-lv{margin:8px 16px 0;padding:7px 12px;border-radius:12px;background:var(--soft);text-align:center;
+  font-size:12px;font-weight:800;color:var(--sub)}
+.sv-q{padding:20px 16px 0;text-align:center}
+.sv-q .g{font-size:40px;font-weight:800;line-height:1.2;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.sv-q .g.sm{font-size:26px}
+.sv-q .sub{font-size:12.5px;color:var(--sub);font-weight:700;margin-top:8px}
+.sv-bar{height:5px;margin:12px 16px 0;border-radius:3px;background:var(--line);overflow:hidden}
+.sv-bar i{display:block;height:100%;background:var(--accent);transition:width .1s linear}
+.sv-over{padding:30px 20px;text-align:center;display:none}
+.sv-over .em{font-size:52px}
+.sv-over .sc{font-size:34px;font-weight:900;margin-top:6px}
+.sv-over .ms{font-size:14px;color:var(--sub);margin-top:6px}
+
+/* ══ 공통 JLPT 레벨 선택 바 ══ */
+.lvbar{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;padding:9px 16px 2px}
+.lvbar button{padding:6px 12px;border:1px solid var(--line);background:var(--card);border-radius:16px;
+  font-size:12px;font-weight:800;color:var(--sub);cursor:pointer}
+.lvbar button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.lvbar .lb{font-size:11px;font-weight:800;color:var(--sub);align-self:center;margin-right:2px}
+.lvbar button.thin{padding:6px 10px}
+</style>
+</head>
+<body>
+
+<!-- ═══ 홈 / 네비게이터 ═══ -->
+<div class="screen on" id="home">
+  <div class="home-hd">
+    <div class="hd-actions">
+      <button class="restore-link" onclick="openAccount()">내 구매 · 로그인</button>
+      <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켬</button>
+    </div>
+    <div class="app">YOMI<div class="en">ヨミ · 일본어 책으로 배우는 일본어</div></div>
+  </div>
+
+  <!-- ★ v6.0 YOMI — 홈의 주인공은 '책'이다.
