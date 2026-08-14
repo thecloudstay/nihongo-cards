@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>YOMI · 일본어 책으로 배우는 일본어 | 원서 104편 무료</title>
+<meta name="description" content="일본 명작 원서 104편을 후리가나·문장별 한국어 번역·원어민 음성으로. 좋아하는 책을 읽다 보면 어느새 일본어가 들립니다. 설치·가입 없이 전부 무료.">
+<meta property="og:title" content="YOMI — 일본어 책으로 배우는 일본어">
+<meta property="og:description" content="일본 명작 104편 · 21,232문장. 후리가나·번역·원어민 음성까지 전부 무료.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:url" content="https://nihongocards.fyi/">
+<meta property="og:image" content="https://nihongocards.fyi/og-cover.png">
+<meta property="og:site_name" content="YOMI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="YOMI — 일본어 책으로 배우는 일본어">
+<meta name="twitter:description" content="일본 명작 104편 · 21,232문장. 후리가나·번역·원어민 음성까지 전부 무료.">
+<meta name="twitter:image" content="https://nihongocards.fyi/og-cover.png">
+<meta name="naver-site-verification" content="f8cbc289e49f10da1bf2bdbdd478dba386c6541f" />
+<link rel="canonical" href="https://nihongocards.fyi/">
+<link rel="alternate" type="application/rss+xml" title="YOMI RSS" href="https://nihongocards.fyi/rss.xml">
+<meta name="keywords" content="일본어 원서,일본어 책 읽기,일본어 다독,YOMI,일본 명작 일본어,후리가나 원서,일본어 소설 읽기,JLPT 독해,일본어 무료,아오조라 문고">
+<meta name="theme-color" content="#ff7a59">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<style>
