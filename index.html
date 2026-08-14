@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>일본어 단어 암기 · JLPT 단어장 | 일본어 카드모음</title>
-<meta name="description" content="히라가나·가타카나부터 JLPT N5~N1 한자·단어까지, 4지선다 퀴즈로 외우는 무료 일본어 단어장. 원어민 발음 지원.">
-<meta property="og:title" content="일본어 카드모음 — 일본어 단어 암기 퀴즈">
-<meta property="og:description" content="히라가나부터 JLPT까지, 4지선다 퀴즈로 외우는 일본어 단어카드. 무료로 시작하세요.">
+<title>YOMI · 일본어 책으로 배우는 일본어 | 원서 104편 무료</title>
+<meta name="description" content="일본 명작 원서 104편을 후리가나·문장별 한국어 번역·원어민 음성으로. 좋아하는 책을 읽다 보면 어느새 일본어가 들립니다. 설치·가입 없이 전부 무료.">
+<meta property="og:title" content="YOMI — 일본어 책으로 배우는 일본어">
+<meta property="og:description" content="일본 명작 104편 · 21,232문장. 후리가나·번역·원어민 음성까지 전부 무료.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:url" content="https://nihongocards.fyi/">
 <meta property="og:image" content="https://nihongocards.fyi/og-cover.png">
-<meta property="og:site_name" content="일본어 카드모음">
+<meta property="og:site_name" content="YOMI">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="일본어 카드모음 — 일본어 단어 암기 퀴즈">
-<meta name="twitter:description" content="히라가나부터 JLPT까지, 4지선다 퀴즈로 외우는 일본어 단어카드. 무료로 시작하세요.">
+<meta name="twitter:title" content="YOMI — 일본어 책으로 배우는 일본어">
+<meta name="twitter:description" content="일본 명작 104편 · 21,232문장. 후리가나·번역·원어민 음성까지 전부 무료.">
 <meta name="twitter:image" content="https://nihongocards.fyi/og-cover.png">
 <meta name="naver-site-verification" content="f8cbc289e49f10da1bf2bdbdd478dba386c6541f" />
 <link rel="canonical" href="https://nihongocards.fyi/">
-<link rel="alternate" type="application/rss+xml" title="일본어 카드모음 RSS" href="https://nihongocards.fyi/rss.xml">
-<meta name="keywords" content="일본어 단어장,일본어 단어 암기,JLPT 단어,히라가나 외우기,가타카나,일본어 한자,일본어 퀴즈,JLPT N5,JLPT N3,무료 일본어">
+<link rel="alternate" type="application/rss+xml" title="YOMI RSS" href="https://nihongocards.fyi/rss.xml">
+<meta name="keywords" content="일본어 원서,일본어 책 읽기,일본어 다독,YOMI,일본 명작 일본어,후리가나 원서,일본어 소설 읽기,JLPT 독해,일본어 무료,아오조라 문고">
 <meta name="theme-color" content="#ff7a59">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -70,6 +70,57 @@
        바깥(페이지)과 안쪽(목록)이 각각 스크롤돼 "스크롤이 잘 안 된다"는 증상의 원인.
        → 홈은 페이지 한 겹만 스크롤한다. */
   .list{padding:8px 18px 40px}
+
+  /* ═══ v6.0 YOMI — 책 중심 홈 ═══
+       읽던 책 → 오늘 읽을 책 → 서재 → 내 기록 → (아래) 더 연습하기 */
+  .home-hd .app{letter-spacing:1px}
+  /* 이어서 읽기 — 읽던 게 있으면 최상단. 읽던 곳을 못 찾는 게 이탈 1순위였다 */
+  .rsm{display:flex;align-items:center;gap:12px;margin:6px 16px 2px;padding:14px 16px;
+    background:var(--ink);color:#fff;border:none;border-radius:16px;width:calc(100% - 32px);
+    text-align:left;box-shadow:0 4px 14px rgba(43,39,35,.2)}
+  .rsm:active{transform:scale(.99)}
+  .rsm .p{flex:0 0 38px;height:38px;border-radius:50%;background:rgba(255,255,255,.16);
+    display:flex;align-items:center;justify-content:center;font-size:16px}
+  .rsm .x{flex:1;min-width:0}
+  .rsm .x b{display:block;font-size:14.5px;font-weight:800}
+  .rsm .x s{display:block;text-decoration:none;font-size:12px;opacity:.82;margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rsm .a{opacity:.55;font-size:18px}
+  /* 오늘 읽을 책 — 날짜 시드로 매일 바뀐다. 돌아올 이유. */
+  .tb{display:flex;flex-direction:column;gap:0;margin:0 16px;padding:18px 18px 16px;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;width:calc(100% - 32px);
+    text-align:left;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+  .tb:active{background:var(--soft)}
+  .tb .lv{display:inline-block;align-self:flex-start;font-size:10.5px;font-weight:800;color:var(--accent);
+    background:#fff1ec;padding:3px 9px;border-radius:20px;margin-bottom:9px}
+  .tb .t{font-size:21px;font-weight:900;letter-spacing:-.6px;line-height:1.25}
+  .tb .jp2{font-size:12.5px;color:var(--sub);margin-top:4px}
+  .tb .d{font-size:13px;color:#4b5563;margin-top:9px;line-height:1.55;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .tb .m{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;color:var(--sub);font-weight:700}
+  .tb .go{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--accent)}
+  /* 서재 */
+  .lib-open{display:flex;align-items:center;gap:12px;margin:14px 16px 0;padding:14px 16px;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;width:calc(100% - 32px);text-align:left}
+  .lib-open:active{background:var(--soft)}
+  .lib-open .li{font-size:20px}
+  .lib-open .lt{flex:1;min-width:0}
+  .lib-open .lt b{display:block;font-size:15px;font-weight:800}
+  .lib-open .lt s{display:block;text-decoration:none;font-size:11.5px;color:var(--sub);margin-top:2px}
+  .lib-open .la{color:#ccc;font-size:18px}
+  .lib-lv{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px 16px 0}
+  .lib-lv button{padding:9px 2px;border:1px solid var(--line);background:var(--card);border-radius:12px;
+    font-size:12px;font-weight:800;color:var(--ink)}
+  .lib-lv button:active{background:var(--soft)}
+  .lib-lv button s{display:block;text-decoration:none;font-size:9.5px;color:var(--sub);font-weight:700;margin-top:1px}
+  /* 내 기록 */
+  .my-rec{display:flex;gap:8px;margin:16px 16px 0}
+  .my-rec div{flex:1;text-align:center;padding:11px 4px;background:var(--soft);border-radius:13px}
+  .my-rec b{display:block;font-size:17px;font-weight:900}
+  .my-rec s{display:block;text-decoration:none;font-size:10.5px;color:var(--sub);font-weight:700;margin-top:2px}
+  /* 부가 기능 구역은 한 단계 낮춰 보이게 */
+  .sec-h.more-h{margin-top:10px;border-top:1px solid var(--line);padding-top:22px}
+  .sec-h.more-h span{font-weight:600;color:var(--lock)}
 
   /* ─── 카테고리 격자 (탭+아코디언 대체) ─── */
   .sec-h{font-size:12.5px;font-weight:800;color:var(--sub);padding:18px 20px 8px;letter-spacing:.2px}
@@ -993,19 +1044,36 @@
       <button class="restore-link" onclick="openAccount()">내 구매 · 로그인</button>
       <button class="restore-link" id="muteBtn" onclick="toggleMute()">🔊 소리 켬</button>
     </div>
-    <div class="app">일본어 카드모음<div class="en">にほんご カード · 読みテスト</div></div>
+    <div class="app">YOMI<div class="en">ヨミ · 일본어 책으로 배우는 일본어</div></div>
   </div>
-  <div class="daily-card" id="dailyCard" style="display:none" onclick="startDaily()">
-    <div class="dc-ico">🎯</div>
-    <div><div class="dc-tt" id="dcTitle">오늘의 10문제</div><div class="dc-sub" id="dcSub">전국 동일 문제 · 매일 0시 갱신</div></div>
-    <div class="dc-streak" id="dcStreak"></div>
-  </div>
-  <div class="sec-h">무엇부터 해볼까요?</div>
+
+  <!-- ★ v6.0 YOMI — 홈의 주인공은 '책'이다.
+       읽던 책 → 오늘 읽을 책 → 서재 순으로 놓고,
+       카드·쓰기·말하기·게임은 맨 아래 '더 연습하기'로 내렸다. -->
+  <div id="homeResume"></div>
+
+  <div class="sec-h">오늘 읽을 책</div>
+  <div id="todayBook"></div>
+
+  <button class="lib-open" onclick="openRead()">
+    <span class="li">📚</span>
+    <span class="lt"><b>서재 열기</b><s id="libSub">원서 104편 · 21,232문장</s></span>
+    <span class="la">›</span>
+  </button>
+  <div class="lib-lv" id="libLv"></div>
+
+  <div class="my-rec" id="myRec"></div>
+
+  <div class="sec-h more-h">더 연습하기 <span>단어·쓰기·말하기</span></div>
   <div class="cgrid cg4" id="catGrid"></div>
   <div class="tiles" id="homeTiles">
     <button class="tile sm" id="tileWb" onclick="openWrongbook()"><i>📕</i><b>오답노트</b><s id="tWb">없음</s></button>
     <button class="tile sm" onclick="openGames()"><i>🎮</i><b>게임</b><s id="tTa">8가지</s></button>
-    <button class="tile sm" id="tileRd" onclick="openRead()"><span class="dot"></span><i>📚</i><b>책읽기</b><s id="tRd">5세부터</s></button>
+    <button class="tile sm" id="tileDaily" onclick="startDaily()"><i>🎯</i><b>오늘의 10문제</b><s id="dcStreak"></s></button>
+  </div>
+  <div class="daily-card" id="dailyCard" style="display:none" onclick="startDaily()">
+    <div class="dc-ico">🎯</div>
+    <div><div class="dc-tt" id="dcTitle">오늘의 10문제</div><div class="dc-sub" id="dcSub">전국 동일 문제 · 매일 0시 갱신</div></div>
   </div>
   <div class="legal-links"><a href="privacy.html">개인정보처리방침</a> · <a href="terms.html">이용약관·환불정책</a></div>
 </div>
@@ -3170,8 +3238,12 @@ function saveDailyState(s){ try{ localStorage.setItem("daily_state",JSON.stringi
 function renderDaily(){
   buildDailyPool();
   const el=$("dailyCard"); if(!el) return;
-  if(DAILY_POOL.length<20){ el.style.display="none"; return; }
-  el.style.display="flex";
+  // ⚠ v6.0 — 홈의 주인공이 '책'이 되면서 오늘의 10문제는 아래 작은 타일로 내렸다.
+  //    큰 배너(dailyCard)는 더 이상 홈에 띄우지 않는다(타일과 중복 노출 방지).
+  el.style.display="none";
+  const tile=$("tileDaily");
+  if(tile) tile.style.display = DAILY_POOL.length<20 ? "none" : "";
+  if(DAILY_POOL.length<20) return;
   const s=dailyState(), today=kstDate(0);
   const streak=(s.last===today||s.last===kstDate(-1))?(s.streak||0):0;
   // ⚠ v5.3 — 예전엔 여기에도 `#${dailyNo()}` 를 찍어 제목의 "오늘의 10문제 #22" 와 번호가 겹쳤다.
@@ -3889,6 +3961,112 @@ function renderRdResume(){
     <span class="go">›</span>`;
   el.onclick=()=>{ rdBookCur=L.book; openChapter(L.k); };
 }
+/* ═══ v6.0 YOMI — 홈(책 중심) 렌더 ═══
+     books.json(7.5MB)을 시작할 때 받지 않는 원칙은 그대로 둔다.
+     그래서 홈은 ①진도(localStorage)만으로 즉시 그리고 ②책 데이터가 오면 다시 그린다. */
+function renderYomiHome(){
+  renderHomeResume(); renderTodayBook(); renderLibLv(); renderMyRec();
+}
+
+/** 이어서 읽기 — 읽던 게 있으면 홈 최상단 */
+function renderHomeResume(){
+  const el=$("homeResume"); if(!el) return;
+  const L=(typeof rdLast==="function") ? rdLast() : null;
+  if(!L){ el.innerHTML=""; return; }
+  el.innerHTML=`<button class="rsm" onclick="yomiResume()">
+    <span class="p">▶</span>
+    <span class="x"><b>이어서 읽기</b><s>${L.book.title_ko} · ${L.k+1}장 / ${L.book.chapters.length}장</s></span>
+    <span class="a">›</span></button>`;
+}
+function yomiResume(){
+  const L=rdLast(); if(!L) return;
+  rdBookCur=L.book; openChapter(L.k);
+}
+
+/** 오늘 읽을 책 — KST 날짜 시드로 매일 바뀐다.
+ *  ⚠ 단계를 반드시 맞춰야 한다. 처음 온 사람에게 4단계 근대문학을 추천하면
+ *     "역시 어렵네" 하고 그날로 떠난다. 진도가 없으면 1~2단계에서만 고른다. */
+function myReadLv(){
+  const st=rdState(); let hi=0;
+  if(BOOKS) BOOKS.forEach(b=>{ if(((st[b.id]||{}).done||[]).length) hi=Math.max(hi,b.lv); });
+  return hi;                       // 0 = 아직 아무것도 안 읽음
+}
+function todayPick(){
+  if(!BOOKS||!BOOKS.length) return null;
+  const hi=myReadLv();
+  const lo = hi ? Math.max(1,hi-1) : 1;
+  const up = hi ? Math.min(5,hi+1) : 2;     // 처음이면 1~2단계만
+  let cand=BOOKS.filter(b=>{
+    const p=rdBookProg(b);
+    return p.d<p.t && b.lv>=lo && b.lv<=up && b.kind!=="original";  // 완독·창작 제외
+  });
+  if(!cand.length) cand=BOOKS.filter(b=>{ const p=rdBookProg(b); return p.d<p.t; });
+  if(!cand.length) cand=BOOKS.slice();
+  const pool=cand.sort((a,b)=>rdSents(a)-rdSents(b))               // 짧은 것부터
+                 .slice(0, Math.max(8, Math.ceil(cand.length*0.5)));
+  const seed=Number(String(kstDate()).replace(/\D/g,""))||1;
+  return pool[seed % pool.length];
+}
+function renderTodayBook(){
+  const el=$("todayBook"); if(!el) return;
+  if(!BOOKS){
+    el.innerHTML=`<div class="tb" style="color:var(--sub);font-size:13.5px">📚 오늘의 책을 고르는 중…</div>`;
+    return;
+  }
+  const b=todayPick(); if(!b){ el.innerHTML=""; return; }
+  const i=BOOKS.indexOf(b), n=rdSents(b);
+  const mins=Math.max(5, Math.round(n*0.35));           // 문장당 약 20초 = 완독 예상
+  el.innerHTML=`<button class="tb" onclick="openBookFromHome(${i})">
+    <span class="lv">${b.lv}단계 · ${b.lvName||""}</span>
+    <span class="t">${b.title_ko}</span>
+    <span class="jp2">${[b.title,b.author_ko].filter(Boolean).join(" · ")}</span>
+    <span class="d">${b.intro_ko||""}</span>
+    <span class="m">${b.chapters.length}장 · ${n.toLocaleString()}문장 · 약 ${mins}분
+      <span class="go">읽기 →</span></span></button>`;
+}
+async function openBookFromHome(i){
+  await loadBooks();
+  show("rdScreen"); openBook(i);
+}
+
+/** 단계 바로가기 — 서재를 열면서 그 단계로 필터 */
+function renderLibLv(){
+  const el=$("libLv"); if(!el) return;
+  const cnt={};
+  if(BOOKS) BOOKS.forEach(b=>cnt[b.lv]=(cnt[b.lv]||0)+1);
+  const NM={1:"입문",2:"초급",3:"중급",4:"중상급",5:"상급"};
+  el.innerHTML=[1,2,3,4,5].map(v=>
+    `<button onclick="openLibLv(${v})">${v}단계<s>${NM[v]}${cnt[v]?" "+cnt[v]:""}</s></button>`).join("");
+  const sub=$("libSub");
+  if(sub && BOOKS){
+    const s=BOOKS.reduce((a,b)=>a+rdSents(b),0);
+    sub.textContent=`원서 ${BOOKS.length}편 · ${s.toLocaleString()}문장 · 전부 무료`;
+  }
+}
+async function openLibLv(v){ await openRead(); rdSetLv(v); window.scrollTo(0,0); }
+
+/** 내 기록 — 읽은 책·문장·연속일 */
+function renderMyRec(){
+  const el=$("myRec"); if(!el) return;
+  const st=rdState(); let done=0, sents=0, books=0;
+  if(BOOKS){
+    BOOKS.forEach(b=>{
+      const p=rdBookProg(b); done+=p.d;
+      if(p.d>=p.t && p.t) books++;
+      const s=(st[b.id]||{}).done||[];
+      s.forEach(k=>{ const ch=b.chapters[k]; if(ch) sents+=ch.s.length; });
+    });
+  } else {
+    for(const k in st){ if(k[0]==="_") continue; done+=((st[k]||{}).done||[]).length; }
+  }
+  const streak=(dailyState()||{}).streak||0;
+  el.innerHTML=
+     `<div><b>${books}</b><s>완독</s></div>`
+   + `<div><b>${done}</b><s>읽은 장</s></div>`
+   + `<div><b>${sents.toLocaleString()}</b><s>읽은 문장</s></div>`
+   + `<div><b>${streak}</b><s>연속일</s></div>`;
+}
+
 function renderRdBar(){
   const el=$("tRd"); if(!el) return;
   let d=0,t=0;
@@ -5470,9 +5648,13 @@ async function initApp(){
   renderWrBar();
   renderCjBar();
   renderRwTile();
-  renderRdBar();          // ⚠ 시작 시 books.json(3.6MB)을 받지 않는다. 진도는 localStorage로 충분.
+  renderRdBar();          // ⚠ 시작 시 books.json(7.5MB)을 받지 않는다. 진도는 localStorage로 충분.
   renderSpTile();
   renderKdTile();
+  // v6.0 — 홈이 책 중심이라 목록 데이터가 필요하다.
+  //   ① 먼저 진도만으로 즉시 그리고 ② 백그라운드로 책을 받아 다시 그린다(첫 화면을 붙잡지 않는다).
+  renderYomiHome();
+  loadBooks().then(()=>renderYomiHome()).catch(()=>{});
 }
 // 설정에서 뒤로 = 왔던 카테고리 목록으로 (없으면 홈)
 function backToCats(){ show(curSecCat ? "secScreen" : "home"); }
