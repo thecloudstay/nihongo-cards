@@ -1,0 +1,350 @@
+const TA_SECS=60;
+function taBestGet(){ try{ return JSON.parse(localStorage.getItem("ta_best")||"null"); }catch(e){ return null; } }
+function taBestSet(v){ try{ localStorage.setItem("ta_best",JSON.stringify(v)); }catch(e){} }
+function renderTaBar(){
+  const t=$("tTa"); if(!t) return;
+  const b=taBestGet();
+  t.textContent = (b&&b.score) ? "최고 "+b.score.toLocaleString() : "7가지";
+}
+function startTimeAttack(){
+  _taLvPool=null;
+  if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
+  taMode=true; dailyMode=false; wbMode=false; reviewRound=0;
+  results=[]; misses=[]; correct=0; combo=0; qi=0;
+  taScore=0; taMax=0; taCount=0;
+  curCat={code:"__ta",ko:"타임어택",jp:"タイムアタック",sent:false}; previewMode=false;
+  deck=shuffle(taPoolLv());
+  $("qtitle").textContent="⚡ 타임어택";
+  $("scoreTot").textContent="";
+  show("quizScreen");
+  taEndAt=performance.now()+TA_SECS*1000;
+  clearInterval(taTimer);
+  taTimer=setInterval(()=>{
+    const left=Math.max(0,taEndAt-performance.now());
+    $("tbar").style.width=(left/(TA_SECS*1000)*100)+"%";
+    $("tlabel").textContent=Math.ceil(left/1000)+"초";
+    document.querySelector(".timer").classList.toggle("tbar-hot", left<10000);
+    if(left<=0){ clearInterval(taTimer); taFinish(); }
+  },100);
+  loadQ();
+}
+let _taPopT=null;
+function taPop(txt){
+  const el=$("taPop"); if(!el) return;
+  el.textContent=txt; el.classList.remove("go"); void el.offsetWidth; el.classList.add("go");
+  clearTimeout(_taPopT);
+  _taPopT=setTimeout(()=>{ el.classList.remove("go"); el.textContent=""; }, 900);   // 자동 소거
+}
+function taPopClear(){ clearTimeout(_taPopT); const el=$("taPop"); if(el){ el.classList.remove("go"); el.textContent=""; } }
+function taFinish(){
+  clearInterval(taTimer); clearInterval(timerId); _pend.forEach(clearTimeout); _pend=[];
+  document.querySelector(".timer").classList.remove("tbar-hot");
+  const prev=taBestGet(); const isRecord=!prev||taScore>prev.score;
+  if(isRecord) taBestSet({score:taScore,count:correct,combo:taMax,d:kstDate(0)});
+  // 결과 화면 구성 (기존 done 재사용)
+  $("scoreNum").textContent=correct; $("scoreTot").textContent=taCount;
+  $("doneLabel").textContent="⚡ 타임어택 결과";
+  const rk=$("rankLabel");
+  rk.innerHTML=`${taScore.toLocaleString()}점 · 최대 🔥${taMax}콤보`+(isRecord?`<span class="new-record">🏆 신기록!</span>`:"");
+  rk.style.display="block";
+  $("blob").style.background="linear-gradient(135deg,var(--accent),var(--accent2))";
+  const seen=new Set(); const uniq=misses.filter(m=>{if(seen.has(m.front))return false;seen.add(m.front);return true;});
+  const rows=$("missRows");rows.innerHTML="";
+  uniq.forEach(m=>{const d=document.createElement("div");d.className="mrow";d.innerHTML=`<div class="mg jp">${m.front}</div><div class="ma"><b>${m.ko}</b> · ${m.romaji}</div>`;rows.appendChild(d);});
+  if(uniq.length===0){ $("missWrap").style.display="none"; $("reviewBtn").disabled=true; $("reviewBtn").textContent="다시 풀 문자 없음"; }
+  else { $("missTitle").textContent=`틀린 문제 ${uniq.length}개`; $("missWrap").style.display="block";
+         $("reviewBtn").disabled=false; $("reviewBtn").textContent=`틀린 문제 ${uniq.length}개 다시 풀기`; }
+  window._miss=uniq.slice();
+  const oldCta=$("buyCta"); if(oldCta) oldCta.remove();
+  const oldPk=$("packBtn"); if(oldPk) oldPk.remove();
+  const oldRw=$("rewardBtn"); if(oldRw) oldRw.remove();
+  const sb=$("shareBtn"); sb.style.display="block"; sb.textContent="📤 점수 자랑하기";
+  _shareText=`⚡ 일본어 타임어택 60초\n${taScore.toLocaleString()}점 · ${correct}문제 · 최대 🔥${taMax}콤보`+(isRecord?"\n🏆 신기록 달성!":"")+`\n너도 도전: https://nihongocards.fyi`;
+  const dn=$("dailyNote"); const b=taBestGet();
+  dn.innerHTML=`내 최고기록: <b>${b.score.toLocaleString()}점</b> (${b.combo}콤보)`; dn.style.display="block";
+  taMode=false;
+  renderTaBar(); renderCollBar();
+  maybeShowPwa();
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $("done").classList.add("on");
+}
+
+// ═══════════ 바이럴: 오늘의 10문제 · 스트릭 · 공유 · PWA ═══════════
+const DAILY_EPOCH="2026-07-21";           // #1 기준일
+const DAILY_CODES=["num","week","time","body","dir","color","family","weather","greet","ask"]; // 무료 단어팩(전원 동일 보장)
+let DAILY_POOL=[];
+const DAILY_CAT={code:"__daily",ko:"오늘의 10문제",jp:"今日の10問",sent:false};
+function kstDate(offset){ const d=new Date(Date.now()+9*3600e3+(offset||0)*86400e3); return d.toISOString().slice(0,10); }
+function dailyNo(){ return Math.max(1, Math.round((new Date(kstDate(0))-new Date(DAILY_EPOCH))/86400e3)+1); }
+function seedRng(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
+  return function(){ h=Math.imul(h^(h>>>16),2246822507); h=Math.imul(h^(h>>>13),3266489909); return ((h^=h>>>16)>>>0)/4294967296; }; }
+function buildDailyPool(){ DAILY_POOL=[]; DAILY_CODES.forEach(c=>{ (DATA[c]||[]).forEach(x=>{ const y=Object.assign({},x); y._cat=c; DAILY_POOL.push(y); }); }); }
+function dailyDeck(){
+  const rng=seedRng("nihongo-"+kstDate(0)); const idx=new Set();
+  while(idx.size<Math.min(10,DAILY_POOL.length)) idx.add(Math.floor(rng()*DAILY_POOL.length));
+  return [...idx].map(i=>DAILY_POOL[i]);
+}
+function dailyState(){ try{ return JSON.parse(localStorage.getItem("daily_state")||"{}"); }catch(e){ return {}; } }
+function saveDailyState(s){ try{ localStorage.setItem("daily_state",JSON.stringify(s)); }catch(e){} }
+function renderDaily(){
+  buildDailyPool();
+  const el=$("dailyCard"); if(!el) return;
+  // ⚠ v6.0 — 홈의 주인공이 '책'이 되면서 오늘의 10문제는 아래 작은 타일로 내렸다.
+  //    큰 배너(dailyCard)는 더 이상 홈에 띄우지 않는다(타일과 중복 노출 방지).
+  el.style.display="none";
+  const tile=$("tileDaily");
+  if(tile) tile.style.display = DAILY_POOL.length<20 ? "none" : "";
+  if(DAILY_POOL.length<20) return;
+  const s=dailyState(), today=kstDate(0);
+  const streak=(s.last===today||s.last===kstDate(-1))?(s.streak||0):0;
+  // ⚠ v5.3 — 예전엔 여기에도 `#${dailyNo()}` 를 찍어 제목의 "오늘의 10문제 #22" 와 번호가 겹쳤다.
+  $("dcStreak").innerHTML = streak>0 ? `🔥 ${streak}일<small>연속</small>` : `▶<small>시작</small>`;
+  if(s.last===today){
+    el.classList.add("done-today");
+    $("dcTitle").textContent="오늘의 10문제 완료!";
+    $("dcSub").textContent=`${s.score} · 내일 0시에 새 문제 · 다시 풀어보기`;
+  } else {
+    el.classList.remove("done-today");
+    $("dcTitle").textContent=`오늘의 10문제 #${dailyNo()}`;
+    $("dcSub").textContent="모두에게 같은 문제 · 결과를 친구와 비교해보세요";
+  }
+}
+function startDaily(){
+  if(DAILY_POOL.length<20){ toast("데이터 준비 중입니다"); return; }
+  dailyMode=true; wbMode=false; reviewRound=0; results=[]; misses=[]; correct=0; qi=0; combo=0;
+  curCat=DAILY_CAT; previewMode=false;
+  deck=dailyDeck();
+  $("qtitle").textContent=`오늘의 10문제 #${dailyNo()}`;
+  $("scoreTot").textContent=deck.length;
+  show("quizScreen"); loadQ();
+}
+function updateStreak(scoreText){
+  const s=dailyState(), today=kstDate(0);
+  if(s.last===today){ s.score=scoreText; saveDailyState(s); return s.streak||1; }
+  s.streak=(s.last===kstDate(-1))?(s.streak||0)+1:1;
+  s.last=today; s.score=scoreText; s.best=Math.max(s.best||0,s.streak); s.total=(s.total||0)+1;
+  saveDailyState(s); return s.streak;
+}
+function rankOf(pct){
+  if(pct>=100) return "満点! 오늘의 사범 🏆";
+  if(pct>=90) return "달인의 감각 ⚡";
+  if(pct>=70) return "상승세 수험생 📈";
+  if(pct>=50) return "꾸준함이 무기 💪";
+  return "내일의 역전 🌱";
+}
+function emojiGrid(){
+  let g=""; results.forEach((ok,i)=>{ g+=ok?"🟩":"⬛"; if((i+1)%10===0&&i<results.length-1)g+="\n"; }); return g;
+}
+let _shareText="";
+function buildShare(){
+  const total=results.length, pct=total?Math.round(correct/total*100):0;
+  if(dailyMode){
+    const st=dailyState();
+    let txt=`일본어 카드모음 · 오늘의 10문제 #${dailyNo()}\n${emojiGrid()} ${correct}/${total}\n${rankOf(pct)}`;
+    if((st.streak||0)>1) txt+=` · 🔥${st.streak}일 연속`;
+    txt+=`\nhttps://nihongocards.fyi`;
+    return txt;
+  }
+  const name=curCat?(curCat.ko||""):"";
+  return `일본어 카드모음 · ${name}\n${emojiGrid()} ${correct}/${total} (${pct}%)\n${rankOf(pct)}\nhttps://nihongocards.fyi`;
+}
+async function doShare(){
+  const txt=_shareText||buildShare();
+  try{
+    if(navigator.share){ await navigator.share({text:txt}); return; }
+  }catch(e){ if(e && e.name==="AbortError") return; }
+  try{ await navigator.clipboard.writeText(txt); toast("결과를 복사했어요! 카톡에 붙여넣기 📋"); }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); try{document.execCommand("copy"); toast("결과를 복사했어요! 카톡에 붙여넣기 📋");}catch(_){toast("복사 실패 — 직접 캡처해주세요");}
+    ta.remove();
+  }
+}
+// ── PWA 설치 ──
+let _bip=null;
+window.addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); _bip=e; });
+function isStandalone(){ return matchMedia("(display-mode: standalone)").matches || navigator.standalone===true; }
+function isIOS(){ return /iPhone|iPad|iPod/.test(navigator.userAgent); }
+function pwaDismissed(){ try{ const ts=+localStorage.getItem("pwa_dismiss")||0; return Date.now()-ts < 3*86400e3; }catch(e){ return false; } }
+function dismissPwa(){ try{ localStorage.setItem("pwa_dismiss",Date.now()); }catch(e){} $("pwaTip").style.display="none"; }
+function maybeShowPwa(){
+  if(isStandalone()||pwaDismissed()) return;
+  if(_bip || isIOS()) $("pwaTip").style.display="flex";
+}
+async function promptInstall(){
+  if(_bip){ _bip.prompt(); const r=await _bip.userChoice.catch(()=>null); _bip=null; $("pwaTip").style.display="none";
+    if(r && r.outcome==="accepted") toast("설치 완료! 홈 화면에서 만나요 🎉"); return; }
+  if(isIOS()){ $("iosSheet").classList.add("on"); return; }
+  toast("브라우저 메뉴에서 '홈 화면에 추가'를 눌러주세요");
+}
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); }); }
+
+function finish(){
+  clearInterval(timerId);
+  $("scoreNum").textContent=correct; $("scoreTot").textContent=deck.length;
+  const seen=new Set(); const uniq=misses.filter(m=>{if(seen.has(m.front))return false;seen.add(m.front);return true;});
+  const rows=$("missRows");rows.innerHTML="";
+  uniq.forEach(m=>{const d=document.createElement("div");d.className="mrow";d.innerHTML=`<div class="mg jp">${m.front}</div><div class="ma"><b>${m.ko}</b> · ${m.romaji}</div>`;rows.appendChild(d);});
+  if(uniq.length===0){
+    $("doneLabel").textContent=reviewRound>0?"복습 완료! 모두 맞혔어요 🎉":"만점! 모두 맞혔어요 🎉";
+    $("blob").style.background="linear-gradient(135deg,var(--ok),var(--ok2))";
+    $("missWrap").style.display="none"; $("reviewBtn").disabled=true; $("reviewBtn").textContent="다시 풀 문자 없음";
+  }else{
+    $("doneLabel").textContent=reviewRound>0?`복습 ${reviewRound}회차 결과`:"내 점수";
+    $("blob").style.background="linear-gradient(135deg,var(--accent),var(--accent2))";
+    $("missTitle").textContent=`틀린 문자 ${uniq.length}개`; $("missWrap").style.display="block";
+    $("reviewBtn").disabled=false; $("reviewBtn").textContent=`틀린 문자 ${uniq.length}개 다시 풀기`;
+  }
+  const oldCta=$("buyCta"); if(oldCta) oldCta.remove();
+  if(previewMode && curCat){
+    const b=document.createElement("button"); b.id="buyCta"; b.className="primary";
+    b.textContent=`전체 ${curCat.n}장 잠금해제 — ${priceOf(curCat)}`;
+    b.onclick=()=>openBuy(curCat);
+    document.querySelector("#done .actions").prepend(b);
+  }
+  window._miss=uniq.slice();
+  // ── 바이럴: 등급·공유·데일리·PWA ──
+  const total=results.length||deck.length, pct=total?Math.round(correct/total*100):0;
+  const rk=$("rankLabel");
+  if(reviewRound===0 && results.length){ rk.textContent=rankOf(pct); rk.style.display="block"; }
+  else rk.style.display="none";
+  const sb=$("shareBtn"); sb.style.display = (reviewRound===0 && results.length) ? "block" : "none";
+  const dn=$("dailyNote"); dn.style.display="none";
+  if(dailyMode && reviewRound===0){
+    const st=updateStreak(`${correct}/${total}`);
+    dn.innerHTML=`🔥 <b>${st}일 연속</b> 도전 중 · 내일 0시에 새 문제가 나와요`;
+    dn.style.display="block";
+    sb.textContent="📤 결과 공유하고 친구와 비교하기";
+    renderDaily();
+    const oldPk=$("packBtn"); if(oldPk) oldPk.remove();
+    if(!packClaimedToday()){
+      // 스트릭 마일스톤 → 오늘 팩 확정등급 업그레이드 (3일 R·7일 SR·14일 SR·30일 SSR)
+      const sNow=dailyState(); const ms=sNow.ms||[];
+      const MS=[[30,3,"SSR 확정!"],[14,2,"SR 확정!"],[7,2,"SR 확정!"],[3,1,"R 확정!"]];
+      PACK_MIN=0; PACK_LABEL="";
+      for(const [d,r,label] of MS){
+        if((sNow.streak||0)>=d && !ms.includes(d)){
+          PACK_MIN=r; PACK_LABEL=`🔥${d}일 연속 보상 · ${label}`;
+          ms.push(d); sNow.ms=ms; saveDailyState(sNow);
+          break;
+        }
+      }
+      const pk=document.createElement("button"); pk.id="packBtn"; pk.className="primary pack-btn";
+      pk.textContent = PACK_LABEL ? `🎁 ${PACK_LABEL.replace("🔥","")} 카드팩 열기` : (getPity()>=9 ? "🎁 카드팩 열기 (✨SSR 확정)" : "🎁 보상: 오늘의 카드팩 열기 (5장)");
+      pk.onclick=openPack;
+      document.querySelector("#done .actions").prepend(pk);
+    }
+    const oldRw=$("rewardBtn"); if(oldRw) oldRw.remove();
+    if(pendingReward()){
+      const rw=document.createElement("button"); rw.id="rewardBtn"; rw.className="primary rw-btn";
+      rw.textContent="🎖 학습 보상 도착 — 유료팩 무료로 받기!";
+      rw.onclick=openReward;
+      document.querySelector("#done .actions").prepend(rw);
+    }
+  } else { sb.textContent="📤 결과 공유하기"; }
+  _shareText=buildShare();
+  maybeShowPwa();
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $("done").classList.add("on");
+}
+function reviewMiss(){
+  reviewRound++; taMode=false; clearInterval(taTimer); deck=shuffle(window._miss);qi=0;correct=0;misses=[]; results=[];
+  $("qtitle").textContent=`복습 ${reviewRound}회차 · ${deck.length}개`; $("scoreTot").textContent=deck.length;
+  $("done").classList.remove("on"); show("quizScreen"); loadQ();
+}
+
+// override show() for done screen properly
+function show(id){
+  if(typeof taPopClear==="function") taPopClear();
+  if(typeof ktTimer!=="undefined" && id!=="ktScreen") clearInterval(ktTimer);
+  if(typeof svTimer!=="undefined" && id!=="svScreen") clearInterval(svTimer);
+  if(id!=="spScreen" && typeof spRec!=="undefined" && spRec && spRecOn){ try{spRec.stop();}catch(e){} spRecOn=false; }
+  if(typeof rdStopPlay==="function" && id!=="rdRead") rdStopPlay();
+  if(id!=="vcScreen" && typeof _vcTok!=="undefined"){ _vcTok++; _vcOn=false; }
+  if(typeof closeWordPop==="function" && id!=="rdRead") closeWordPop();
+  if(id!=="quizScreen"){ stopQuiz(); repToken++; repRunning=false; const P=$("repPanel"); if(P) P.style.display="none";
+                          if(typeof hideNextBtn==="function") hideNextBtn(); }   // 퀴즈 이탈 시 타이머·발음·예약 콜백 전부 정지
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+  $("done").classList.remove("on");
+  if(id==="done"){$("done").classList.add("on");}
+  else{$(id).classList.add("on");}
+}
+
+// ══ GAS 데이터 연동 (1단계) ══
+// 구글시트 cards 데이터를 GAS 웹앱에서 JSON으로 받아 DATA에 채운다.
+// 배포 후 아래 URL을 본인 GAS 웹앱 URL로 바꾸세요. 비워두면 앱 내장 데이터로 동작(오프라인 폴백).
+const API_URL = "https://script.google.com/macros/s/AKfycbxnmDF3XA7ubkM6BhAmAihhRy6lFp1KIppsnn8Us_pOHdHeuKPI03pR_-8QuFrVxLWI/exec";
+
+function rowToCard(r){
+  const isKana = String(r.type||"").trim()==="kana";
+  const reading = String(r.reading||"").trim();
+  const ko = String(r.meaning_ko||"").trim();
+  const romaji = isKana ? String(r.meaning_en||"").trim() : reading;
+  const speak = isKana ? String(r.front||reading) : (reading.split("/")[0]||reading||String(r.front||""));
+  const card = {front:String(r.front||"").trim(), romaji, ko, speak, label:`${ko} [${romaji}]`};
+  if(!isKana){ card.ex=String(r.example||"").trim(); card.exy=String(r.example_reading||"").trim(); card.exk=String(r.example_ko||"").trim(); }
+  card.tags = String(r.tags||"").trim();
+  card.level = String(r.level||"").trim();
+  card.sent = String(r.type||"").trim()==="sentence";
+  card._order = parseInt(r.order_in_cat,10)||0;
+  return card;
+}
+
+async function tryFetchRows(url){
+  try{ const res=await fetch(url,{cache:"no-store"}); const j=await res.json(); return Array.isArray(j)?j:(j.cards||null); }
+  catch(e){ return null; }
+}
+function ingestRows(rows, markReady){
+  const built={};
+  rows.forEach(r=>{ const cat=String(r.category||"").trim(); if(!cat) return; (built[cat]=built[cat]||[]).push(rowToCard(r)); });
+  Object.keys(built).forEach(cat=>{ built[cat].sort((a,b)=>a._order-b._order); built[cat].forEach(c=>delete c._order); DATA[cat]=built[cat]; });
+  if(markReady){ Object.keys(NAV).forEach(tab=> NAV[tab].forEach(g=> g.items.forEach(it=>{
+    if(DATA[it.code] && DATA[it.code].length){
+      it.ready=true;
+      // 유료 미보유는 미리보기 20장만 로드된 상태 → 표기 장수는 하드코딩(전체) 유지
+      if(!(tierOf(it)==="paid" && !isOwned(it.code))) it.n=DATA[it.code].length;
+    }
+  }))); }
+  return Object.keys(built);
+}
+// 무료 데이터: 정적 JSON(GitHub Pages 동봉) 우선 → GAS 무료 API 폴백 → 내장 데이터
+async function loadData(){
+  if(isMaster()){                                  // 관리자 마스터 계정 → 전체 데이터
+    OWNED = new Set(["ALL"]); saveOwned();
+    const all = await tryFetchRows("cards_all.json");
+    if(all && all.length){ ingestRows(all, true); return true; }
+  }
+  let rows = await tryFetchRows("cards_free.json");
+  if((!rows||!rows.length) && API_URL) rows = await tryFetchRows(API_URL + (API_URL.includes("?")?"&":"?") + "action=cards");
+  if(!rows || !rows.length) return false;
+  ingestRows(rows, true);
+  return true;
+}
+
+// ── 라이선스(email+token) 기반 유료 로딩 ──
+let LIC = (()=>{ try{ return JSON.parse(localStorage.getItem('license')||'null'); }catch(e){ return null; } })();
+// ── 관리자 마스터 계정 (GAS 없이 전체 열람) ──
+const MASTER_EMAIL="thecloudstay@gmail.com", MASTER_KEY="1234";
+function isMaster(){ return !!(LIC && String(LIC.email||"").trim().toLowerCase()===MASTER_EMAIL && String(LIC.token).trim()===MASTER_KEY); }
+// 구매 복원: 이메일+키로 보유팩 조회 → OWNED 갱신
+async function restorePurchase(email, token){
+  if(!API_URL) throw new Error("서버 URL 미설정");
+  const r = await fetch(`${API_URL}?action=entitlement&email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`,{cache:"no-store"});
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error||"키가 올바르지 않습니다");
+  LIC={email,token}; localStorage.setItem('license', JSON.stringify(LIC));
+  OWNED = new Set(j.packs); saveOwned(); renderNav();
+  return j.packs;
+}
+// 유료 카테고리 지연 로딩(잠금해제된 것만, 검증된 email+token으로)
+async function loadPaidCategory(it){
+  if(!LIC || !API_URL) return false;
+  const r = await fetch(`${API_URL}?action=paidcards&email=${encodeURIComponent(LIC.email)}&token=${encodeURIComponent(LIC.token)}&category=${encodeURIComponent(it.code)}`,{cache:"no-store"});
+  const j = await r.json();
+  if(!j.ok || !j.cards || !j.cards.length) return false;
+  ingestRows(j.cards, false); it.ready=true; it.n=DATA[it.code].length;
+  return true;
+}
+
+// ── 50음도표 (무료, 터치 발음) ──
+const GOJUON_H=[["あ","い","う","え","お"],["か","き","く","け","こ"],["さ","し","す","せ","そ"],["た","ち","つ","て","と"],["な","に","ぬ","ね","の"],["は","ひ","ふ","へ","ほ"],["ま","み","む","め","も"],["や","","ゆ","","よ"],["ら","り","る","れ","ろ"],["わ","","を","","ん"]];
+const GOJUON_K=[["ア","イ","ウ","エ","オ"],["カ","キ","ク","ケ","コ"],["サ","シ","ス","セ","ソ"],["タ","チ","ツ","テ","ト"],["ナ","ニ","ヌ","ネ","ノ"],["ハ","ヒ","フ","ヘ","ホ"],["マ","ミ","ム","メ","モ"],["ヤ","","ユ","","ヨ"],["ラ","リ","ル","レ","ロ"],["ワ","","ヲ","","ン"]];
+const ROMAJI=[["a","i","u","e","o"],["ka","ki","ku","ke","ko"],["sa","shi","su","se","so"],["ta","chi","tsu","te","to"],["na","ni","nu","ne","no"],["ha","hi","fu","he","ho"],["ma","mi","mu","me","mo"],["ya","","yu","","yo"],["ra","ri","ru","re","ro"],["wa","","o","","n"]];
