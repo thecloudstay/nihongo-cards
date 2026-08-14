@@ -1,0 +1,350 @@
+    <button class="start" style="background:var(--rs);margin-bottom:12px" onclick="openColl()">📚 카드 도감 보기</button>
+    <button class="start" id="accRw" style="display:none;background:var(--ok);margin-bottom:12px" onclick="openReward()">🎖 학습 보상 받기</button>
+<div class="acc-tools">
+      <h4>📦 학습 데이터 백업 · 기기 이전</h4>
+      <div class="row2">
+        <button onclick="exportProgress()">내보내기 (복사)</button>
+        <button onclick="importProgress()">가져오기 (붙여넣기)</button>
+      </div>
+      <p class="acc-desc" style="margin-top:8px;font-size:12px">도감·스트릭·오답노트·최고기록·구매내역을 텍스트로 복사해, 새 기기의 이 화면에서 붙여넣으면 그대로 이어집니다.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ 카테고리 구조 (한글 메인/일본어 서브) ══
+const NAV = {
+  kana:[
+    {ko:"",jp:"",items:[
+      {code:"hiragana",ko:"히라가나",jp:"ひらがな",n:46,ready:true,tier:"free"},
+      {code:"katakana",ko:"가타카나",jp:"カタカナ",n:111,ready:false,tier:"free"},
+      {code:"KSIM",ko:"헷갈리는 가타카나",jp:"間違えやすいカタカナ",n:60,ready:false,tier:"free"},
+    ]},
+    {ko:"기초 필수",jp:"基礎",items:[
+      {code:"num",ko:"숫자",jp:"数字",n:54,ready:false,tier:"free"},
+      {code:"week",ko:"요일·날짜",jp:"曜日・日付",n:53,ready:false,tier:"free"},
+      {code:"time",ko:"시간",jp:"時間",n:53,ready:false,tier:"free"},
+      {code:"body",ko:"신체",jp:"体",n:55,ready:false,tier:"free"},
+      {code:"dir",ko:"방향·위치",jp:"方向・位置",n:55,ready:false,tier:"free"},
+      {code:"color",ko:"색깔",jp:"色",n:55,ready:false,tier:"free"},
+      {code:"family",ko:"가족",jp:"家族",n:55,ready:false,tier:"free"},
+      {code:"weather",ko:"계절·날씨",jp:"季節・天気",n:54,ready:false,tier:"free"},
+      {code:"greet",ko:"인사·표현",jp:"挨拶",n:54,ready:false,tier:"free"},
+      {code:"ask",ko:"지시·의문",jp:"指示・疑問",n:54,ready:false,tier:"free"},
+    ]},
+    {ko:"주제·생활",jp:"テーマ",items:[
+      {code:"shape",ko:"도형",jp:"図形",n:55,ready:false,tier:"free"},
+      {code:"country",ko:"나라 이름",jp:"国名",n:55,ready:false,tier:"free"},
+      {code:"animal",ko:"동물",jp:"動物",n:55,ready:false,tier:"free"},
+      {code:"nature",ko:"자연",jp:"自然",n:55,ready:false,tier:"free"},
+      {code:"job",ko:"직업",jp:"職業",n:55,ready:false,tier:"free"},
+      {code:"food",ko:"음식·채소",jp:"食べ物・野菜",n:58,ready:false,tier:"free"},
+    ]},
+  ],
+  kanji:[
+    {ko:"자격시험 JLPT",jp:"日本語能力試験",items:[
+      {code:"N5",ko:"N5 · 입문",jp:"N5",n:99,ready:true,tier:"free"},
+      {code:"N4",ko:"N4 · 초급",jp:"N4",n:177,ready:false,tier:"paid"},
+      {code:"N3",ko:"N3 · 중급",jp:"N3",n:345,ready:false,tier:"paid"},
+      {code:"N2",ko:"N2 · 중상급",jp:"N2",n:362,ready:false,tier:"paid"},
+      {code:"N1",ko:"N1 · 상급",jp:"N1",n:1077,ready:false,tier:"paid"},
+    ]},
+  ],
+  vocab:[
+    {ko:"JLPT 실전 어휘 · 빈칸(끼워넣기)",jp:"実戦語彙",items:[
+      {code:"V5",ko:"N5 어휘",jp:"N5 語彙",n:118,ready:false,tier:"free",sent:true},
+      {code:"V4",ko:"N4 어휘",jp:"N4 語彙",n:158,ready:false,tier:"free",sent:true},
+      {code:"V3",ko:"N3 어휘",jp:"N3 語彙",n:170,ready:false,tier:"free",sent:true},
+      {code:"V2",ko:"N2 어휘",jp:"N2 語彙",n:210,ready:false,tier:"free",sent:true},
+      {code:"V1",ko:"N1 어휘",jp:"N1 語彙",n:210,ready:false,tier:"free",sent:true},
+    ]},
+    {ko:"상황·장면별",jp:"場面別",items:[
+      {code:"B2",ko:"호텔",jp:"ホテル",n:100,ready:false,tier:"paid"},
+      {code:"B1",ko:"공항·출입국",jp:"空港・出入国",n:100,ready:false,tier:"paid"},
+      {code:"B3",ko:"음식점",jp:"飲食店",n:100,ready:false,tier:"paid"},
+      {code:"B9",ko:"애니·만화",jp:"アニメ・漫画",n:100,ready:false,tier:"paid"},
+      {code:"B10",ko:"드라마·연애",jp:"ドラマ・恋愛",n:100,ready:false,tier:"paid"},
+      {code:"B4",ko:"역·교통",jp:"駅・交通",n:100,ready:false,tier:"paid"},
+      {code:"B5",ko:"병원·약국",jp:"病院・薬局",n:100,ready:false,tier:"paid"},
+      {code:"B6",ko:"쇼핑·상점",jp:"買い物・店",n:100,ready:false,tier:"paid"},
+      {code:"B8",ko:"학교·학원",jp:"学校・学園",n:100,ready:false,tier:"paid"},
+      {code:"B11",ko:"직장·회사",jp:"職場・会社",n:100,ready:false,tier:"paid"},
+      {code:"B12",ko:"집·생활",jp:"家・暮らし",n:100,ready:false,tier:"paid"},
+      {code:"B13",ko:"SNS·인터넷",jp:"SNS・ネット",n:100,ready:false,tier:"paid"},
+      {code:"B14",ko:"감정·리액션",jp:"感情・リアクション",n:100,ready:false,tier:"paid"},
+      {code:"B7",ko:"길·표지판",jp:"道・標識",n:100,ready:false,tier:"paid"},
+    ]},
+    {ko:"분야·주제별",jp:"テーマ別",items:[
+      {code:"A1",ko:"시사·뉴스",jp:"時事・ニュース",n:100,ready:false,tier:"paid"},
+      {code:"A2",ko:"경제·비즈니스",jp:"経済・ビジネス",n:100,ready:false,tier:"paid"},
+      {code:"A3",ko:"문학·감정",jp:"文学・感情",n:100,ready:false,tier:"paid"},
+      {code:"A4",ko:"의학·건강",jp:"医学・健康",n:100,ready:false,tier:"paid"},
+      {code:"A5",ko:"법률·계약",jp:"法律・契約",n:100,ready:false,tier:"paid"},
+      {code:"A6",ko:"건축·부동산",jp:"建築・不動産",n:100,ready:false,tier:"paid"},
+      {code:"A7",ko:"과학·기술",jp:"科学・技術",n:100,ready:false,tier:"paid"},
+    ]},
+    {ko:"책 빈도별",jp:"読書の頻度",items:[
+      {code:"C1",ko:"최빈출 100",jp:"最頻出100",n:100,ready:false,tier:"free"},
+      {code:"C2",ko:"소설 빈출",jp:"小説によく出る",n:100,ready:false,tier:"paid"},
+      {code:"C3",ko:"평론·신서",jp:"評論・新書",n:100,ready:false,tier:"paid"},
+      {code:"C4",ko:"접속·부사",jp:"接続・副詞",n:100,ready:false,tier:"paid"},
+    ]},
+    {ko:"가타카나 마스터·빈칸",jp:"カタカナ",items:[
+      {code:"KATA",ko:"가타카나어 기초",jp:"カタカナ語・基礎",n:300,ready:false,tier:"paid",sent:true},
+      {code:"KATA2",ko:"가타카나어 심화",jp:"カタカナ語・応用",n:250,ready:false,tier:"paid",sent:true},
+      {code:"WASEI",ko:"和製英語(함정)",jp:"和製英語",n:97,ready:false,tier:"paid",sent:true},
+      {code:"KABBR",ko:"가타카나 줄임말",jp:"カタカナ略語",n:80,ready:false,tier:"paid",sent:true},
+    ]},
+    {ko:"특화·빈칸",jp:"特化",items:[
+      {code:"VERB",ko:"필수 동사 400",jp:"動詞400",n:400,ready:false,tier:"free",sent:true},
+      {code:"CNT",ko:"카운터(조수사)",jp:"助数詞",n:100,ready:false,tier:"paid",sent:true},
+    ]},
+  ],
+  sentence:[
+    {ko:"통문장 암기 · 수험(빈칸)",jp:"例文・JLPT",items:[
+      {code:"S1",ko:"N5 문장",jp:"N5 例文",n:162,ready:false,tier:"free",sent:true},
+      {code:"S2",ko:"N4 문장",jp:"N4 例文",n:165,ready:false,tier:"free",sent:true},
+      {code:"S3",ko:"N3 문장",jp:"N3 例文",n:160,ready:false,tier:"free",sent:true},
+      {code:"S4",ko:"N2 문장",jp:"N2 例文",n:155,ready:false,tier:"free",sent:true},
+      {code:"S5",ko:"N1 문장",jp:"N1 例文",n:155,ready:false,tier:"free",sent:true},
+    ]},
+    {ko:"통문장 암기 · 실전(빈칸)",jp:"例文・実戦",items:[
+      {code:"ST",ko:"여행 문장",jp:"旅行 例文",n:164,ready:false,tier:"free",sent:true},
+      {code:"SB",ko:"비즈니스 문장",jp:"ビジネス 例文",n:166,ready:false,tier:"free",sent:true},
+      {code:"SD",ko:"일상회화 문장",jp:"日常会話 例文",n:160,ready:false,tier:"free",sent:true},
+    ]},
+  ],
+  grammar:[
+    {ko:"문법 · 빈칸(끼워넣기)",jp:"文法・穴埋め",items:[
+      {code:"GP",ko:"조사",jp:"助詞",n:52,ready:false,tier:"free",sent:true},
+      {code:"GADV",ko:"부사",jp:"副詞",n:52,ready:false,tier:"free",sent:true},
+      {code:"GV",ko:"동사 활용",jp:"動詞の活用",n:64,ready:false,tier:"free",sent:true},
+      {code:"GADJ",ko:"형용사",jp:"形容詞",n:67,ready:false,tier:"free",sent:true},
+      {code:"GF",ko:"문형·기능어",jp:"文型",n:105,ready:false,tier:"free",sent:true},
+    ]},
+    {ko:"JLPT 급별 문형",jp:"級別文型",items:[
+      {code:"G5",ko:"N5 문형",jp:"N5 文型",n:70,ready:false,tier:"free",sent:true},
+      {code:"G4",ko:"N4 문형",jp:"N4 文型",n:80,ready:false,tier:"free",sent:true},
+      {code:"G3",ko:"N3 문형",jp:"N3 文型",n:90,ready:false,tier:"free",sent:true},
+      {code:"G2",ko:"N2 문형",jp:"N2 文型",n:90,ready:false,tier:"free",sent:true},
+      {code:"G1",ko:"N1 문형",jp:"N1 文型",n:90,ready:false,tier:"free",sent:true},
+    ]},
+  ],
+};
+// v5.4 신규 팩은 기존 섹션 안에 넣는다 — NAV 최상위에 새 섹션을 만들면
+//   CGRID(홈 4칸)가 참조하지 않아 화면에 아예 안 나온다.
+NAV.vocab.push({ko:"실전 표현 · 빈칸",jp:"実用表現",items:[
+  {code:"TRAVEL",ko:"여행 실전 회화",jp:"旅行会話",n:120,ready:false,tier:"paid",sent:true},
+  {code:"KEIGO",ko:"경어(존경·겸양)",jp:"敬語",n:100,ready:false,tier:"paid",sent:true},
+  {code:"BIZ",ko:"비즈니스 일본어",jp:"ビジネス日本語",n:100,ready:false,tier:"paid",sent:true},
+  {code:"ONO",ko:"오노마토페 기초",jp:"オノマトペ・基礎",n:100,ready:false,tier:"paid",sent:true},
+  {code:"ONO2",ko:"오노마토페 심화",jp:"オノマトペ・応用",n:80,ready:false,tier:"paid",sent:true},
+]});
+
+// ══ 실제 카드 데이터 (지금은 hira_seion만) ══
+const DATA = {
+ hiragana: [
+  ["あ","a","아"],["い","i","이"],["う","u","우"],["え","e","에"],["お","o","오"],
+  ["か","ka","카"],["き","ki","키"],["く","ku","쿠"],["け","ke","케"],["こ","ko","코"],
+  ["さ","sa","사"],["し","shi","시"],["す","su","스"],["せ","se","세"],["そ","so","소"],
+  ["た","ta","타"],["ち","chi","치"],["つ","tsu","츠"],["て","te","테"],["と","to","토"],
+  ["な","na","나"],["に","ni","니"],["ぬ","nu","누"],["ね","ne","네"],["の","no","노"],
+  ["は","ha","하"],["ひ","hi","히"],["ふ","fu","후"],["へ","he","헤"],["ほ","ho","호"],
+  ["ま","ma","마"],["み","mi","미"],["む","mu","무"],["め","me","메"],["も","mo","모"],
+  ["や","ya","야"],["ゆ","yu","유"],["よ","yo","요"],
+  ["ら","ra","라"],["り","ri","리"],["る","ru","루"],["れ","re","레"],["ろ","ro","로"],
+  ["わ","wa","와"],["を","o","오"],["ん","n","응(ㄴ)"],
+ ].map(x=>({front:x[0],romaji:x[1],ko:x[2],speak:x[0],label:`${x[2]} [${x[1]}]`})),
+ N5: [
+  {front:"日",romaji:"にち/ひ",ko:"날·해",speak:"にち",label:"날·해 [にち/ひ]",ex:"日曜日",exy:"にちようび",exk:"일요일"},
+  {front:"一",romaji:"いち",ko:"하나",speak:"いち",label:"하나 [いち]",ex:"一人",exy:"ひとり",exk:"한 사람"},
+  {front:"二",romaji:"に",ko:"둘",speak:"に",label:"둘 [に]",ex:"二つ",exy:"ふたつ",exk:"두 개"},
+  {front:"三",romaji:"さん",ko:"셋",speak:"さん",label:"셋 [さん]",ex:"三日",exy:"みっか",exk:"3일"},
+  {front:"四",romaji:"し/よん",ko:"넷",speak:"し",label:"넷 [し/よん]",ex:"四月",exy:"しがつ",exk:"4월"},
+  {front:"五",romaji:"ご",ko:"다섯",speak:"ご",label:"다섯 [ご]",ex:"五時",exy:"ごじ",exk:"5시"},
+  {front:"六",romaji:"ろく",ko:"여섯",speak:"ろく",label:"여섯 [ろく]",ex:"六日",exy:"むいか",exk:"6일"},
+  {front:"七",romaji:"しち/なな",ko:"일곱",speak:"しち",label:"일곱 [しち/なな]",ex:"七月",exy:"しちがつ",exk:"7월"},
+  {front:"八",romaji:"はち",ko:"여덟",speak:"はち",label:"여덟 [はち]",ex:"八日",exy:"ようか",exk:"8일"},
+  {front:"九",romaji:"きゅう/く",ko:"아홉",speak:"きゅう",label:"아홉 [きゅう/く]",ex:"九月",exy:"くがつ",exk:"9월"},
+  {front:"十",romaji:"じゅう",ko:"열",speak:"じゅう",label:"열 [じゅう]",ex:"十分",exy:"じゅっぷん",exk:"10분"},
+  {front:"百",romaji:"ひゃく",ko:"백",speak:"ひゃく",label:"백 [ひゃく]",ex:"百円",exy:"ひゃくえん",exk:"100엔"},
+  {front:"千",romaji:"せん",ko:"천",speak:"せん",label:"천 [せん]",ex:"千円",exy:"せんえん",exk:"1000엔"},
+  {front:"万",romaji:"まん",ko:"만",speak:"まん",label:"만 [まん]",ex:"一万",exy:"いちまん",exk:"1만"},
+  {front:"円",romaji:"えん",ko:"엔·둥글다",speak:"えん",label:"엔·둥글다 [えん]",ex:"百円",exy:"ひゃくえん",exk:"100엔"},
+  {front:"時",romaji:"じ",ko:"때·시간",speak:"じ",label:"때·시간 [じ]",ex:"時間",exy:"じかん",exk:"시간"},
+  {front:"人",romaji:"ひと",ko:"사람",speak:"ひと",label:"사람 [ひと]",ex:"日本人",exy:"にほんじん",exk:"일본인"},
+  {front:"本",romaji:"ほん",ko:"책·근본",speak:"ほん",label:"책·근본 [ほん]",ex:"日本",exy:"にほん",exk:"일본"},
+  {front:"中",romaji:"なか",ko:"가운데·안",speak:"なか",label:"가운데·안 [なか]",ex:"中国",exy:"ちゅうごく",exk:"중국"},
+  {front:"大",romaji:"おお",ko:"크다",speak:"おお",label:"크다 [おお]",ex:"大学",exy:"だいがく",exk:"대학"},
+  {front:"小",romaji:"ちい",ko:"작다",speak:"ちい",label:"작다 [ちい]",ex:"小学校",exy:"しょうがっこう",exk:"초등학교"},
+  {front:"上",romaji:"うえ",ko:"위",speak:"うえ",label:"위 [うえ]",ex:"上手",exy:"じょうず",exk:"능숙함"},
+  {front:"下",romaji:"した",ko:"아래",speak:"した",label:"아래 [した]",ex:"下手",exy:"へた",exk:"서투름"},
+  {front:"左",romaji:"ひだり",ko:"왼쪽",speak:"ひだり",label:"왼쪽 [ひだり]",ex:"左右",exy:"さゆう",exk:"좌우"},
+  {front:"右",romaji:"みぎ",ko:"오른쪽",speak:"みぎ",label:"오른쪽 [みぎ]",ex:"右手",exy:"みぎて",exk:"오른손"},
+  {front:"前",romaji:"まえ",ko:"앞",speak:"まえ",label:"앞 [まえ]",ex:"前日",exy:"ぜんじつ",exk:"전날"},
+  {front:"後",romaji:"うし/あと",ko:"뒤·후",speak:"うし",label:"뒤·후 [うし/あと]",ex:"午後",exy:"ごご",exk:"오후"},
+  {front:"東",romaji:"ひがし",ko:"동쪽",speak:"ひがし",label:"동쪽 [ひがし]",ex:"東京",exy:"とうきょう",exk:"도쿄"},
+  {front:"西",romaji:"にし",ko:"서쪽",speak:"にし",label:"서쪽 [にし]",ex:"西口",exy:"にしぐち",exk:"서쪽 출구"},
+  {front:"南",romaji:"みなみ",ko:"남쪽",speak:"みなみ",label:"남쪽 [みなみ]",ex:"南口",exy:"みなみぐち",exk:"남쪽 출구"},
+  {front:"北",romaji:"きた",ko:"북쪽",speak:"きた",label:"북쪽 [きた]",ex:"北口",exy:"きたぐち",exk:"북쪽 출구"},
+  {front:"外",romaji:"そと",ko:"밖",speak:"そと",label:"밖 [そと]",ex:"外国",exy:"がいこく",exk:"외국"},
+  {front:"名",romaji:"な",ko:"이름",speak:"な",label:"이름 [な]",ex:"名前",exy:"なまえ",exk:"이름"},
+  {front:"女",romaji:"おんな",ko:"여자",speak:"おんな",label:"여자 [おんな]",ex:"女性",exy:"じょせい",exk:"여성"},
+  {front:"男",romaji:"おとこ",ko:"남자",speak:"おとこ",label:"남자 [おとこ]",ex:"男性",exy:"だんせい",exk:"남성"},
+  {front:"子",romaji:"こ",ko:"아이",speak:"こ",label:"아이 [こ]",ex:"子供",exy:"こども",exk:"아이"},
+  {front:"学",romaji:"がく",ko:"배우다",speak:"がく",label:"배우다 [がく]",ex:"学生",exy:"がくせい",exk:"학생"},
+  {front:"校",romaji:"こう",ko:"학교",speak:"こう",label:"학교 [こう]",ex:"学校",exy:"がっこう",exk:"학교"},
+  {front:"先",romaji:"さき",ko:"먼저",speak:"さき",label:"먼저 [さき]",ex:"先生",exy:"せんせい",exk:"선생님"},
+  {front:"生",romaji:"せい/なま",ko:"살다·나다",speak:"せい",label:"살다·나다 [せい/なま]",ex:"学生",exy:"がくせい",exk:"학생"},
+  {front:"年",romaji:"とし",ko:"해·나이",speak:"とし",label:"해·나이 [とし]",ex:"来年",exy:"らいねん",exk:"내년"},
+  {front:"月",romaji:"つき",ko:"달",speak:"つき",label:"달 [つき]",ex:"月曜日",exy:"げつようび",exk:"월요일"},
+  {front:"火",romaji:"ひ",ko:"불",speak:"ひ",label:"불 [ひ]",ex:"火曜日",exy:"かようび",exk:"화요일"},
+  {front:"水",romaji:"みず",ko:"물",speak:"みず",label:"물 [みず]",ex:"水曜日",exy:"すいようび",exk:"수요일"},
+  {front:"木",romaji:"き",ko:"나무",speak:"き",label:"나무 [き]",ex:"木曜日",exy:"もくようび",exk:"목요일"},
+  {front:"金",romaji:"かね",ko:"쇠·돈",speak:"かね",label:"쇠·돈 [かね]",ex:"金曜日",exy:"きんようび",exk:"금요일"},
+  {front:"土",romaji:"つち",ko:"흙",speak:"つち",label:"흙 [つち]",ex:"土曜日",exy:"どようび",exk:"토요일"},
+  {front:"曜",romaji:"よう",ko:"요일",speak:"よう",label:"요일 [よう]",ex:"何曜日",exy:"なんようび",exk:"무슨 요일"},
+  {front:"何",romaji:"なに/なん",ko:"무엇",speak:"なに",label:"무엇 [なに/なん]",ex:"何時",exy:"なんじ",exk:"몇 시"},
+  {front:"今",romaji:"いま",ko:"지금",speak:"いま",label:"지금 [いま]",ex:"今日",exy:"きょう",exk:"오늘"},
+  {front:"行",romaji:"い/おこな",ko:"가다·행하다",speak:"い",label:"가다·행하다 [い/おこな]",ex:"旅行",exy:"りょこう",exk:"여행"},
+  {front:"来",romaji:"く/らい",ko:"오다",speak:"く",label:"오다 [く/らい]",ex:"来週",exy:"らいしゅう",exk:"다음 주"},
+  {front:"帰",romaji:"かえ",ko:"돌아가다",speak:"かえ",label:"돌아가다 [かえ]",ex:"帰国",exy:"きこく",exk:"귀국"},
+  {front:"食",romaji:"た/しょく",ko:"먹다",speak:"た",label:"먹다 [た/しょく]",ex:"食堂",exy:"しょくどう",exk:"식당"},
+  {front:"飲",romaji:"の",ko:"마시다",speak:"の",label:"마시다 [の]",ex:"飲食",exy:"いんしょく",exk:"음식"},
+  {front:"見",romaji:"み",ko:"보다",speak:"み",label:"보다 [み]",ex:"見学",exy:"けんがく",exk:"견학"},
+  {front:"聞",romaji:"き",ko:"듣다·묻다",speak:"き",label:"듣다·묻다 [き]",ex:"新聞",exy:"しんぶん",exk:"신문"},
+  {front:"読",romaji:"よ",ko:"읽다",speak:"よ",label:"읽다 [よ]",ex:"読書",exy:"どくしょ",exk:"독서"},
+  {front:"書",romaji:"か",ko:"쓰다",speak:"か",label:"쓰다 [か]",ex:"書店",exy:"しょてん",exk:"서점"},
+  {front:"話",romaji:"はな/はなし",ko:"말하다",speak:"はな",label:"말하다 [はな/はなし]",ex:"電話",exy:"でんわ",exk:"전화"},
+  {front:"買",romaji:"か",ko:"사다",speak:"か",label:"사다 [か]",ex:"買い物",exy:"かいもの",exk:"쇼핑"},
+  {front:"出",romaji:"で/だ",ko:"나가다·내다",speak:"で",label:"나가다·내다 [で/だ]",ex:"出口",exy:"でぐち",exk:"출구"},
+  {front:"入",romaji:"はい/い",ko:"들어가다",speak:"はい",label:"들어가다 [はい/い]",ex:"入口",exy:"いりぐち",exk:"입구"},
+  {front:"休",romaji:"やす",ko:"쉬다",speak:"やす",label:"쉬다 [やす]",ex:"休日",exy:"きゅうじつ",exk:"휴일"},
+  {front:"立",romaji:"た",ko:"서다",speak:"た",label:"서다 [た]",ex:"国立",exy:"こくりつ",exk:"국립"},
+  {front:"会",romaji:"あ/かい",ko:"만나다·모임",speak:"あ",label:"만나다·모임 [あ/かい]",ex:"会社",exy:"かいしゃ",exk:"회사"},
+  {front:"社",romaji:"しゃ",ko:"회사·모임",speak:"しゃ",label:"회사·모임 [しゃ]",ex:"会社",exy:"かいしゃ",exk:"회사"},
+  {front:"国",romaji:"くに",ko:"나라",speak:"くに",label:"나라 [くに]",ex:"外国",exy:"がいこく",exk:"외국"},
+  {front:"語",romaji:"ご",ko:"말·언어",speak:"ご",label:"말·언어 [ご]",ex:"日本語",exy:"にほんご",exk:"일본어"},
+  {front:"電",romaji:"でん",ko:"전기",speak:"でん",label:"전기 [でん]",ex:"電車",exy:"でんしゃ",exk:"전철"},
+  {front:"車",romaji:"くるま",ko:"차·수레",speak:"くるま",label:"차·수레 [くるま]",ex:"電車",exy:"でんしゃ",exk:"전철"},
+  {front:"駅",romaji:"えき",ko:"역",speak:"えき",label:"역 [えき]",ex:"駅前",exy:"えきまえ",exk:"역 앞"},
+  {front:"道",romaji:"みち",ko:"길",speak:"みち",label:"길 [みち]",ex:"道路",exy:"どうろ",exk:"도로"},
+  {front:"店",romaji:"みせ",ko:"가게",speak:"みせ",label:"가게 [みせ]",ex:"書店",exy:"しょてん",exk:"서점"},
+  {front:"週",romaji:"しゅう",ko:"주(週)",speak:"しゅう",label:"주(週) [しゅう]",ex:"毎週",exy:"まいしゅう",exk:"매주"},
+  {front:"毎",romaji:"まい",ko:"매·마다",speak:"まい",label:"매·마다 [まい]",ex:"毎日",exy:"まいにち",exk:"매일"},
+  {front:"午",romaji:"ご",ko:"낮",speak:"ご",label:"낮 [ご]",ex:"午前",exy:"ごぜん",exk:"오전"},
+  {front:"半",romaji:"はん",ko:"절반",speak:"はん",label:"절반 [はん]",ex:"半分",exy:"はんぶん",exk:"절반"},
+  {front:"分",romaji:"ふん/ぶん",ko:"나누다·분",speak:"ふん",label:"나누다·분 [ふん/ぶん]",ex:"半分",exy:"はんぶん",exk:"절반"},
+  {front:"間",romaji:"あいだ",ko:"사이",speak:"あいだ",label:"사이 [あいだ]",ex:"時間",exy:"じかん",exk:"시간"},
+  {front:"方",romaji:"かた",ko:"방향·분",speak:"かた",label:"방향·분 [かた]",ex:"方法",exy:"ほうほう",exk:"방법"},
+  {front:"新",romaji:"あたら",ko:"새롭다",speak:"あたら",label:"새롭다 [あたら]",ex:"新聞",exy:"しんぶん",exk:"신문"},
+  {front:"古",romaji:"ふる",ko:"오래되다",speak:"ふる",label:"오래되다 [ふる]",ex:"中古",exy:"ちゅうこ",exk:"중고"},
+  {front:"高",romaji:"たか",ko:"높다·비싸다",speak:"たか",label:"높다·비싸다 [たか]",ex:"高校",exy:"こうこう",exk:"고등학교"},
+  {front:"安",romaji:"やす",ko:"싸다·편안",speak:"やす",label:"싸다·편안 [やす]",ex:"安心",exy:"あんしん",exk:"안심"},
+  {front:"長",romaji:"なが",ko:"길다",speak:"なが",label:"길다 [なが]",ex:"社長",exy:"しゃちょう",exk:"사장"},
+  {front:"白",romaji:"しろ",ko:"희다",speak:"しろ",label:"희다 [しろ]",ex:"白紙",exy:"はくし",exk:"백지"},
+  {front:"天",romaji:"てん",ko:"하늘",speak:"てん",label:"하늘 [てん]",ex:"天気",exy:"てんき",exk:"날씨"},
+  {front:"気",romaji:"き",ko:"기운·마음",speak:"き",label:"기운·마음 [き]",ex:"元気",exy:"げんき",exk:"건강함"},
+  {front:"雨",romaji:"あめ",ko:"비",speak:"あめ",label:"비 [あめ]",ex:"大雨",exy:"おおあめ",exk:"큰비"},
+  {front:"花",romaji:"はな",ko:"꽃",speak:"はな",label:"꽃 [はな]",ex:"花見",exy:"はなみ",exk:"꽃구경"},
+  {front:"空",romaji:"そら",ko:"하늘·비다",speak:"そら",label:"하늘·비다 [そら]",ex:"空港",exy:"くうこう",exk:"공항"},
+  {front:"川",romaji:"かわ",ko:"강",speak:"かわ",label:"강 [かわ]",ex:"川口",exy:"かわぐち",exk:"강 어귀"},
+  {front:"山",romaji:"やま",ko:"산",speak:"やま",label:"산 [やま]",ex:"富士山",exy:"ふじさん",exk:"후지산"},
+  {front:"魚",romaji:"さかな",ko:"물고기",speak:"さかな",label:"물고기 [さかな]",ex:"金魚",exy:"きんぎょ",exk:"금붕어"},
+  {front:"犬",romaji:"いぬ",ko:"개",speak:"いぬ",label:"개 [いぬ]",ex:"子犬",exy:"こいぬ",exk:"강아지"},
+  {front:"友",romaji:"とも",ko:"친구",speak:"とも",label:"친구 [とも]",ex:"友人",exy:"ゆうじん",exk:"친구"},
+  {front:"父",romaji:"ちち",ko:"아버지",speak:"ちち",label:"아버지 [ちち]",ex:"父親",exy:"ちちおや",exk:"아버지"},
+  {front:"母",romaji:"はは",ko:"어머니",speak:"はは",label:"어머니 [はは]",ex:"母親",exy:"ははおや",exk:"어머니"}
+ ],
+};
+
+const $=id=>document.getElementById(id);
+let curTab="kana", curCat=null;
+let CONF=(()=>{ try{ const s=JSON.parse(localStorage.getItem("conf")); if(s&&s.count!==undefined) return s; }catch(e){} return {count:20,time:5,mode:"meaning",rep:0,flip:0}; })();
+function saveConf(){ try{ localStorage.setItem("conf",JSON.stringify(CONF)); }catch(e){} }
+let deck=[],qi=0,correct=0,misses=[],answered=false,paused=false,timerId=null,reviewRound=0;
+let results=[],dailyMode=false,combo=0;
+let taMode=false,taScore=0,taMax=0,taCount=0,taTimer=null,taEndAt=0;
+// 퀴즈 중 예약된 콜백(발음·다음문제)을 추적해 화면 이탈 시 전부 취소 (뒤로가기 버그 방지)
+let _pend=[];
+function sched(fn,ms){ const id=setTimeout(fn,ms); _pend.push(id); return id; }
+// ── 정답 확인 시간 (박 대표: "넘어가는 게 너무 빨라 못 본다") ──
+// CONF.flip: 0=기본 / 1=여유(1.6배) / 2=넉넉(2.5배) / -1=수동(직접 눌러야 넘어감)
+const FLIP_MULT={ "-1":0, "0":1, "1":1.6, "2":2.5 };
+function flipMs(ms){
+  const m=FLIP_MULT[String(CONF.flip|0)];
+  return (m===0) ? 0 : Math.round(ms*m);
+}
+// 다음 문제로 넘어가는 예약 — 수동 모드거나 홀드 중이면 버튼을 띄우고 기다린다
+function schedNext(ms){
+  const wait=flipMs(ms);
+  if(wait===0){ showNextBtn(); return; }
+  showNextBtn(true);                                  // "지금 넘기기 / ⏸ 잠깐" 버튼은 항상 보여 준다
+  _nextTimer=sched(()=>{ if(!_held) nextQ(); }, wait);
+}
+let _nextTimer=0, _held=false;
+function showNextBtn(auto){
+  const bar=$("qNav"); if(!bar) return;
+  _held=false;
+  bar.style.display="flex";
+  bar.innerHTML =
+    (auto? `<button onclick="qHold(this)">⏸ 잠깐 볼게요</button>` : "") +
+    `<button class="pri" onclick="qGoNext()">다음 →</button>`;
+}
+function hideNextBtn(){ const bar=$("qNav"); if(bar){ bar.style.display="none"; bar.innerHTML=""; } _held=false; }
+function qHold(btn){
+  _held=!_held;
+  btn.textContent = _held ? "▶ 이어서" : "⏸ 잠깐 볼게요";
+  btn.classList.toggle("on",_held);
+  if(!_held) nextQ();
+}
+function qGoNext(){ _held=false; clearTimeout(_nextTimer); nextQ(); }
+function stopQuiz(){
+  clearInterval(timerId); clearInterval(taTimer); taMode=false;
+  const tm=document.querySelector(".timer"); if(tm) tm.classList.remove("tbar-hot");
+  _pend.forEach(clearTimeout); _pend=[];
+  try{ speechSynthesis.cancel(); }catch(e){}
+  try{ if(_sharedAudio){ _sharedAudio.pause(); } }catch(e){}
+}
+const isKanjiCat=()=> curCat && !["hiragana","katakana"].includes(curCat.code);
+const isSent=()=> !!(curCat && curCat.sent);   // 문장암기(cloze) 팩
+// ── 무료/유료 경계 (앱 UI) — 무료=카나+기초필수 12팩만, 나머지는 미리보기 10장+유료 ──
+const FREE_APP = new Set(["hiragana","katakana","KSIM","VERB","num","week","time","body","dir","color","family","weather","greet","ask"]);
+function tierOf(it){ return FREE_APP.has(it.code) ? "free" : "paid"; }
+const qMode=()=> ((typeof dailyMode!=="undefined"&&dailyMode)||(typeof taMode!=="undefined"&&taMode)||(typeof wbMode!=="undefined"&&wbMode)) ? "meaning" : CONF.mode;
+const optText=c=>{ const m=qMode(); return isSent() ? (m==="listen" ? (c.exk||c.ko) : c.front) : (!isKanjiCat() ? c.label : (m==="reading" ? c.romaji : m==="write" ? c.front : c.ko)); };
+function clozeText(q){ const w=q.front||"", s=q.ex||""; const i=s.indexOf(w); return i<0 ? s : (s.slice(0,i)+"（　）"+s.slice(i+w.length)); }
+
+// ══ 구매·소유(entitlement) ══ 스테이지·카테고리별 1회 구매 = 영구 소유
+// 가격(표시용). 카테고리 코드별로 다르게 줄 수 있고, 없으면 _default 사용.
+// 가격 정책(확정): 자당 30원 × 유료 80자(100자 중 20자 무료 미리보기) = 팩당 ₩2,400 균일
+const PACK_PRICE = {};  // 개별가는 computePrice(50% 런칭)로 자동계산, 번들가는 BUNDLE_PRICE
+// 배포 후 Paddle 체크아웃 링크를 카테고리 코드별로 채우면 '구매' 시 그 링크가 열림.
+const CHECKOUT_URL = {};   // (구방식 폴백용 — 현재 미사용)
+// ── Paddle 결제 (라이브) ──
+const PADDLE_CLIENT_TOKEN = "live_d8a7d39a54fd3b9827f27ef03e1"; // 공개용 클라이언트 토큰
+const PRICE_IDS = {
+  N5:"pri_01kxzm5g3grbqpkw1vd3fe6fw8",
+  BUNDLE_THEME:"pri_01kxzkn1y2j5scxz6fkh2wnndf",   // 주제·생활 올팩 ₩4,800
+  BUNDLE_V:"pri_01kxzkvwa0hyt3gx15n9w54hys",       // 실전어휘 올팩 ₩9,800
+  BUNDLE_S:"pri_01kxzkz51czkee5kqt2exs4wmn",       // 통문장 올팩 ₩16,100
+  BUNDLE_G:"pri_01kxzm2g0j2kgj63z7x53vg1sn",       // 문법 올팩 ₩4,800
+  N4:"pri_01kxj6d22tv7rbzsmz2twejs51",
+  N3:"pri_01kxj7194vbqz2z9cjzmxcpqa3", N2:"pri_01kxj71a3hyeh5pp2gx9wazr4a", N1:"pri_01kxj71b3qwmke74krv2an0k79",
+  B1:"pri_01kxj71c1gazp64efqpxk4trv4", B2:"pri_01kxj71h75kg9mp4mdsqjez6e9", B3:"pri_01kxj71j4w6nv8p0kwh4660b45",
+  B4:"pri_01kxj71k1380hc0rbk2kpq4bne", B5:"pri_01kxj71kwjeqjmsgqzy1c1a8qj", B6:"pri_01kxj71mvy8ty9mw8qc4rwk0h7",
+  B7:"pri_01kxj71nqt3jx24z090zbdsbpc", B8:"pri_01kxj71pkq5c1wkv4pwcfajx6d", B9:"pri_01kxj71qn55syb751hz8wjnrpa",
+  B10:"pri_01kxj71rhdwyy4qx93rph7vzfa", B11:"pri_01kxj71sf02m4whatzfty4ky1c", B12:"pri_01kxj71tdmcxqvjgxjy93gv28z",
+  B13:"pri_01kxj71vaxbtb92292mt3y00y7", B14:"pri_01kxj71w7hkgk2ynnbspwh6syt",
+  A1:"pri_01kxj71xjezpf118e3x59yze7n", A2:"pri_01kxj71ydsh2tk27kwdkmmewxr", A3:"pri_01kxj71z95w285c5agmmjvbwsd",
+  A4:"pri_01kxj7204bff3nvdd03jdprx4y", A5:"pri_01kxj7210006z41f6kmwqdwbq0", A6:"pri_01kxj721ttm33w5h7s2t6583h0",
+  A7:"pri_01kxj722p3k5kxvx66ngyjpcge",
+  C2:"pri_01kxj723h6rv1y65bs55n8znaz", C3:"pri_01kxj7251ca4q8z10xy3bze7ys", C4:"pri_01kxj725z7pngstp3vd06cmam7",
+  BUNDLE_B:"pri_01kxj726v7chaaav320ryzjej5",  // 상황별 올팩 ₩16,900
+  BUNDLE_A:"pri_01kxj727r70jhc27b3dm6ysrax",  // 분야별 올팩 ₩8,900
+  BUNDLE_N:"pri_01kxj728n4f61nhjrav4eatttr",  // JLPT 올팩 ₩5,900
+  BUNDLE_C:"pri_01kxj729e9qy4qnzmes9nn49hn",  // 독서 올팩 ₩4,900
+  ALL:"pri_01kxj72aaah1gvg89ry7p793gv"        // 라이프타임 ₩19,900
+};
