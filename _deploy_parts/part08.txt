@@ -1,0 +1,350 @@
+  choices.forEach(it=>{
+    const b=document.createElement("button");
+    b.innerHTML=`${it.ko} <small>${it.n}장 영구 해제</small>`;
+    b.onclick=()=>claimReward(r,it);
+    list.appendChild(b);
+  });
+  $("rwOv").classList.add("on");
+}
+async function claimReward(r,it){
+  $("rwOv").classList.remove("on");
+  sched(renderRwTile,50);
+  const st=dailyState(); (st.rw=st.rw||[]).push(r.d); saveDailyState(st);
+  OWNED.add(it.code); saveOwned();
+  toast("🎉 "+it.ko+" 팩이 열렸어요! 데이터 로딩 중…");
+  try{
+    const rows=await fetchAllRows();
+    const mine=rows.filter(x=>String(x.category||"").trim()===it.code);
+    if(mine.length){ ingestRows(mine,false); it.ready=true; it.n=(DATA[it.code]||[]).length; }
+  }catch(e){}
+  renderNav(); renderCollBar();
+  toast("🎉 "+it.ko+" "+((DATA[it.code]||[]).length||it.n)+"장 — 지금 바로 풀 수 있어요!");
+  const btn=$("rewardBtn"); if(btn) btn.remove();
+}
+
+// ── 카드팩 개봉 (일일챌린지 보상, 하루 1회) ──
+function packClaimedToday(){ try{ return localStorage.getItem("pack_last")===kstDate(0); }catch(e){ return true; } }
+let PACK_MIN=0, PACK_LABEL="";
+function getPity(){ try{ return +localStorage.getItem("pity")||0; }catch(e){ return 0; } }
+function setPity(v){ try{ localStorage.setItem("pity",v); }catch(e){} }
+function rollRarity(min){ const r=Math.random(); const v = r<0.03?3 : r<0.15?2 : r<0.40?1 : 0; return Math.max(v, min||0); }
+function openPack(){
+  if(packClaimedToday()){ toast("오늘의 팩은 이미 열었어요 — 내일 또!"); return; }
+  if(DAILY_POOL.length<20){ toast("데이터 준비 중"); return; }
+  try{ localStorage.setItem("pack_last",kstDate(0)); }catch(e){}
+  // 피티(천장): 10팩째까지 SSR 없으면 확정
+  const pityNow=getPity(); const pityForce = pityNow>=9;
+  const wrap=$("pkCards"); wrap.innerHTML=""; $("pkDone").style.display="none";
+  $("pkTitle").innerHTML="🎁 오늘의 카드팩"+(PACK_LABEL?` <span class="pk-sub">${PACK_LABEL}</span>`:"");
+  $("pkHint").textContent = pityForce ? "✨ 천장 도달 — 이번 팩엔 SSR이 반드시 들어있어요!" : "카드를 눌러서 뒤집어 보세요!";
+  let flipped=0; const picks=[];
+  while(picks.length<5){ const x=DAILY_POOL[Math.floor(Math.random()*DAILY_POOL.length)]; if(!picks.includes(x)) picks.push(x); }
+  const forceIdx = pityForce ? Math.floor(Math.random()*5) : -1;
+  let gotSSR=false;
+  picks.forEach((x,pi)=>{
+    const r = pi===forceIdx ? 3 : rollRarity(PACK_MIN);
+    // 도감 반영 (신규 or 등급업)
+    const c=getColl(), k=(x._cat||"misc")+"|"+x.front, cur=c[k];
+    if(!cur) c[k]={r:r,n:1}; else { cur.n++; if(r>cur.r) cur.r=r; }
+    saveColl(c);
+    if(r===3) gotSSR=true;
+    const d=document.createElement("div"); d.className="pcard";
+    d.innerHTML=`<div class="inner"><div class="face back">?</div>
+      <div class="face front r${r}"><span class="rb">${RAR_NAME[r]}</span><div class="g jp">${x.front}</div><div class="k">${x.ko||""}</div></div></div>`;
+    d.onclick=()=>{
+      if(d.classList.contains("flip")||d.classList.contains("charge"))return;
+      const done=()=>{ d.classList.remove("charge","gold"); d.classList.add("flip"); sfx("ok"); flipped++;
+        if(r===3){ const f=$("ssrFlash"); f.classList.remove("go"); void f.offsetWidth; f.classList.add("go"); }
+        if(flipped===5){ $("pkHint").textContent="오늘의 5장 획득!"; $("pkDone").style.display="block"; renderCollBar(); } };
+      if(r>=2){ d.classList.add("charge"); if(r===3) d.classList.add("gold"); setTimeout(done, r===3?1100:700); }  // SR+ 서스펜스 차징
+      else done();
+    };
+    wrap.appendChild(d);
+  });
+  setPity(gotSSR ? 0 : getPity()+1);
+  PACK_MIN=0; PACK_LABEL="";
+  $("packOv").classList.add("on");
+}
+function closePack(){ $("packOv").classList.remove("on"); renderCollBar(); }
+
+// ═══════════ 오답노트 (영구, localStorage) ═══════════
+let wbMode=false;
+function getWB(){ try{ return JSON.parse(localStorage.getItem("wrongbook")||"{}"); }catch(e){ return {}; } }
+function saveWB(w){ try{ localStorage.setItem("wrongbook",JSON.stringify(w)); }catch(e){} }
+function wbAdd(q){
+  if(wbMode||taMode) return;                     // 오답노트·타임어택 중 기록 제외(타임어택은 속도전이라 오답 과다)
+  const cat=q._cat||(curCat?curCat.code:null); if(!cat||cat.startsWith("__")) return;
+  const w=getWB(), k=cat+"|"+q.front;
+  w[k]={n:((w[k]||{}).n||0)+1,t:Date.now()};
+  saveWB(w); renderWbBar();
+}
+function wbRemove(q){
+  if($("wbScreen")&&$("wbScreen").classList.contains("on")) sched(renderWbList,50);
+  const w=getWB(); const k=(q._cat||"")+"|"+q.front;
+  if(w[k]){ delete w[k]; saveWB(w); }
+  renderWbBar();
+}
+function renderWbBar(){
+  const t=$("tWb"), tile=$("tileWb"); if(!t) return;
+  const n=Object.keys(getWB()).length;
+  t.textContent = n ? n+"개" : "없음";
+  if(tile) tile.classList.toggle("hot", n>0);
+}
+
+// 🎧 청해 연습 — 오디오가 있는 팩을 골라 청해 모드로 바로 시작
+function openListenPick(){
+  const cand=[];
+  for(const s in NAV) NAV[s].forEach(g=>g.items.forEach(it=>{
+    if(tierOf(it)==="paid" && !isOwned(it.code)) return;
+    if((DATA[it.code]||[]).length) cand.push(it);
+  }));
+  if(!cand.length){ toast("청해 가능한 팩이 없어요"); return; }
+  curSecCat={ic:"🎧",ko:"청해 연습",_listen:1};
+  $("secTitle").textContent="🎧 청해 연습";
+  $("secCount").textContent=cand.length+"팩";
+  $("secTools").innerHTML='<button onclick="toast(\'팩을 고르면 바로 🎧청해로 시작해요\')"><i>🎧</i>소리만 듣고 맞히기</button>';
+  const box=$("catList");
+  box.innerHTML=cand.map((it,i)=>`<div class="cat" onclick="pickListen(${i})">
+     <div class="txt"><div class="k">${it.ko}</div><div class="j jp">${it.jp}</div></div>
+     <div class="meta"><span class="num">${(DATA[it.code]||[]).length}</span></div>
+     <span class="arrow">›</span></div>`).join("");
+  _listenPool=cand;
+  show("secScreen"); window.scrollTo(0,0);
+}
+let _listenPool=[];
+async function pickListen(i){
+  const it=_listenPool[i]; if(!it) return;
+  CONF.mode="listen";
+  await pickCat(it);
+  [...$("segType").children].forEach(b=>b.classList.toggle("on",b.dataset.m==="listen"));
+}
+
+// ══════════ 📖 단어장 — 팩 전체를 목록으로 ══════════
+// 박 대표: "단어장 없이 문제만 있으니 학습 효과가 떨어진다"
+// 외울 곳이 있어야 시험이 의미가 있다. 그래서 테스트 전에 훑어보는 화면을 둔다.
+let vcSort=0, vcHide=0;   // sort 0=원래 순서 1=가나다(뜻) / hide 0=보임 1=뜻 가림
+let _vcFrom="setup";
+function vcBack(){ show(_vcFrom); }
+function openVocab(from){
+  if(!curCat) return;
+  if(from) _vcFrom=from;
+  $("vcTitle").textContent = curCat.ko;
+  show("vcScreen"); window.scrollTo(0,0);
+  $("vcQ").value="";
+  renderVocab();
+}
+function vcToggleSort(){ vcSort=1-vcSort; $("vcSort").textContent=vcSort?"가나다":"순서"; $("vcSort").classList.toggle("on",!!vcSort); renderVocab(); }
+function vcToggleHide(){ vcHide=1-vcHide; $("vcHide").classList.toggle("on",!!vcHide); renderVocab(); }
+function vcCards(){
+  let a=(DATA[curCat.code]||[]).slice();
+  if(vcSort) a.sort((x,y)=>String(x.ko||"").localeCompare(String(y.ko||""),"ko"));
+  const q=($("vcQ").value||"").trim();
+  if(q) a=a.filter(c=>(c.front||"").indexOf(q)>=0||(c.ko||"").indexOf(q)>=0||(c.romaji||"").indexOf(q)>=0
+                      ||(c.ex||"").indexOf(q)>=0||(c.exk||"").indexOf(q)>=0);
+  return a;
+}
+function renderVocab(){
+  const a=vcCards(), wb=getWB();
+  $("vcCount").textContent=a.length+"개";
+  const note=$("vcNote");
+  if(previewMode){ note.style.display="block";
+    note.innerHTML=`🎁 미리보기 <b>10장</b>만 보입니다 · 전체 ${curCat.n}장 <b>${priceOf(curCat)}</b>
+      <button class="buy-mini" onclick="openBuy(curCat)">구매</button>`; }
+  else note.style.display="none";
+  const esc=s=>String(s||"").replace(/'/g,"\\'");
+  $("vcList").innerHTML = a.length ? a.map((c,i)=>{
+    const key=curCat.code+"|"+c.front, inWb=!!wb[key];
+    const sent=!!c.sent;
+    const disp = sent ? (c.ex||c.front) : c.front;                 // 문장팩은 예문이 본체
+    const read = sent ? (c.exy||"") : (c.romaji||"");
+    const mean = sent ? (c.exk||c.ko||"") : (c.ko||"");
+    const say  = c.speak||c.front;
+    const hasEx = !sent && c.ex;
+    return `<div class="vc-row" id="vc${i}">
+      <div class="vc-hd" ${hasEx?`onclick="vcOpen(${i},event)"`:""}>
+        <span class="n">${i+1}</span>
+        <span class="f">${disp}</span>
+        <span class="b">${read?`<span class="r">${read}</span>`:""}
+          <span class="m" style="${vcHide?'filter:blur(5px)':''}">${mean}</span></span>
+        <button class="sp" onclick="event.stopPropagation();speak('${esc(say)}')" aria-label="발음">🔊</button>
+        <button class="wb${inWb?" on":""}" onclick="event.stopPropagation();vcWb('${esc(c.front)}',this)" aria-label="오답노트">📕</button>
+      </div>
+      ${hasEx?`<div class="vc-ex"><div class="e">${c.ex}</div>
+        <div class="y">${c.exy||""}</div><div class="k">${c.exk||""}</div></div>`:""}
+    </div>`;
+  }).join("") : `<div class="vc-note">찾는 단어가 없어요</div>`;
+}
+// 전체 듣기 — 위에서부터 차례로 읽어 준다 (통근·설거지하며 듣기)
+let _vcTok=0, _vcOn=false;
+async function vcSpeakAll(){
+  if(_vcOn){ _vcTok++; _vcOn=false; $("vcPlay").textContent="🔊 전체 듣기";
+             document.querySelectorAll(".vc-row.cur").forEach(e=>e.classList.remove("cur")); return; }
+  const a=vcCards(); if(!a.length) return;
+  const my=++_vcTok; _vcOn=true; $("vcPlay").textContent="⏸ 멈춤";
+  for(let i=0;i<a.length;i++){
+    if(my!==_vcTok) return;
+    const el=$("vc"+i);
+    document.querySelectorAll(".vc-row.cur").forEach(e=>e.classList.remove("cur"));
+    if(el){ el.classList.add("cur"); el.scrollIntoView({block:"center",behavior:"smooth"}); }
+    await speakP(a[i].speak||a[i].front);
+    if(my!==_vcTok) return;
+    await new Promise(r=>setTimeout(r,220));
+  }
+  _vcOn=false; $("vcPlay").textContent="🔊 전체 듣기";
+  document.querySelectorAll(".vc-row.cur").forEach(e=>e.classList.remove("cur"));
+}
+function vcOpen(i,e){ const el=$("vc"+i); if(!el) return; el.classList.toggle("open");
+  if(el.classList.contains("open")){ const c=vcCards()[i]; if(c&&c.exy) speak(c.exy); } }
+function vcWb(front,btn){
+  const w=getWB(), k=curCat.code+"|"+front;
+  if(w[k]){ delete w[k]; btn.classList.remove("on"); toast("오답노트에서 뺐어요"); }
+  else { w[k]={n:1,t:Date.now(),manual:1}; btn.classList.add("on"); toast(`📕 「${front}」 담았어요`); }
+  saveWB(w); renderWbBar();
+}
+
+// ── 오답노트에 직접 추가 (틀린 적 없어도 담고 싶은 단어) ──
+function wbSearch(){
+  const q=($("wbQ").value||"").trim();
+  const box=$("wbRes");
+  if(q.length<1){ box.innerHTML=""; return; }
+  const have=getWB();
+  const hit=[];
+  for(const cat in DATA){
+    if(cat.startsWith("__")) continue;
+    for(const c of (DATA[cat]||[])){
+      const f=c.front||"", ko=c.ko||"", rd=c.romaji||"";
+      if(f.indexOf(q)<0 && ko.indexOf(q)<0 && rd.indexOf(q)<0) continue;
+      if(have[cat+"|"+f]) continue;                 // 이미 담긴 건 빼고
+      hit.push({cat,c});
+      if(hit.length>=40) break;
+    }
+    if(hit.length>=40) break;
+  }
+  // 앞에서부터 일치하는 것을 위로
+  hit.sort((a,b)=>((a.c.front||"").indexOf(q)===0?0:1)-((b.c.front||"").indexOf(q)===0?0:1));
+  box.innerHTML = hit.length
+    ? hit.slice(0,12).map(({cat,c})=>{
+        const nm=(NAV_NAME[cat]||cat);
+        const mean=c.sent ? (c.exk||c.ko||"") : (c.ko||"");
+        return `<button onclick="wbAddManual('${cat}','${String(c.front).replace(/'/g,"\\'")}')">
+          <span class="f">${c.front}</span><span class="m">${mean}</span><span class="p">＋ ${nm}</span></button>`;
+      }).join("")
+    : `<div class="none">"${q}" — 찾는 단어가 없어요</div>`;
+}
+// 팩 코드 → 사람이 읽는 이름 (검색 결과에 출처 표시)
+const NAV_NAME=(()=>{ const m={}; for(const s in NAV) NAV[s].forEach(g=>g.items.forEach(it=>m[it.code]=it.ko)); return m; })();
+function wbAddManual(cat,front){
+  const w=getWB(), k=cat+"|"+front;
+  if(!w[k]){ w[k]={n:1,t:Date.now(),manual:1}; saveWB(w); }
+  $("wbQ").value=""; $("wbRes").innerHTML="";
+  renderWbList(); renderWbBar();
+  toast(`📕 「${front}」 오답노트에 담았어요`);
+}
+
+// ── 오답노트 화면 ──
+let wbConf={n:20,t:5,r:0};
+function wbItems(){
+  const w=getWB(); const out=[];
+  Object.keys(w).forEach(k=>{
+    const i=k.indexOf("|"); const cat=k.slice(0,i), front=k.slice(i+1);
+    const card=(DATA[cat]||[]).find(x=>x.front===front);
+    out.push({key:k, cat, front, card, n:(w[k]||{}).n||1, t:(w[k]||{}).t||0});
+  });
+  out.sort((a,b)=> b.n-a.n || b.t-a.t);
+  return out;
+}
+function openWrongbook(){
+  show("wbScreen");
+  try{ wbConf.t=CONF.time|0; wbConf.r=CONF.rep|0; }catch(e){}
+  [["wbSegN","n"],["wbSegT","t"],["wbSegR","r"]].forEach(([id,key])=>{
+    const el=$(id); if(!el) return;
+    [...el.children].forEach(b=>{
+      const v=+(b.dataset.n??b.dataset.t??b.dataset.r);
+      b.classList.toggle("on", v===wbConf[key]);
+      b.onclick=()=>{ wbConf[key]=v; [...el.children].forEach(x=>x.classList.remove("on")); b.classList.add("on"); };
+    });
+  });
+  renderWbList();
+}
+function renderWbList(){
+  const items=wbItems();
+  const ready=items.filter(x=>x.card).length;
+  $("wbTot").textContent=items.length+"개";
+  $("wbSum").innerHTML = items.length
+    ? `틀린 문항 <b>${items.length}</b>개 · 맞히면 자동으로 지워져요`
+    : "";
+  $("wbGo").disabled = ready<1;
+  const list=$("wbList");
+  if(!items.length){
+    list.innerHTML=`<div class="wb-empty">아직 오답이 없어요 🎉<br><span style="font-size:12.5px">퀴즈에서 틀린 문제가 자동으로 쌓이고,<br>위 칸에서 검색해 직접 담을 수도 있어요</span></div>`;
+    $("wbSet").style.display="none"; return;
+  }
+  $("wbSet").style.display="block";
+  list.innerHTML=items.map(x=>{
+    const c=x.card;
+    const mean = c ? (c.sent? (c.exk||c.ko||"") : (c.ko||"")) : "잠긴 팩 — 구매 후 복습 가능";
+    const say  = c ? (c.speak||c.front) : "";
+    return `<div class="wb-row">
+      <span class="fr">${x.front}</span>
+      <span class="mn">${mean}</span>
+      <span class="cnt">${x.n}번</span>
+      ${c?`<button class="sp" onclick="speak('${String(say).replace(/'/g,"\\'")}')">🔊</button>`:""}
+      <button class="del" onclick="wbDel('${x.key.replace(/'/g,"\\'")}')">✕</button>
+    </div>`;
+  }).join("");
+}
+function wbDel(key){
+  const w=getWB(); delete w[key]; saveWB(w);
+  renderWbBar(); renderWbList();
+}
+function wbClearAll(){
+  const n=Object.keys(getWB()).length;
+  if(!n){ toast("비어 있어요"); return; }
+  if(!confirm(`오답노트 ${n}개를 모두 지울까요?\n(되돌릴 수 없습니다)`)) return;
+  saveWB({}); renderWbBar(); renderWbList(); toast("오답노트를 비웠어요");
+}
+function startWrongbook(){
+  const w=getWB();
+  const items=[];
+  Object.keys(w).forEach(k=>{
+    const i=k.indexOf("|"); const cat=k.slice(0,i), front=k.slice(i+1);
+    const card=(DATA[cat]||[]).find(x=>x.front===front);
+    if(card){ const c=Object.assign({},card); c._cat=cat; items.push(c); }
+  });
+  if(items.length<1){ toast("복습할 오답이 없어요 (데이터 미로딩 팩 제외)"); return; }
+  wbMode=true; dailyMode=false; taMode=false; reviewRound=0;
+  results=[]; misses=[]; correct=0; combo=0; qi=0;
+  curCat={code:"__wb",ko:"오답노트",jp:"苦手ノート",sent:false}; previewMode=false;
+  CONF.time=wbConf.t; CONF.rep=wbConf.r; saveConf();          // 오답노트 화면에서 고른 설정 적용
+  const take = wbConf.n===0 ? items.length : Math.min(wbConf.n, items.length);
+  deck=shuffle(items).slice(0,take);
+  $("qtitle").textContent=`📕 오답노트 (${deck.length}개)`;
+  $("scoreTot").textContent=deck.length;
+  show("quizScreen"); loadQ();
+}
+// ═══════════ 백업/복원 (기기 이전) ═══════════
+const BK_KEYS=["owned_packs","collection","daily_state","ta_best","sb_best","mt_best","cj_best","sp_best","kids","kt_best","sv_best","hg_best","rd_ruby","rd_ko","rd_komode","rd_kara","rd_fs","writing","reading","wrongbook","pack_last","pity","conf","license"];
+async function exportProgress(){
+  const data={_app:"nihongocards",_v:1,_d:new Date().toISOString().slice(0,10)};
+  BK_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!==null) data[k]=v; });
+  const txt=JSON.stringify(data);
+  try{ await navigator.clipboard.writeText(txt); toast("백업을 복사했어요! 메모장·카톡 나에게 보내기로 보관 📋"); }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); try{document.execCommand("copy"); toast("백업을 복사했어요 📋");}catch(_){prompt("아래 텍스트를 복사해 보관하세요",txt);}
+    ta.remove();
+  }
+}
+function importProgress(){
+  const txt=prompt("백업 텍스트를 붙여넣으세요");
+  if(!txt) return;
+  try{
+    const data=JSON.parse(txt);
+    if(data._app!=="nihongocards") throw 0;
+    BK_KEYS.forEach(k=>{ if(data[k]!==undefined) localStorage.setItem(k,data[k]); });
+    toast("복원 완료! 새로고침합니다…");
+    setTimeout(()=>location.reload(),900);
+  }catch(e){ toast("형식이 올바르지 않아요 — 내보내기로 복사한 텍스트인지 확인"); }
+}
+
+// ═══════════ G1: 타임어택 60초 (풀=데일리 공통풀, 전부 로컬) ═══════════
