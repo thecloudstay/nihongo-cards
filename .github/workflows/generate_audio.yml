@@ -3,7 +3,8 @@
 # 설정: Settings > Secrets and variables > Actions > New repository secret
 #       이름 GOOGLE_TTS_KEY, 값 = GCP TTS API 키
 # 실행: Actions 탭 > generate-audio > Run workflow (수동)
-#       또는 CSV 파일 push 시 자동 실행
+#       또는 CSV·books.json·kids.json 이 바뀌면 자동 실행
+#       (이 파일 자체를 고쳐 커밋해도 실행된다 — 클릭할 수단이 없을 때의 통로)
 
 name: generate-audio
 
@@ -12,6 +13,10 @@ on:
   push:
     paths:
       - "**/*.csv"
+      - "books.json"
+      - "kids.json"
+      - "cards_all.json"
+      - ".github/workflows/generate_audio.yml"
 
 permissions:
   contents: write
