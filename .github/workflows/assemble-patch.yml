@@ -1,0 +1,61 @@
+name: assemble-patch
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble and verify
+        run: |
+          set -e
+          if [ ! -d _patch/parts ]; then
+            echo "no _patch/parts -- nothing to do"
+            echo "SKIP=1" >> $GITHUB_ENV
+            exit 0
+          fi
+          cat _patch/parts/part01.txt \
+              _patch/parts/part02.txt \
+              _patch/parts/part03.txt \
+              _patch/parts/part04.txt \
+              _patch/parts/part05.txt \
+              _patch/parts/part06.txt \
+              _patch/parts/part07.txt \
+              _patch/parts/part08.txt > /tmp/patch_books.json
+          python3 - <<'PY'
+          import hashlib, json
+          d = open('/tmp/patch_books.json','rb').read()
+          assert len(d) == 103425, ('SIZE MISMATCH', len(d))
+          sha = hashlib.sha1(b'blob %d\0' % len(d) + d).hexdigest()
+          assert sha == '9f133329675b025442a97de5c55dfd674d97d7b0', ('SHA MISMATCH', sha)
+          pairs = json.loads(d.decode('utf-8'))
+          assert isinstance(pairs, list) and all(len(p) == 2 for p in pairs)
+          print('OK bytes=%d sha1=%s pairs=%d' % (len(d), sha, len(pairs)))
+          PY
+          cp /tmp/patch_books.json _patch/patch_books.json
+          rm -rf _patch/parts
+
+      - name: Commit assembled patch
+        if: env.SKIP != '1'
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A _patch
+          git commit -m "patch: books.json 후리가나 교정"
+          git push
+
+      - name: Remove this workflow (best effort)
+        if: env.SKIP != '1'
+        continue-on-error: true
+        run: |
+          git rm -f .github/workflows/assemble-patch.yml
+          git commit -m "chore: remove assemble-patch workflow"
+          git push
