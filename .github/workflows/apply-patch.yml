@@ -1,5 +1,8 @@
 name: apply-patch
 on:
+  push:
+    paths:
+      - '.github/workflows/apply-patch.yml'
   workflow_dispatch:
 permissions:
   contents: write
