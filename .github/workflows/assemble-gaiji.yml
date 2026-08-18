@@ -1,0 +1,78 @@
+name: assemble-gaiji
+
+on:
+  push:
+    paths:
+      - '.github/workflows/assemble-gaiji.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble, decode and verify
+        run: |
+          python3 - <<'PY'
+          import base64, bz2, glob, hashlib, os, sys
+
+          parts = sorted(glob.glob('_b64parts/part*.txt'))
+          print('parts:', parts)
+          if not parts:
+              sys.exit('no parts found')
+
+          b64 = ''
+          for p in parts:
+              with open(p, 'rb') as f:
+                  raw = f.read()
+              b64 += ''.join(raw.decode('ascii').split())
+
+          print('b64 len:', len(b64))
+          comp = base64.b64decode(b64)
+          print('bz2 len:', len(comp), 'sha1:', hashlib.sha1(comp).hexdigest())
+
+          data = bz2.decompress(comp)
+          size = len(data)
+          blob = hashlib.sha1(b'blob %d\0' % size + data).hexdigest()
+          print('size:', size, 'blob sha1:', blob)
+
+          EXP_SIZE = 34637
+          EXP_BLOB = '5e052dfbd9ace1a21ed64074ba485c7b462fb696'
+          if size != EXP_SIZE:
+              sys.exit('SIZE MISMATCH: got %d expected %d' % (size, EXP_SIZE))
+          if blob != EXP_BLOB:
+              sys.exit('BLOB SHA1 MISMATCH: got %s expected %s' % (blob, EXP_BLOB))
+
+          import json
+          obj = json.loads(data.decode('utf-8'))
+          print('json pairs:', len(obj))
+
+          os.makedirs('_patch', exist_ok=True)
+          with open('_patch/gaiji_patch.json', 'wb') as f:
+              f.write(data)
+          print('OK written')
+          PY
+
+      - name: Verify written file
+        run: |
+          set -e
+          SZ=$(wc -c < _patch/gaiji_patch.json)
+          echo "size=$SZ"
+          test "$SZ" = "34637"
+          BLOB=$( { printf "blob %d\0" "$SZ"; cat _patch/gaiji_patch.json; } | sha1sum | cut -d' ' -f1 )
+          echo "blob=$BLOB"
+          test "$BLOB" = "5e052dfbd9ace1a21ed64074ba485c7b462fb696"
+
+      - name: Commit and self-destruct
+        run: |
+          set -e
+          rm -rf _b64parts
+          rm -f .github/workflows/assemble-gaiji.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A _patch _b64parts .github/workflows/assemble-gaiji.yml
+          git commit -m "patch: 아오조라 외자 94자 복원"
+          git push
