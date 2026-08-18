@@ -1,0 +1,49 @@
+name: apply-yume
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-yume.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: apply
+        run: |
+          python3 - <<'EOF'
+          import json, io, hashlib
+
+          chs = json.load(io.open('_patch/yume_chapters.json', encoding='utf-8'))
+          assert len(chs) == 7, len(chs)
+
+          B = json.load(io.open('books.json', encoding='utf-8'))
+          b = [x for x in B if x['id'] == 'yumejuya'][0]
+          assert len(b['chapters']) == 3, "이미 합쳐졌거나 장 수가 다름: %d" % len(b['chapters'])
+          b['chapters'].extend(chs)
+          b['title'] = '夢十夜'
+          b['title_ko'] = '열흘 밤의 꿈'
+          b['intro_ko'] = '"이런 꿈을 꾸었다." 로 시작하는 열 개의 짧은 꿈 이야기. 소세키 문장의 정수.'
+
+          io.open('books.json', 'w', encoding='utf-8').write(
+              json.dumps(B, ensure_ascii=False, separators=(',', ':')))
+
+          raw = io.open('books.json', 'rb').read()
+          got = hashlib.sha1(b"blob %d\0" % len(raw) + raw).hexdigest()
+          exp = 'eed7dcd25963054e89708388c77c9df74a53e16a'
+          n = sum(len(c['s']) for x in B for c in x['chapters'])
+          print('편수 %d · 장 %d · 문장 %d' % (len(B), sum(len(x['chapters']) for x in B), n))
+          print('books.json', got, 'OK' if got == exp else 'MISMATCH expected ' + exp)
+          if got != exp:
+              raise SystemExit("sha1 불일치 — 커밋하지 않음")
+          EOF
+      - name: commit
+        run: |
+          rm -rf _patch .github/workflows/apply-yume.yml
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "content: 夢十夜 완역 — 3야에서 열 밤 전편으로 (+417문장)"
+          git push
