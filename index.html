@@ -583,6 +583,37 @@
 .wr-svg text{font-size:8px;fill:var(--rr-d);font-weight:800;paint-order:stroke;stroke:#fff;stroke-width:1.6px}
 .wr-svg.hideNum text{display:none}
 .wr-svg.off{display:none}
+/* ── 읽다 말고 잠깐 쓰는 창 — 읽기 화면 위에 겹쳐 뜨고, 닫으면 읽던 자리 그대로 ── */
+.wk-bd{position:fixed;inset:0;background:rgba(20,17,14,.42);z-index:70;opacity:0;pointer-events:none;transition:opacity .18s}
+.wk-bd.on{opacity:1;pointer-events:auto}
+.wk{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);z-index:71;
+  width:min(360px,100% - 28px);background:var(--card);border-radius:22px;padding:14px 14px 12px;
+  box-shadow:0 18px 50px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+.wk.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.wk-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.wk-hd .ttl{flex:1;font-size:13px;color:var(--sub);text-align:left;line-height:1.35}
+.wk-hd .ttl b{color:var(--ink);font-size:14.5px}
+.wk-hd .cl{width:38px;height:38px;border-radius:50%;border:none;background:var(--soft);
+  font-size:18px;color:var(--sub);cursor:pointer;flex:none}
+.wk-box{position:relative;width:100%;aspect-ratio:1/1;border-radius:16px;background:var(--bg);
+  border:2px solid var(--line);overflow:hidden;touch-action:none}
+.wk-tpl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  font-size:min(62vw,240px);line-height:1;color:var(--ink);opacity:.14;font-weight:500;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP","Meiryo",sans-serif;transition:opacity .15s}
+.wk-tpl.off{opacity:0}
+.wk-cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.wk-tools{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.wk-tools button{flex:1;padding:9px 0;border:1px solid var(--line);background:var(--card);
+  border-radius:11px;font-size:12.5px;color:var(--ink);cursor:pointer}
+.wk-tools button:active{background:var(--soft)}
+.wk-nav{display:flex;gap:8px;margin-top:9px}
+.wk-nav button{padding:12px 0;border:none;border-radius:12px;background:var(--soft);
+  font-size:14px;font-weight:700;color:var(--ink);cursor:pointer}
+.wk-nav .arw{width:52px;flex:none}
+.wk-nav .pri{flex:1;background:var(--ok);color:#fff}
+.wk-nav button:disabled{opacity:.35}
+.wk-ft{margin-top:9px;text-align:center;font-size:11.5px;color:var(--sub)}
+.wk-ft b{color:var(--ink)}
 /* ══ 오답 반복 학습 ══ */
 .q-nav{display:flex;gap:9px;padding:10px 20px 0}
 .q-nav button{flex:1;padding:13px 0;border:1px solid var(--line);background:var(--card);border-radius:13px;
@@ -1467,6 +1498,33 @@
   <div class="wp-kj" id="wpKj" style="display:none"></div>
   <div class="cx" id="wpCx" style="display:none"></div>
   <button class="sp" onclick="wpSpeak()">🔊 발음 듣기</button>
+</div>
+
+<!-- ═══ 한자 잠깐 쓰기 (읽기 위에 겹쳐 뜨는 창) ═══ -->
+<div class="wk-bd" id="wkBd" onclick="closeWritePop()"></div>
+<div class="wk" id="wkPop">
+  <div class="wk-hd">
+    <div class="ttl"><b id="wkCh">漢</b> <span id="wkKo"></span><br><span id="wkPos"></span></div>
+    <button class="cl" onclick="closeWritePop()">✕</button>
+  </div>
+  <div class="wk-box" id="wkBox">
+    <div class="wr-grid"></div>
+    <div class="wk-tpl" id="wkTpl"></div>
+    <div class="wr-svg off" id="wkSvg"></div>
+    <canvas class="wk-cv" id="wkCv"></canvas>
+  </div>
+  <div class="wk-tools">
+    <button onclick="wkUndo()">↩ 되돌리기</button>
+    <button onclick="wkClear()">🗑 지우기</button>
+    <button id="wkOrderBtn" onclick="wkOrderCycle()">획순 끄기</button>
+    <button onclick="wkPlay()">▶ 획순</button>
+  </div>
+  <div class="wk-nav">
+    <button class="arw" id="wkPrev" onclick="wkGo(-1)">←</button>
+    <button class="pri" onclick="wkOK()">✓ 다 썼어요</button>
+    <button class="arw" id="wkNext" onclick="wkGo(1)">→</button>
+  </div>
+  <div class="wk-ft" id="wkFt"></div>
 </div>
 
 
@@ -3808,23 +3866,125 @@ function wrOK(){
   toast("👏 좋아요! 다음 글자");
   wrIdx++; wrLoad();
 }
+// ══════════ 한자 잠깐 쓰기 — 읽기를 끊지 않는 겹침 창 ══════════
+// 화면을 갈아타면 읽던 자리·스크롤·재생 상태가 다 날아간다. 그래서 별도 화면이 아니라
+// 읽기 위에 얹는 창으로 만들고, 닫으면 곧바로 읽던 문장으로 돌아온다.
+let wkList=[], wkIdx=0, wkWord="", wkStrokes=[], wkDrawing=false, wkCtx=null, wkOrder=2;
+function wkCur(){ return wkList[wkIdx]||null; }
+function wkFit(){
+  const cv=$("wkCv"), box=$("wkBox"); if(!cv||!box) return false;
+  const r=box.getBoundingClientRect(); if(!r.width||!r.height) return false;
+  const dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+  wkCtx=cv.getContext("2d"); wkCtx.setTransform(dpr,0,0,dpr,0,0);
+  wkCtx.lineCap="round"; wkCtx.lineJoin="round";
+  wkRedraw(); return true;
+}
+function wkFitSoon(){ if(wkFit()) return; requestAnimationFrame(()=>{ if(!wkFit()) setTimeout(wkFit,140); }); }
+function wkRedraw(){
+  if(!wkCtx) return;
+  const cv=$("wkCv"); wkCtx.save(); wkCtx.setTransform(1,0,0,1,0,0);
+  wkCtx.clearRect(0,0,cv.width,cv.height); wkCtx.restore();
+  const ink=getComputedStyle(document.documentElement).getPropertyValue("--ink").trim()||"#2b2723";
+  wkStrokes.forEach(st=>{
+    if(!st.p.length) return;
+    wkCtx.strokeStyle=ink; wkCtx.lineWidth=st.w;
+    wkCtx.beginPath(); wkCtx.moveTo(st.p[0][0],st.p[0][1]);
+    for(let i=1;i<st.p.length;i++) wkCtx.lineTo(st.p[i][0],st.p[i][1]);
+    if(st.p.length===1) wkCtx.lineTo(st.p[0][0]+.1,st.p[0][1]+.1);
+    wkCtx.stroke();
+  });
+}
+function wkPt(e){ const r=$("wkCv").getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; }
+function wkUndo(){ wkStrokes.pop(); wkRedraw(); }
+function wkClear(){ wkStrokes=[]; wkRedraw(); }
+async function wkRenderOrder(){
+  const box=$("wkSvg"); if(!box) return;
+  box.innerHTML=""; box.classList.add("off");
+  const c=wkCur(); if(!c || wkOrder===0) return;
+  const svg=await kvgFetch(c.ch);
+  if(!svg){ $("wkFt").textContent="이 글자는 획순 데이터가 없어요"; return; }
+  box.appendChild(document.importNode(svg,true));
+  box.classList.remove("off");
+  [...box.querySelectorAll("path")].forEach(p=>p.style.opacity = wkOrder===1 ? ".10" : "");
+}
+function wkOrderCycle(){
+  wkOrder=(wkOrder+1)%3;
+  $("wkOrderBtn").textContent = wkOrder===0?"획순 끄기":wkOrder===1?"획순 번호":"획순 번호+선";
+  wkRenderOrder();
+}
+let _wkAnim=0;
+async function wkPlay(){
+  const box=$("wkSvg"); if(!wkCur()) return;
+  if(wkOrder===0){ wkOrder=2; $("wkOrderBtn").textContent="획순 번호+선"; }
+  await wkRenderOrder();
+  const paths=[...box.querySelectorAll("path")]; if(!paths.length) return;
+  const tk=++_wkAnim, texts=[...box.querySelectorAll("text")];
+  texts.forEach(t=>t.style.opacity="0");
+  paths.forEach(p=>{ const L=p.getTotalLength(); p.style.transition="none";
+    p.style.strokeDasharray=L; p.style.strokeDashoffset=L; p.style.opacity="1"; });
+  for(let i=0;i<paths.length;i++){
+    if(tk!==_wkAnim) return;
+    const p=paths[i], L=p.getTotalLength(), dur=Math.max(260,Math.min(880,L*9));
+    p.style.transition=`stroke-dashoffset ${dur}ms ease-in-out`; p.style.strokeDashoffset=0;
+    if(texts[i]) texts[i].style.opacity="1";
+    await new Promise(r=>setTimeout(r,dur+100));
+  }
+}
+function wkLoad(){
+  const c=wkCur(); if(!c) return;
+  $("wkCh").textContent=c.ch;
+  $("wkKo").textContent=c.ko||"";
+  $("wkTpl").textContent=c.ch;
+  $("wkPos").textContent = wkWord ? `「${wkWord}」 ${wkIdx+1} / ${wkList.length}` : `${wkIdx+1} / ${wkList.length}`;
+  $("wkPrev").disabled = wkIdx<=0;
+  $("wkNext").disabled = wkIdx>=wkList.length-1;
+  const n=(wrLog()["book|"+c.ch]|0);
+  $("wkFt").innerHTML = n? `이 글자 <b>${n}번</b> 썼어요` : "칸 안에 손가락으로 따라 써보세요";
+  wkClear(); wkRenderOrder();
+}
+function wkGo(d){ const i=wkIdx+d; if(i<0||i>=wkList.length) return; wkIdx=i; wkLoad(); }
+function wkOK(){
+  const c=wkCur(); if(!c) return;
+  if(!wkStrokes.length){ toast("먼저 한 번 써보세요"); return; }
+  const o=wrLog(); const k="book|"+c.ch; o[k]=(o[k]|0)+1; wrSave(o);
+  renderWrBar(); try{sfx("ok");}catch(e){}
+  if(wkIdx<wkList.length-1){ toast("👏 좋아요! 다음 글자"); wkIdx++; wkLoad(); }
+  else { toast("👏 다 썼어요 — 이어서 읽어요"); setTimeout(closeWritePop,600); }
+}
+// 단어의 한자를 전부 싣되 누른 글자부터 — 팝업이라 읽던 자리는 그대로 남는다
+function openWritePop(word, start){
+  const I=rdBuildIndex();
+  const chs=[...new Set(String(word||"").match(/[一-鿿]/g)||[])];
+  if(!chs.length){ toast("이 단어엔 한자가 없어요"); return; }
+  wkList=chs.map(ch=>{ const ko=I.byK.get(ch)||I.byW.get(ch)||"";
+    return {ch, ko:String(ko).split(/[,，·]/)[0].trim()}; });
+  wkWord = chs.length>1 ? String(word) : "";
+  wkIdx=Math.max(0,Math.min(chs.length-1,start|0));
+  closeWordPop();
+  $("wkPop").classList.add("on"); $("wkBd").classList.add("on");
+  const cv=$("wkCv");
+  if(cv && !cv._wired){
+    cv._wired=true;
+    cv.addEventListener("pointerdown",e=>{ e.preventDefault(); try{cv.setPointerCapture(e.pointerId);}catch(_){}
+      if(!wkCtx) wkFit(); wkDrawing=true; wkStrokes.push({w:10,p:[wkPt(e)]}); wkRedraw(); });
+    cv.addEventListener("pointermove",e=>{ if(!wkDrawing) return; e.preventDefault();
+      wkStrokes[wkStrokes.length-1].p.push(wkPt(e)); wkRedraw(); });
+    ["pointerup","pointercancel","pointerleave"].forEach(t=>cv.addEventListener(t,()=>{wkDrawing=false;}));
+    window.addEventListener("resize",()=>{ if($("wkPop").classList.contains("on")) wkFitSoon(); });
+  }
+  wkOrder=2; $("wkOrderBtn").textContent="획순 번호+선";
+  wkLoad(); wkFitSoon();
+}
+function closeWritePop(){
+  _wkAnim++; wkDrawing=false;
+  $("wkPop").classList.remove("on"); $("wkBd").classList.remove("on");
+}
 // 연습 기록은 팩이 달라도 같은 글자면 함께 세도록 — 임시목록은 "book" 으로 묶는다
 function wrKey(c){ return (wrCat==="_adhoc"?"book":wrCat)+"|"+c.front; }
 function wrBackGo(){ const b=wrBack; wrBack="home"; wrAdhoc=null; show(b); }
-// 📖 읽기 중 만난 한자를 그 자리에서 획순 연습 — chars 는 한자 1글자 배열
-function openWriteChar(chars, label, back, start){
-  const I=rdBuildIndex();
-  const list=[...new Set(String(chars||"").match(/[一-鿿]/g)||[])].map(ch=>{
-    const ko=I.byK.get(ch)||I.byW.get(ch)||"";
-    return {front:ch, romaji:"", ko:String(ko).split(/[,，·]/)[0].trim(), speak:ch};
-  });
-  if(!list.length){ toast("이 단어엔 한자가 없어요"); return; }
-  wrAdhoc=list; wrAdhocLabel=label||"이 단어"; wrCat="_adhoc";
-  wrIdx=Math.max(0, Math.min(list.length-1, start|0));   // 누른 글자부터 시작, ←→ 로 나머지도
-  wrBack=back||"rdRead"; wrOrderMode=2;                 // 책에서 왔으면 획순을 처음부터 보여 준다
-  const ob=$("wrOrderBtn"); if(ob) ob.textContent="획순: 번호+선";
-  closeWordPop(); openWriting();                        // wrLoad 안에서 획순을 그린다(중복 호출 금지)
-}
+// (책에서 온 한자는 화면을 갈아타지 않고 openWritePop 겹침 창으로 연습한다.
+//  wrAdhoc 통로는 남겨 둠 — 나중에 단어장·오답노트에서 여러 글자를 몰아 연습시킬 때 쓴다.)
 function openWriting(preset){
   if(preset && (DATA[preset]||[]).length) wrCat=preset;      // 카테고리에서 바로 들어올 때 소스 지정
   show("wrScreen"); renderWrSrc();
@@ -4652,7 +4812,7 @@ function openWordPop(w,r,si){
     const wq=String(w||"").replace(/'/g,"");
     kbox.innerHTML = `<div class="lb">✍️ 한자를 누르면 획순을 따라 써볼 수 있어요</div><div class="row">`
       + kj.map((ch,i)=>{ const n=lg["book|"+ch]|0;
-          return `<button onclick="openWriteChar('${wq}','${wq}','rdRead',${i})">`
+          return `<button onclick="openWritePop('${wq}',${i})">`
                + `<span class="ch">${ch}</span><span class="tg">${n?n+"번 씀":"따라쓰기"}</span></button>`;
         }).join("") + `</div>`;
     kbox.style.display="";
