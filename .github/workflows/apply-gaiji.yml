@@ -1,0 +1,48 @@
+name: apply-gaiji
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-gaiji.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: apply
+        run: |
+          python3 - <<'EOF'
+          import json, io, hashlib
+
+          pairs = json.load(io.open('_patch/gaiji_patch.json', encoding='utf-8'))
+          t = io.open('books.json', encoding='utf-8').read()
+          hit = miss = 0
+          for old, new in pairs:
+              eo = json.dumps(old, ensure_ascii=False)[1:-1]
+              en = json.dumps(new, ensure_ascii=False)[1:-1]
+              c = t.count(eo)
+              if c:
+                  hit += c
+                  t = t.replace(eo, en)
+              else:
+                  miss += 1
+          io.open('books.json', 'w', encoding='utf-8').write(t)
+          print("치환 %d 건 · 미적중 %d" % (hit, miss))
+
+          raw = io.open('books.json', 'rb').read()
+          got = hashlib.sha1(b"blob %d\0" % len(raw) + raw).hexdigest()
+          exp = '9cbbf22c5a3bcadb7c2fc9c907dfa2957fa40f25'
+          print('books.json', got, 'OK' if got == exp else 'MISMATCH expected ' + exp)
+          if got != exp:
+              raise SystemExit("sha1 불일치 — 커밋하지 않음")
+          EOF
+      - name: commit
+        run: |
+          rm -rf _patch .github/workflows/apply-gaiji.yml
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: 원문에서 빠져 있던 희귀 한자 94자 복원 (犍陀多·袁傪 등)"
+          git push
