@@ -14,7 +14,7 @@ jobs:
       - name: apply
         run: |
           python3 - <<'EOF'
-          import json, io, hashlib, os
+          import json, io, hashlib
 
           def blob_sha1(path):
               b = io.open(path, 'rb').read()
@@ -29,19 +29,23 @@ jobs:
               t = t.replace(old, new, 1)
           io.open('index.html', 'w', encoding='utf-8').write(t)
 
-          # 2) books.json — 문장 단위 치환. 파일 원문은 JSON 이므로 이스케이프된 형태로 찾는다.
+          # 2) books.json — 문장 단위 치환. 파일 원문은 JSON 이라 이스케이프된 형태로 찾는다.
+          #    짧은 문장이 앞선 치환에 이미 포함돼 사라지는 경우가 있으므로 미적중은 넘어가고,
+          #    최종 판단은 아래 sha1 대조에 맡긴다.
           pairs = json.load(io.open('_patch/patch_books.json', encoding='utf-8'))
           t = io.open('books.json', encoding='utf-8').read()
-          hit = 0
+          hit = miss = 0
           for old, new in pairs:
               eo = json.dumps(old, ensure_ascii=False)[1:-1]
               en = json.dumps(new, ensure_ascii=False)[1:-1]
               c = t.count(eo)
-              assert c >= 1, "books.json 문장을 못 찾음: %r" % old[:60]
-              hit += c
-              t = t.replace(eo, en)
+              if c:
+                  hit += c
+                  t = t.replace(eo, en)
+              else:
+                  miss += 1
           io.open('books.json', 'w', encoding='utf-8').write(t)
-          print("books 치환 문장 %d" % hit)
+          print("books 치환 %d 건 · 미적중 %d" % (hit, miss))
 
           EXP = {'index.html': '99f7069cee3072084377a8f2fd66a17eaacf12b8',
                  'books.json': '5de06e8c23973f409c11e270579dd2773b8aa152'}
