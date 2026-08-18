@@ -1,0 +1,60 @@
+name: apply-patch
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: apply
+        run: |
+          python3 - <<'EOF'
+          import json, io, hashlib, os
+
+          def blob_sha1(path):
+              b = io.open(path, 'rb').read()
+              return hashlib.sha1(b"blob %d\0" % len(b) + b).hexdigest()
+
+          # 1) index.html — 앞뒤 문맥 1줄을 포함한 블록 치환 (각 old 는 파일에 딱 1번만 나와야 한다)
+          pairs = json.load(io.open('_patch/patch_index.json', encoding='utf-8'))
+          t = io.open('index.html', encoding='utf-8').read()
+          for old, new in pairs:
+              n = t.count(old)
+              assert n == 1, "index.html 블록이 %d 번 나옴: %r" % (n, old[:60])
+              t = t.replace(old, new, 1)
+          io.open('index.html', 'w', encoding='utf-8').write(t)
+
+          # 2) books.json — 문장 단위 치환. 파일 원문은 JSON 이므로 이스케이프된 형태로 찾는다.
+          pairs = json.load(io.open('_patch/patch_books.json', encoding='utf-8'))
+          t = io.open('books.json', encoding='utf-8').read()
+          hit = 0
+          for old, new in pairs:
+              eo = json.dumps(old, ensure_ascii=False)[1:-1]
+              en = json.dumps(new, ensure_ascii=False)[1:-1]
+              c = t.count(eo)
+              assert c >= 1, "books.json 문장을 못 찾음: %r" % old[:60]
+              hit += c
+              t = t.replace(eo, en)
+          io.open('books.json', 'w', encoding='utf-8').write(t)
+          print("books 치환 문장 %d" % hit)
+
+          EXP = {'index.html': '99f7069cee3072084377a8f2fd66a17eaacf12b8',
+                 'books.json': '5de06e8c23973f409c11e270579dd2773b8aa152'}
+          bad = False
+          for f, e in EXP.items():
+              g = blob_sha1(f)
+              print(f, g, 'OK' if g == e else 'MISMATCH expected ' + e)
+              bad |= (g != e)
+          if bad:
+              raise SystemExit("sha1 불일치 — 커밋하지 않음")
+          EOF
+      - name: commit
+        run: |
+          rm -rf _patch .github/workflows/apply-patch.yml
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: 단어 뜻 조회 정확도 개선 + 후리가나 교정 294건 + 책갈피"
+          git push
