@@ -3812,14 +3812,15 @@ function wrOK(){
 function wrKey(c){ return (wrCat==="_adhoc"?"book":wrCat)+"|"+c.front; }
 function wrBackGo(){ const b=wrBack; wrBack="home"; wrAdhoc=null; show(b); }
 // 📖 읽기 중 만난 한자를 그 자리에서 획순 연습 — chars 는 한자 1글자 배열
-function openWriteChar(chars, label, back){
+function openWriteChar(chars, label, back, start){
   const I=rdBuildIndex();
   const list=[...new Set(String(chars||"").match(/[一-鿿]/g)||[])].map(ch=>{
     const ko=I.byK.get(ch)||I.byW.get(ch)||"";
     return {front:ch, romaji:"", ko:String(ko).split(/[,，·]/)[0].trim(), speak:ch};
   });
   if(!list.length){ toast("이 단어엔 한자가 없어요"); return; }
-  wrAdhoc=list; wrAdhocLabel=label||"이 단어"; wrCat="_adhoc"; wrIdx=0;
+  wrAdhoc=list; wrAdhocLabel=label||"이 단어"; wrCat="_adhoc";
+  wrIdx=Math.max(0, Math.min(list.length-1, start|0));   // 누른 글자부터 시작, ←→ 로 나머지도
   wrBack=back||"rdRead"; wrOrderMode=2;                 // 책에서 왔으면 획순을 처음부터 보여 준다
   const ob=$("wrOrderBtn"); if(ob) ob.textContent="획순: 번호+선";
   closeWordPop(); openWriting();                        // wrLoad 안에서 획순을 그린다(중복 호출 금지)
@@ -4648,9 +4649,10 @@ function openWordPop(w,r,si){
   const kj=[...new Set(String(w||"").match(/[一-鿿]/g)||[])], kbox=$("wpKj");
   if(kj.length){
     const lg=wrLog();
+    const wq=String(w||"").replace(/'/g,"");
     kbox.innerHTML = `<div class="lb">✍️ 한자를 누르면 획순을 따라 써볼 수 있어요</div><div class="row">`
-      + kj.map(ch=>{ const n=lg["book|"+ch]|0;
-          return `<button onclick="openWriteChar('${ch}','${(w||"").replace(/'/g,"")}','rdRead')">`
+      + kj.map((ch,i)=>{ const n=lg["book|"+ch]|0;
+          return `<button onclick="openWriteChar('${wq}','${wq}','rdRead',${i})">`
                + `<span class="ch">${ch}</span><span class="tg">${n?n+"번 씀":"따라쓰기"}</span></button>`;
         }).join("") + `</div>`;
     kbox.style.display="";
