@@ -1,0 +1,46 @@
+name: assemble yume_chapters
+on:
+  push:
+    paths:
+      - '.github/workflows/assemble-yume.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble and verify
+        run: |
+          set -euo pipefail
+          EXPECT_SIZE=96570
+          EXPECT_SHA=5209994ae8a62d893970473ac00ac9b914e0e5f5
+          cat _patch/parts/part01.txt \
+              _patch/parts/part02.txt \
+              _patch/parts/part03.txt \
+              _patch/parts/part04.txt \
+              _patch/parts/part05.txt \
+              _patch/parts/part06.txt \
+            | tr -d '\n\r \t' | base64 -d | bunzip2 > /tmp/out.json
+          SZ=$(stat -c%s /tmp/out.json)
+          echo "size=$SZ"
+          if [ "$SZ" != "$EXPECT_SIZE" ]; then echo "SIZE MISMATCH (want $EXPECT_SIZE)"; exit 1; fi
+          SHA=$(printf "blob %d\0" "$SZ" | cat - /tmp/out.json | sha1sum | cut -d' ' -f1)
+          echo "blob sha1=$SHA"
+          if [ "$SHA" != "$EXPECT_SHA" ]; then echo "SHA MISMATCH (want $EXPECT_SHA)"; exit 1; fi
+          python3 -c "import json,sys; d=json.load(open('/tmp/out.json',encoding='utf-8')); assert isinstance(d,list) and len(d)==7, d; print('json ok: list of', len(d))"
+
+      - name: Install, clean up, commit
+        run: |
+          set -euo pipefail
+          cp /tmp/out.json _patch/yume_chapters.json
+          rm -rf _patch/parts
+          rm -f .github/workflows/assemble-yume.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A _patch .github/workflows
+          git commit -m "content: 夢十夜 第四〜十夜 7장"
+          git push
