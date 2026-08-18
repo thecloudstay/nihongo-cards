@@ -643,8 +643,32 @@
   font-size:12px;font-weight:700;color:var(--sub);cursor:pointer}
 .rd-tools button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .rd-body{padding:10px 16px 4px}
-.rd-s{padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.rd-s{padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer;position:relative}
 .rd-s:last-child{border-bottom:none}
+/* ═══ v6.1 책갈피 — 브랜드의 액센트색이 곧 책갈피다 ═══
+     문장을 탭해 펼치면 🔖 가 나타나고, 꽂은 문장은 왼쪽에 주홍 띠가 남는다. */
+.rd-s.mk{background:linear-gradient(90deg,#fff6f3 0%,transparent 60%)}
+.rd-s.mk::before{content:"";position:absolute;left:-8px;top:6px;bottom:6px;width:4px;
+  background:var(--accent);border-radius:3px}
+.rd-mk{position:absolute;top:4px;right:0;border:none;background:none;font-size:15px;
+  padding:4px 6px;opacity:0;transition:opacity .15s;line-height:1}
+.rd-s.open .rd-mk,.rd-s.mk .rd-mk{opacity:1}
+.rd-s.mk .rd-mk{filter:none}
+.rd-s:not(.mk) .rd-mk{filter:grayscale(1) opacity(.45)}
+/* 책갈피 목록 */
+.mk-list{padding:10px 16px 28px;display:flex;flex-direction:column;gap:9px}
+.mk-row{display:flex;gap:11px;align-items:flex-start;padding:13px 14px;background:var(--card);
+  border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;text-align:left;width:100%}
+.mk-row:active{background:var(--soft)}
+.mk-row .mi{flex:1;min-width:0}
+.mk-row .mj{display:block;font-size:14.5px;font-weight:700;line-height:1.5;
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mk-row .mko{display:block;font-size:12px;color:var(--sub);margin-top:5px;line-height:1.45;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mk-row .msrc{display:block;font-size:10.5px;color:var(--accent);font-weight:800;margin-top:7px}
+.mk-row .mdel{flex:0 0 auto;background:none;border:none;color:var(--sub);font-size:15px;padding:2px 4px}
+.mk-empty{text-align:center;color:var(--sub);font-size:13.5px;padding:48px 24px;line-height:1.7}
 .rd-body{--rdfs:17.5px}
 .rd-s .jp{font-size:var(--rdfs);line-height:2.15;
   font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
@@ -1332,6 +1356,16 @@
 
 
 <!-- ═══ 원서 읽기: 목록 ═══ -->
+<!-- ═══ v6.1 내 책갈피 ═══ -->
+<div class="screen" id="mkScreen">
+  <div class="top">
+    <button class="back" onclick="show('rdRead')">‹</button>
+    <span class="title">🔖 내 책갈피<span class="s"> しおり</span></span>
+    <span class="count" id="mkCount"></span>
+  </div>
+  <div class="mk-list" id="mkList"></div>
+</div>
+
 <div class="screen" id="rdScreen">
   <div class="top">
     <button class="back" onclick="show('home')">‹</button>
@@ -1373,6 +1407,7 @@
     <button onclick="rdPlayAll()" id="rrPlay">🔊 이어 듣기</button>
     <button id="rrCont" onclick="rdToggleCont()">🔂 장별</button>
     <button id="rrKa" onclick="rdToggleKara()">🎤 따라읽기</button>
+    <button id="rrMk" onclick="openMarks()" title="내 책갈피">🔖</button>
     <span class="rd-fs">
       <button onclick="rdFont(-1)" title="글자 작게">가﹣</button>
       <button onclick="rdFont(1)" id="rrFs" title="글자 크게">가﹢</button>
@@ -4262,7 +4297,9 @@ function openChapter(k){
   body.innerHTML=c.s.map((x,i)=>{
     const jp = rdChunks(x.jp).map(seg=>
       `<span class="rd-k" data-m="${rdMora(seg)}">${rdRubyHtml(seg)}</span>`).join("");
-    return `<div class="rd-s ${rdKoMode==="on"?'open':''}" data-i="${i}" onclick="rdTapSentence(event,${i})">
+    const mk = mkHas(b.id, k, i) ? " mk" : "";
+    return `<div class="rd-s ${rdKoMode==="on"?'open':''}${mk}" data-i="${i}" onclick="rdTapSentence(event,${i})">
+       <button class="rd-mk" onclick="mkToggle(event,${i})" title="책갈피">🔖</button>
        <div class="jp">${jp}</div>${x.ro?`<div class="ro">${x.ro}</div>`:""}<div class="ko">${x.ko}</div></div>`;
   }).join("");
   rdRubySync();
@@ -4272,9 +4309,76 @@ function openChapter(k){
   $("rrRo").style.display = hasRo ? "" : "none";
   $("rrRo").classList.toggle("on",rdRo);
   if(hasRo && rdRo) body.querySelectorAll(".rd-s").forEach(e=>e.classList.add("ropen"));
-  rdStopPlay(); rdSyncNextBtn(); rdSyncContBtn(); rdApplyFont(); rdTouch(b.id,k);
+  rdStopPlay(); rdSyncNextBtn(); rdSyncContBtn(); mkSyncBtn(); rdApplyFont(); rdTouch(b.id,k);
   show("rdRead");
 }
+/* ═══ v6.1 책갈피 ═══
+   브랜드가 '책'이면 마음에 든 문장을 꽂아 두는 건 필수 기능이다.
+   저장 위치: localStorage `yomi_marks` = [{b,k,i,jp,ko,t}]  (b=책id, k=장, i=문장)  */
+function mkAll(){ try{ return JSON.parse(localStorage.getItem("yomi_marks")||"[]"); }catch(e){ return []; } }
+function mkSave(a){ try{ localStorage.setItem("yomi_marks", JSON.stringify(a.slice(-500))); }catch(e){} }
+function mkHas(b,k,i){ return mkAll().some(m=>m.b===b&&m.k===k&&m.i===i); }
+function mkToggle(e,i){
+  e.stopPropagation();
+  const b=rdBookCur, k=rdChapCur; if(!b) return;
+  const s=b.chapters[k].s[i];
+  let a=mkAll();
+  const at=a.findIndex(m=>m.b===b.id&&m.k===k&&m.i===i);
+  const el=e.currentTarget.closest(".rd-s");
+  if(at>=0){ a.splice(at,1); el.classList.remove("mk"); toast("책갈피를 뺐어요"); }
+  else{
+    a.push({b:b.id,k:k,i:i,jp:rdPlain(s.jp),ko:s.ko,t:Date.now()});
+    el.classList.add("mk"); toast("🔖 책갈피에 꽂았어요");
+  }
+  mkSave(a); mkSyncBtn();
+}
+function mkSyncBtn(){
+  const el=$("rrMk"); if(!el) return;
+  const n=mkAll().length;
+  el.textContent = n ? `🔖 ${n}` : "🔖";
+}
+/** 책갈피 목록 화면 */
+async function openMarks(){
+  show("mkScreen"); window.scrollTo(0,0);
+  const wrap=$("mkList");
+  const a=mkAll().slice().reverse();
+  if(!a.length){
+    wrap.innerHTML=`<div class="mk-empty">아직 꽂아 둔 문장이 없어요.<br>
+      책을 읽다가 마음에 드는 문장을 탭하고 <b>🔖</b> 를 누르면<br>여기에 모입니다.</div>`;
+    $("mkCount").textContent=""; return;
+  }
+  $("mkCount").textContent=`${a.length}개`;
+  await loadBooks();
+  const byId={}; (BOOKS||[]).forEach(b=>byId[b.id]=b);
+  wrap.innerHTML=a.map((m,idx)=>{
+    const b=byId[m.b];
+    const src=b ? `${b.title_ko} · ${m.k+1}장` : "(책을 찾을 수 없음)";
+    return `<button class="mk-row" onclick="mkGo(${idx})">
+      <span class="mi"><span class="mj">${m.jp}</span><span class="mko">${m.ko||""}</span>
+        <span class="msrc">${src}</span></span>
+      <span class="mdel" onclick="mkDel(event,${idx})">✕</span></button>`;
+  }).join("");
+}
+function mkDel(e,idx){
+  e.stopPropagation();
+  const a=mkAll(); const rev=a.slice().reverse();
+  const target=rev[idx];
+  const at=a.findIndex(m=>m.b===target.b&&m.k===target.k&&m.i===target.i);
+  if(at>=0){ a.splice(at,1); mkSave(a); }
+  openMarks();
+}
+async function mkGo(idx){
+  const m=mkAll().slice().reverse()[idx];
+  await loadBooks();
+  const b=(BOOKS||[]).find(x=>x.id===m.b);
+  if(!b){ toast("책을 찾을 수 없어요"); return; }
+  rdBookCur=b; openChapter(m.k);
+  setTimeout(()=>{
+    const el=$("rrBody").querySelectorAll(".rd-s")[m.i];
+    if(el){ el.scrollIntoView({block:"center",behavior:"smooth"}); el.classList.add("open"); }
+  },220);
+}
+
 function rdTapSentence(e,i){
   const t=e.target.closest(".rd-w");
   if(t){ e.stopPropagation();
@@ -4442,6 +4546,7 @@ function rdBuildIndex(){
   if(BOOKS) for(const b of BOOKS) for(const ch of b.chapters) for(const x of (ch.words||[])){
     put(byW,x.w,x.ko); put(byR,x.r,x.ko);
   }
+  var stem=new Map();   // 어간 → 원형  (寒 → 寒い · 憧 → 憧れる)
   for(const k in DATA) for(const card of (DATA[k]||[])){
     const ko=card.ko; if(!ko || card.sent) continue;      // 문장카드는 단어 뜻이 아니므로 제외
     put(byW,card.front,ko);
@@ -4449,20 +4554,33 @@ function rdBuildIndex(){
     if(card.romaji && /[ぁ-ヿ]/.test(card.romaji)) String(card.romaji).split("/").forEach(x=>put(byR,x.trim(),ko));
     if(card.front && card.front.length===1) put(byK,card.front,ko);
   }
-  return (_rdIdx={byW,byR,byK});
+  // 어간 색인: <한자덩어리><가나꼬리(1~3자)> 형태만 채택한다.
+  // 寒い→寒 · 起きる→起 · 夕焼け→夕焼 는 잡히고, 火打ち石·実を結ぶ 처럼
+  // 꼬리에 한자가 또 있는 말은 배제한다(엉뚱한 뜻이 붙는 주범이었다).
+  for(const [w,ko] of byW){
+    const m=/^([一-鿿]+)([ぁ-ゟ]{1,3})$/.exec(w);
+    if(m && !byW.has(m[1]) && !stem.has(m[1])) stem.set(m[1],{w,ko});
+  }
+  return (_rdIdx={byW,byR,byK,stem});
 }
 const rdTrim = s => String(s||"").replace(/[はがをにへでとものやかなねよぞぜさこそあうえおっ]+$/,"");
+// ⚠ 예전에는 ①읽기가 같으면 ②표기가 조금이라도 겹치면 그 뜻을 그대로 보여 줬다.
+//    그 결과 訊(き)→「나무(木)」, 禿(は)→「이,치아(歯)」, 自分→「무렵(時分)」 처럼
+//    동음이의어의 뜻을 단정해 보여주는 일이 6천 건 가까이 있었다(전수검사).
+//    지금은 **표기가 정확히 일치할 때만 단정**하고, 활용형은 「≈ 원형」으로 밝혀 준다.
 function rdLookup(w,r){
   const I=rdBuildIndex();
-  // 1) 현재 챕터 단어장 (문맥상 가장 정확)
   const c=rdBookCur&&rdBookCur.chapters[rdChapCur];
   if(c&&c.words){
-    let h=c.words.find(x=>x.w===w) || c.words.find(x=>x.r===r)
-       || c.words.find(x=>x.w&&w&&(x.w.indexOf(w)>=0||w.indexOf(x.w)>=0));
-    if(h) return h.ko;
+    const h=c.words.find(x=>x.w===w);
+    if(h) return {ko:h.ko, src:"exact"};
   }
-  // 2) 표기 → 3) 읽기 → 4) 송가나 뗀 표기
-  return I.byW.get(w) || (r&&I.byR.get(r)) || I.byW.get(rdTrim(w)) || null;
+  if(I.byW.has(w)) return {ko:I.byW.get(w), src:"exact"};
+  const st=I.stem.get(w);                       // 寒 → 寒い
+  if(st) return {ko:st.ko, src:"form", base:st.w};
+  const t=rdTrim(w);                            // 조사·활용어미가 표기에 딸려온 경우
+  if(t && t!==w && I.byW.has(t)) return {ko:I.byW.get(t), src:"form", base:t};
+  return null;
 }
 // 뜻을 못 찾았을 때: 한자를 낱글자로 쪼개 뜻을 붙여 준다 (建築 → 建 세우다 · 築 쌓다)
 function rdKanjiHint(w){
@@ -4478,9 +4596,15 @@ function rdKanjiHint(w){
 function openWordPop(w,r,si){
   _wpW=r||w;
   $("wpW").textContent=w; $("wpR").textContent=r||"";
-  const ko=rdLookup(w,r);
+  const hit=rdLookup(w,r);
+  const ko=hit?hit.ko:"";
   const hint=ko?"":rdKanjiHint(w);
-  $("wpK").textContent = ko || hint || "이 단어의 뜻은 아직 사전에 없어요";
+  // 확실한 뜻인지, 원형에서 미루어 본 뜻인지 항상 밝힌다
+  if(ko && hit.src==="form"){
+    $("wpK").innerHTML = `${ko}<span style="font-size:12px;color:var(--sub);margin-left:6px">「${hit.base}」의 뜻</span>`;
+  } else {
+    $("wpK").textContent = ko || hint || "이 단어의 뜻은 아직 사전에 없어요";
+  }
   $("wpK").style.color = ko ? "" : "var(--sub)";
   // 문맥 — 그 단어가 들어있는 문장의 한국어 번역을 함께 보여 준다
   const cx=$("wpCx"); const c=rdBookCur&&rdBookCur.chapters[rdChapCur];
