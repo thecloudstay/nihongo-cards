@@ -1,0 +1,82 @@
+name: assemble-ak1
+
+on:
+  push:
+    paths:
+      - '.github/workflows/assemble-ak1.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble, decode and verify
+        run: |
+          python3 - <<'PY'
+          import base64, bz2, hashlib, glob, os, sys
+
+          EXPECT_SIZE = 87154
+          EXPECT_SHA1 = "d0b05ac1c154a1ac979da319ae50d8c288a54146"
+
+          parts = sorted(glob.glob("_b64ak1/part*.txt"))
+          if len(parts) != 6:
+              sys.exit("FAIL: expected 6 parts, found %d -> %s" % (len(parts), parts))
+          print("parts:", parts)
+
+          buf = []
+          for p in parts:
+              with open(p, "rb") as f:
+                  raw = f.read()
+              # 모든 공백/개행 제거 (트레일링 뉴라인 유실/추가 문제 회피)
+              cleaned = b"".join(raw.split())
+              print("  %s raw=%d cleaned=%d" % (p, len(raw), len(cleaned)))
+              buf.append(cleaned)
+          b64 = b"".join(buf)
+          print("total b64 len:", len(b64))
+
+          comp = base64.b64decode(b64)
+          print("bz2 len:", len(comp))
+          data = bz2.decompress(comp)
+
+          size = len(data)
+          sha1 = hashlib.sha1(b"blob %d\0" % size + data).hexdigest()
+          print("size:", size, "expected:", EXPECT_SIZE)
+          print("blob sha1:", sha1, "expected:", EXPECT_SHA1)
+
+          if size != EXPECT_SIZE:
+              sys.exit("FAIL: size mismatch")
+          if sha1 != EXPECT_SHA1:
+              sys.exit("FAIL: blob sha1 mismatch")
+
+          os.makedirs("_patch", exist_ok=True)
+          with open("_patch/ak1_chapters.json", "wb") as f:
+              f.write(data)
+          print("OK: wrote _patch/ak1_chapters.json")
+          PY
+
+      - name: Re-verify written file
+        run: |
+          python3 - <<'PY'
+          import hashlib, sys
+          with open("_patch/ak1_chapters.json", "rb") as f:
+              d = f.read()
+          s = hashlib.sha1(b"blob %d\0" % len(d) + d).hexdigest()
+          print("on-disk size:", len(d), "sha1:", s)
+          assert len(d) == 87154, "size mismatch on disk"
+          assert s == "d0b05ac1c154a1ac979da319ae50d8c288a54146", "sha1 mismatch on disk"
+          print("VERIFIED")
+          PY
+
+      - name: Cleanup and commit
+        run: |
+          rm -rf _b64ak1
+          rm -f .github/workflows/assemble-ak1.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "content: 안도VS구마 1부 재번역 6장 260문장"
+          git push
