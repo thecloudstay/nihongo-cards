@@ -1,0 +1,103 @@
+name: split-sentences
+on:
+  push:
+    paths:
+      - '.github/workflows/split-sentences.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: split
+        run: |
+          python3 - <<'EOF'
+          # 한 칸에 여러 문장이 들어 있어 읽기 힘든 것을 문장 단위로 나눈다.
+          # 원칙: 일본어 조각 수와 한국어 조각 수가 정확히 같을 때만 나눈다.
+          #       (억지로 맞추면 짝이 어긋난다 — 1부에서 실제로 그랬다)
+          import json, io, re, hashlib, collections
+
+          RUBY = re.compile(r'\{([^|{}]+)\|([^|{}]+)\}')
+          pl = lambda s: RUBY.sub(r'\1', s)
+
+          def pieces_jp(m):
+              out = []; buf = ""; i = 0
+              while i < len(m):
+                  if m[i] == '{':
+                      j = m.index('}', i); buf += m[i:j+1]; i = j+1; continue
+                  ch = m[i]; buf += ch; i += 1
+                  if ch in '。！？':
+                      while i < len(m) and m[i] in '」』））"\'':
+                          buf += m[i]; i += 1
+                      out.append(buf); buf = ""
+              if buf.strip(): out.append(buf)
+              return out
+
+          CLOSE = '”"\'』」)）'
+          def pieces_ko(k):
+              k = (k or '').strip()
+              if not k: return []
+              parts = [p for p in re.split(r'(?<=[.!?])\s*', k) if p != '']
+              out = []
+              for p in parts:
+                  if out and p and all(c in CLOSE for c in p.strip()):
+                      out[-1] += p.strip(); continue
+                  if out and p and p[0] in CLOSE:
+                      out[-1] += p[0]; p = p[1:].strip()
+                      if not p: continue
+                  out.append(p.strip())
+              return [x for x in out if x]
+
+          MIN_LEN, MIN_PIECE = 60, 10
+          B = json.load(io.open('books.json', encoding='utf-8'))
+          st = collections.Counter()
+          for b in B:
+              for c in b['chapters']:
+                  ns = []
+                  for s in c['s']:
+                      t = pl(s['jp']); pj = pieces_jp(s['jp'])
+                      ok = len(t) >= MIN_LEN and len(pj) >= 2
+                      if ok:
+                          pk = pieces_ko(s.get('ko'))
+                          ok = len(pk) == len(pj)
+                          if ok:
+                              mj = []; mk = []
+                              for x, y in zip(pj, pk):
+                                  if mj and len(pl(x).strip()) < MIN_PIECE:
+                                      mj[-1] += x; mk[-1] += " " + y
+                                  else:
+                                      mj.append(x); mk.append(y)
+                              while len(mj) > 1 and len(pl(mj[0]).strip()) < MIN_PIECE:
+                                  mj[1] = mj[0] + mj[1]; mk[1] = mk[0] + " " + mk[1]
+                                  mj.pop(0); mk.pop(0)
+                              pj, pk = mj, mk
+                              ok = len(pj) >= 2
+                      if not ok:
+                          ns.append(s); st['그대로'] += 1; continue
+                      for jx, kx in zip(pj, pk):
+                          d = dict(s); d['jp'] = jx.strip(); d['ko'] = kx
+                          ns.append(d)
+                      st['분할'] += 1; st['늘어난 문장'] += len(pj) - 1
+                  c['s'] = ns
+          print(dict(st))
+
+          io.open('books.json', 'w', encoding='utf-8').write(
+              json.dumps(B, ensure_ascii=False, separators=(',', ':')))
+          raw = io.open('books.json', 'rb').read()
+          got = hashlib.sha1(b"blob %d\0" % len(raw) + raw).hexdigest()
+          exp = 'f916345059d68f5afe6925481249e2c9d838cc67'
+          print('문장', sum(len(c['s']) for x in B for c in x['chapters']))
+          print('books.json', got, 'OK' if got == exp else 'MISMATCH expected ' + exp)
+          if got != exp:
+              raise SystemExit("sha1 불일치 — 커밋하지 않음")
+          EOF
+      - name: commit
+        run: |
+          rm -f .github/workflows/split-sentences.yml
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: 한 칸에 뭉쳐 있던 긴 문장을 문장 단위로 분리 (최대 2285자 → 368자)"
+          git push
