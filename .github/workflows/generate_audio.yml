@@ -5,6 +5,9 @@
 # 실행: Actions 탭 > generate-audio > Run workflow (수동)
 #       또는 CSV·books.json·kids.json 이 바뀌면 자동 실행
 #       (이 파일 자체를 고쳐 커밋해도 실행된다 — 클릭할 수단이 없을 때의 통로)
+#
+# ⚠ 문장을 쪼개거나 번역을 고치면 텍스트가 바뀌므로 mp3 해시도 바뀐다.
+#    콘텐츠를 손댄 날은 반드시 이 워크플로를 한 번 돌려 커버리지를 다시 채울 것.
 
 name: generate-audio
 
@@ -24,6 +27,7 @@ permissions:
 jobs:
   tts:
     runs-on: ubuntu-latest
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
 
