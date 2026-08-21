@@ -595,12 +595,12 @@
   font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
 .wk-tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 /* 화면이 짧으면 쓰는 칸이 먼저 줄어든다 — 버튼이 잘려서 못 누르는 일이 없게 */
-.wk-box{position:relative;width:min(80%,37vh);margin:0 auto;aspect-ratio:1/1;border-radius:16px;background:var(--bg);
+.wk-box{position:relative;width:min(72%,33vh);margin:0 auto;aspect-ratio:1/1;border-radius:16px;background:var(--bg);
   border:2px solid var(--line);overflow:hidden;touch-action:none}
 .wk-ok{display:block;width:100%;margin-top:9px;padding:12px 0;border:none;border-radius:12px;
   background:var(--ok);color:#fff;font-size:14px;font-weight:700;cursor:pointer}
 .wk-tpl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
-  font-size:min(46vw,180px);line-height:1;color:var(--ink);opacity:.14;font-weight:500;
+  font-size:96px;line-height:1;color:var(--ink);opacity:.14;font-weight:500;
   font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP","Meiryo",sans-serif;transition:opacity .15s}
 .wk-tpl.off{opacity:0}
 .wk-cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
@@ -2558,7 +2558,9 @@ function speakWSP(t){
       if(!_jaVoice)_jaVoice=pickJaVoice(); if(_jaVoice)u.voice=_jaVoice;
       u.onend=res; u.onerror=res;
       speechSynthesis.speak(u);
-      setTimeout(res,9000);
+      // ⚠ 9초 고정이면 긴 문장은 아직 읽는 중인데 다음 문장이 시작돼 소리가 겹친다.
+      //    안전장치도 문장 길이에 비례시킨다.
+      setTimeout(res, Math.max(9000, String(t).length*280 + 4000));
     }catch(e){ res(); }
   });
 }
@@ -2566,7 +2568,10 @@ function speakP(t){
   return new Promise(res=>{
     t=String(t||""); if(!t||MUTED) return res();
     let fired=false, guard=0;
-    const fin=()=>{ if(!fired){ fired=true; clearTimeout(guard); res(); } };
+    // 안전장치가 먼저 터졌는데 소리가 아직 나고 있으면, 다음 문장과 겹치기 전에 끊는다
+    const fin=()=>{ if(!fired){ fired=true; clearTimeout(guard);
+      try{ if(_sharedAudio && !_sharedAudio.paused) _sharedAudio.pause(); }catch(e){}
+      res(); } };
     // ⚠ 안전장치는 "문장 길이에 비례"해야 한다. 예전엔 9초 고정이라
     //    책의 긴 문장에서 재생 도중에 다음 문장으로 넘어가 "이어 듣기가 끊기는" 증상이 났음.
     const fallbackMs = Math.max(9000, t.length*260 + 4000);
@@ -2574,6 +2579,9 @@ function speakP(t){
       const h=AUDIO_MANIFEST[t]||AUDIO_MANIFEST[t.split("/")[0]];
       if(h){
         try{
+          // 앞 문장이 브라우저 합성음으로 읽히는 중일 수 있다 → 겹치지 않게 먼저 끊는다.
+          // (음성 파일이 있는 문장과 없는 문장이 섞이면 mp3 와 합성음이 동시에 나던 원인)
+          try{ speechSynthesis.cancel(); }catch(e){}
           const a=_getAudioEl(); const src="audio/"+h+".mp3";
           const srcChanged = (!a.src || a.src.indexOf(src)===-1);
           if(srcChanged){ a.src=src; a.load(); }
@@ -2597,6 +2605,8 @@ function speakP(t){
         }catch(e){}
       }
     }
+    // 합성음으로 읽기 전에, 앞 문장 mp3 가 아직 울리고 있으면 끊는다
+    try{ if(_sharedAudio && !_sharedAudio.paused) _sharedAudio.pause(); }catch(e){}
     speakWSP(t).then(fin); guard=setTimeout(fin,fallbackMs);
   });
 }
@@ -2692,8 +2702,19 @@ function speak(t){
         return;
       }catch(e){}
     }
+    else audioReheal();     // 매니페스트가 콘텐츠보다 낡았을 수 있다 → 조용히 한 번 다시 받는다
   }
   speakWS(t);
+}
+// 콘텐츠를 새로 배포한 직후, 기기에 남은 옛 매니페스트 때문에 mp3 를 못 찾는 일이 있었다.
+// (모바일에서만 티가 났다 — 브라우저 합성음 품질이 낮아서.) 못 찾으면 한 번만 새로 받아 스스로 고친다.
+let _healed=false;
+async function audioReheal(){
+  if(_healed) return; _healed=true;
+  try{
+    const r=await fetch("audio_manifest.json?"+Date.now(),{cache:"reload"});
+    if(r.ok) AUDIO_MANIFEST=await r.json();
+  }catch(e){}
 }
 // 브라우저 음성 폴백 — 가능한 최상의 일본어 음성 선택(구글 > 애플 자연음 > 기타 ja)
 let _jaVoice=null;
@@ -3866,6 +3887,9 @@ function wkFit(){
   cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
   wkCtx=cv.getContext("2d"); wkCtx.setTransform(dpr,0,0,dpr,0,0);
   wkCtx.lineCap="round"; wkCtx.lineJoin="round";
+  // 본보기 글자는 뷰포트가 아니라 **칸 크기**에 맞춘다.
+  // vw 로 잡으면 태블릿처럼 화면이 넓을 때 글자가 칸 밖으로 삐져나온다.
+  const tpl=$("wkTpl"); if(tpl) tpl.style.fontSize=Math.round(r.width*0.62)+"px";
   wkRedraw(); return true;
 }
 function wkFitSoon(){ if(wkFit()) return; requestAnimationFrame(()=>{ if(!wkFit()) setTimeout(wkFit,140); }); }

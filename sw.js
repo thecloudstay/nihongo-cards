@@ -1,10 +1,15 @@
 // 일본어 카드모음 SW
 //  · HTML  → 네트워크 우선 (배포 즉시 반영)
 //  · 오디오 → 캐시 우선 (파일명이 해시라 불변)
-//  · 큰 데이터(books/cards) → stale-while-revalidate
-//      books.json이 3.6MB로 커져서, 매번 기다렸다 받으면 읽기 화면이 느리다.
-//      캐시본을 즉시 내주고 뒤에서 조용히 갱신한다(다음 방문에 반영).
-const VER = "v2";
+//  · 큰 데이터(books/cards/매니페스트) → 네트워크 우선, 끊겼을 때만 캐시
+//
+// ⚠ v2 는 books.json·audio_manifest.json 을 stale-while-revalidate 로 내줬다.
+//    그 결과 **한 쪽만 먼저 갱신되는 순간 짝이 깨져** 음성이 안 붙었다.
+//    (문장 텍스트가 바뀌면 mp3 해시도 바뀌는데, 매니페스트가 옛것이면 못 찾는다.)
+//    PC 는 개발 중 캐시를 자주 지워 드러나지 않고, 모바일에서만 "발음이 이상하다"로 나타났다.
+//    두 파일은 항상 같은 시점의 것이어야 하므로 네트워크 우선으로 되돌린다.
+//    ETag 재검증이라 안 바뀌었으면 304(0바이트)로 끝나 느려지지 않는다.
+const VER = "v3";
 const AUDIO_CACHE = "audio-" + VER;
 const SHELL_CACHE = "shell-" + VER;
 const DATA_CACHE  = "data-"  + VER;
@@ -25,7 +30,7 @@ self.addEventListener("fetch", e => {
   if (url.origin !== location.origin) return;              // 외부(결제 등) 미개입
   if (e.request.method !== "GET") return;
 
-  // ① 오디오 — 캐시 우선
+  // ① 오디오 — 캐시 우선 (파일명이 내용 해시라 한 번 받으면 영원히 유효)
   if (url.pathname.startsWith("/audio/")) {
     e.respondWith(
       caches.open(AUDIO_CACHE).then(c => c.match(e.request).then(hit =>
@@ -35,16 +40,13 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // ② 큰 데이터 — 캐시 즉시 응답 + 백그라운드 갱신 (stale-while-revalidate)
+  // ② 큰 데이터 — 네트워크 우선, 실패(오프라인)할 때만 캐시
   if (DATA_FILES.includes(url.pathname)) {
     e.respondWith(
-      caches.open(DATA_CACHE).then(c => c.match(e.request).then(hit => {
-        const net = fetch(e.request).then(res => {
-          if (res.ok) c.put(e.request, res.clone());
-          return res;
-        }).catch(() => hit);
-        return hit || net;                                  // 캐시가 있으면 기다리지 않는다
-      }))
+      fetch(e.request).then(res => {
+        if (res.ok) { const copy = res.clone(); caches.open(DATA_CACHE).then(c => c.put(e.request, copy)); }
+        return res;
+      }).catch(() => caches.open(DATA_CACHE).then(c => c.match(e.request)))
     );
     return;
   }
