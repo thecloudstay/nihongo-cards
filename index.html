@@ -4678,27 +4678,42 @@ function rdSyncNextBtn(){
 //   · 연속(🔁) — 장이 끝나면 다음 장을 자동으로 열고 계속 읽음
 //  둘 다 「⏸ 멈춤」으로 언제든 즉시 중단. 멈춘 자리(장)는 이어보기에 기록된다.
 let _rdPlayTok=0, _rdPlaying=false, _rdAuto=false;
-let rdCont = (()=>{ try{ return localStorage.getItem("rd_cont")==="1"; }catch(e){ return false; } })();
+//   · 반복(🔂1) — 이 장을 끝까지 읽고 처음으로 돌아가 계속 되풀이 (듣고 또 듣기용)
+// 0 장별 · 1 연속 · 2 이 장 반복
+const RD_MODES=[
+  {k:0, t:"🔂 장별",   tip:"이 장만 읽고 멈춥니다",        say:"🔂 이 장만 읽고 멈춰요"},
+  {k:1, t:"🔁 연속",   tip:"책 끝까지 이어서 읽습니다",     say:"🔁 책 끝까지 이어서 읽어요"},
+  {k:2, t:"🔄 반복",   tip:"이 장을 계속 되풀이해 읽습니다", say:"🔄 이 장을 계속 반복해요"}
+];
+let rdPlayMode = (()=>{ try{
+  const v=localStorage.getItem("rd_mode");
+  if(v!=null) return Math.max(0,Math.min(2,parseInt(v,10)||0));
+  return localStorage.getItem("rd_cont")==="1" ? 1 : 0;   // 예전 설정 이어받기
+}catch(e){ return 0; } })();
 function rdSyncContBtn(){
   const b=$("rrCont"); if(!b) return;
-  b.classList.toggle("on", rdCont);
-  b.textContent = rdCont ? "🔁 연속" : "🔂 장별";
-  b.title = rdCont ? "책 끝까지 이어서 읽습니다" : "이 장만 읽고 멈춥니다";
+  const m=RD_MODES[rdPlayMode];
+  b.classList.toggle("on", rdPlayMode!==0);
+  b.textContent=m.t; b.title=m.tip;
 }
 function rdToggleCont(){
-  rdCont=!rdCont;
-  try{ localStorage.setItem("rd_cont", rdCont?"1":"0"); }catch(e){}
+  rdPlayMode=(rdPlayMode+1)%3;
+  try{ localStorage.setItem("rd_mode", String(rdPlayMode)); }catch(e){}
   rdSyncContBtn();
-  toast(rdCont ? "🔁 책 끝까지 이어서 읽어요" : "🔂 이 장만 읽고 멈춰요");
+  toast(RD_MODES[rdPlayMode].say);
 }
 async function rdPlayAll(){
   if(_rdPlaying){ rdStopPlay(); return; }         // ⚠ 예전엔 다시 누르면 두 번째 재생이 겹쳐 소리가 끊겼음
   const bk=rdBookCur; if(!bk) return;
   const my=++_rdPlayTok; _rdPlaying=true;
+  let round=0;
   const label=()=> $("rrPlay").textContent =
-    (rdCont && bk.chapters.length>1) ? `⏸ 멈춤 (${rdChapCur+1}/${bk.chapters.length}장)` : "⏸ 멈춤";
+    rdPlayMode===2 ? (round>1 ? `⏸ 멈춤 (${round}번째)` : "⏸ 멈춤 (반복)")
+    : (rdPlayMode===1 && bk.chapters.length>1) ? `⏸ 멈춤 (${rdChapCur+1}/${bk.chapters.length}장)`
+    : "⏸ 멈춤";
   label();
   while(true){
+    round++; if(rdPlayMode===2) label();
     const c=bk.chapters[rdChapCur];
     const els=[...$("rrBody").querySelectorAll(".rd-s")];
     for(let i=0;i<c.s.length;i++){
@@ -4715,7 +4730,16 @@ async function rdPlayAll(){
       await new Promise(r=>setTimeout(r,180));
     }
     // ── 장 끝 ──
-    if(!rdCont || rdChapCur+1 >= bk.chapters.length) break;
+    if(rdPlayMode===2){                       // 이 장을 처음부터 다시
+      if(my!==_rdPlayTok) return;
+      rdKaraClear();
+      els.forEach(e=>{ e.classList.remove("cur"); if(rdKoMode==="auto") e.classList.remove("open"); });
+      rdToTop();
+      await new Promise(r=>setTimeout(r,900));
+      if(my!==_rdPlayTok) return;
+      continue;
+    }
+    if(rdPlayMode!==1 || rdChapCur+1 >= bk.chapters.length) break;
     if(my!==_rdPlayTok) return;
     _rdAuto=true;                 // openChapter 안의 rdStopPlay 가 재생을 끊지 않도록
     openChapter(rdChapCur+1);
@@ -4728,7 +4752,7 @@ async function rdPlayAll(){
   const done = rdChapCur+1 >= bk.chapters.length;
   rdStopPlay();
   rdToTop();                      // 다 읽었으면 맨 위로 — 다시 읽거나 시험 보러 가기 편하게
-  if(rdCont && done) toast("📖 책을 끝까지 다 읽었어요 🎊");
+  if(rdPlayMode===1 && done) toast("📖 책을 끝까지 다 읽었어요 🎊");
 }
 // 읽기 끝 → 본문 맨 위로. 페이지 스크롤과 본문 스크롤 양쪽을 다 올린다
 //  (기기·화면에 따라 스크롤 주체가 달라서 한쪽만 올리면 그대로 남아 있는 경우가 있다)
