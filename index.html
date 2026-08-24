@@ -3978,7 +3978,7 @@ function wkMount(word){
   if(cv && !cv._wired){
     cv._wired=true;
     cv.addEventListener("pointerdown",e=>{ e.preventDefault(); try{cv.setPointerCapture(e.pointerId);}catch(_){}
-      if(!wkCtx) wkFit(); wkDrawing=true; wkStrokes.push({w:10,p:[wkPt(e)]}); wkRedraw(); });
+      if(!wkCtx) wkFit(); wkDrawing=true; wkStrokes.push({w:5,p:[wkPt(e)]}); wkRedraw(); });
     cv.addEventListener("pointermove",e=>{ if(!wkDrawing) return; e.preventDefault();
       wkStrokes[wkStrokes.length-1].p.push(wkPt(e)); wkRedraw(); });
     ["pointerup","pointercancel","pointerleave"].forEach(t=>cv.addEventListener(t,()=>{wkDrawing=false;}));
@@ -4898,10 +4898,13 @@ function rdWordCards(){
 // ── 챕터 시험: 빈칸 + 내용이해 ──
 function rdStartQuiz(){
   const c=rdBookCur.chapters[rdChapCur];
-  const cz=c.cloze.map(z=>({ask:`<span style="font-size:12px;color:var(--sub);font-weight:700">빈칸에 알맞은 말은?</span><br><span style="font-size:18px;line-height:1.7">${z.jp}</span><br><span style="font-size:12.5px;color:var(--sub);margin-top:6px;display:inline-block">${z.ko}</span>`,
-      opts:z.opts, a:z.a, say:z.a, why:z.ko}));
-  const qz=c.quiz.map(q=>({ask:`<span style="font-size:12px;color:var(--sub);font-weight:700">내용 이해</span><br><span style="font-size:17px;line-height:1.7">${q.q}</span><br><span style="font-size:12.5px;color:var(--sub);margin-top:6px;display:inline-block">${q.q_ko}</span>`,
-      opts:q.opts, a:q.a, say:q.a, why:q.q_ko}));
+  // 한국어 힌트가 없는 문제(`ko`/`q_ko` 미제공)는 일본어만 보여 준다 — 상급 독자용.
+  //   해설은 `why` 에 일본어로 담아 두고, 답을 고른 뒤에만 나온다.
+  const sub=t => t ? `<br><span style="font-size:12.5px;color:var(--sub);margin-top:6px;display:inline-block">${t}</span>` : "";
+  const cz=c.cloze.map(z=>({ask:`<span style="font-size:12px;color:var(--sub);font-weight:700">빈칸에 알맞은 말은?</span><br><span style="font-size:18px;line-height:1.7">${z.jp}</span>${sub(z.ko)}`,
+      opts:z.opts, a:z.a, say:z.a, why:z.why||z.ko||""}));
+  const qz=c.quiz.map(q=>({ask:`<span style="font-size:12px;color:var(--sub);font-weight:700">내용 이해</span><br><span style="font-size:17px;line-height:1.7">${q.q}</span>${sub(q.q_ko)}`,
+      opts:q.opts, a:q.a, say:q.a, why:q.why||q.q_ko||""}));
   rqList=[...shuffle(cz), ...shuffle(qz)];
   rdRunQuiz("✏️ 챕터 시험", true);
 }
