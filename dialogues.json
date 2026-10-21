@@ -1,0 +1,35 @@
+[
+  {
+    "id": "kaze",
+    "title_ko": "감기에 걸렸어",
+    "title_jp": "風邪をひいたみたい",
+    "lv": "N4",
+    "roles": {"F": "여자", "M": "남자"},
+    "lines": [
+      {"w": "F", "jp": "{顔色|かおいろ}{悪|わる}いね。",
+       "ko": "안색이 안 좋네.",
+       "ro": "Kaoiro warui ne."},
+      {"w": "M", "jp": "{風邪|かぜ}をひいたみたい。",
+       "ko": "감기에 걸린 것 같아.",
+       "ro": "Kaze o hiita mitai."},
+      {"w": "F", "jp": "{大丈夫|だいじょうぶ}？{薬|くすり}は{飲|の}んだ？",
+       "ko": "괜찮아? 약은 먹었어?",
+       "ro": "Daijōbu? Kusuri wa nonda?"},
+      {"w": "M", "jp": "うん、さっき{薬局|やっきょく}に{行|い}って、{薬|くすり}を{買|か}って{飲|の}んだよ。でも、まだ{熱|ねつ}があって、{体|からだ}の{調子|ちょうし}が{悪|わる}いんだ。",
+       "ko": "응, 아까 약국에 가서 약을 사서 먹었어. 그래도 아직 열이 있고 몸 상태가 안 좋아.",
+       "ro": "Un, sakki yakkyoku ni itte, kusuri o katte nonda yo. Demo, mada netsu ga atte, karada no chōshi ga warui n da."},
+      {"w": "F", "jp": "じゃ、{早|はや}く{病院|びょういん}に{行|い}った{方|ほう}がいいと{思|おも}うけど。",
+       "ko": "그럼 빨리 병원에 가는 게 좋을 것 같은데.",
+       "ro": "Ja, hayaku byōin ni itta hō ga ii to omou kedo."},
+      {"w": "M", "jp": "{今日|きょう}{日曜日|にちようび}だから、{明日|あした}も{具合|ぐあい}が{悪|わる}かったら{病院|びょういん}に{行|い}くよ。",
+       "ko": "오늘 일요일이니까, 내일도 몸이 안 좋으면 병원에 갈게.",
+       "ro": "Kyō nichiyōbi da kara, ashita mo guai ga warukattara byōin ni iku yo."},
+      {"w": "F", "jp": "それじゃ、お{湯|ゆ}を{飲|の}んで、ちょっと{寝|ね}たらどう？",
+       "ko": "그럼 따뜻한 물을 마시고 잠깐 자는 게 어때?",
+       "ro": "Sore ja, oyu o nonde, chotto netara dō?"},
+      {"w": "M", "jp": "うん、お{湯|ゆ}は{飲|の}んでみるね。でも、{明日|あした}まで{出|だ}さなければならない{宿題|しゅくだい}があるから、{終|お}わってからじゃないと{寝|ね}られないんだ。",
+       "ko": "응, 따뜻한 물은 마셔 볼게. 그런데 내일까지 내야 하는 숙제가 있어서, 끝내고 나서가 아니면 잘 수가 없어.",
+       "ro": "Un, oyu wa nonde miru ne. Demo, ashita made dasanakereba naranai shukudai ga aru kara, owatte kara ja nai to nerarenai n da."}
+    ]
+  }
+]

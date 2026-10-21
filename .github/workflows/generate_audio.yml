@@ -19,6 +19,7 @@ on:
       - "books.json"
       - "kids.json"
       - "cards_all.json"
+      - "dialogues.json"
       - ".github/workflows/generate_audio.yml"
 
 permissions:
@@ -44,6 +45,6 @@ jobs:
         run: |
           git config user.name "audio-bot"
           git config user.email "actions@github.com"
-          git add audio/ audio_manifest.json
+          git add audio/ audio_manifest.json dialogues_audio.json
           git diff --cached --quiet || git commit -m "chore: generate audio (incremental)"
           git push

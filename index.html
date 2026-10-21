@@ -952,6 +952,29 @@
 .sp-tools button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .sp-nosr{margin:12px 16px 0;padding:12px 14px;border-radius:12px;background:var(--soft);
   font-size:12.5px;color:var(--sub);line-height:1.6;display:none}
+/* ══ 남녀 대화 반복 읽기 ══ */
+.dl-ctrl{padding:10px 16px 0;display:flex;flex-direction:column;gap:7px}
+.dl-row{display:flex;align-items:center;gap:6px}
+.dl-row>span{flex:0 0 56px;font-size:12px;font-weight:800;color:var(--sub)}
+.dl-row button{flex:1;min-width:0;padding:8px 2px;border:1px solid var(--line);background:var(--card);
+  border-radius:11px;font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden}
+.dl-row button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.dl-prog{text-align:center;font-size:12.5px;font-weight:800;color:var(--sub);padding:10px 16px 0;min-height:28px}
+.dl-prog.mine{color:var(--accent)}
+.dl-list{padding:8px 16px 4px;display:flex;flex-direction:column;gap:10px}
+.dl-b{max-width:90%;padding:10px 13px 11px;border-radius:16px;border:1px solid var(--line);background:var(--card);
+  cursor:pointer;transition:box-shadow .15s,transform .15s}
+.dl-b.f{align-self:flex-start;border-top-left-radius:4px;background:#fff4ef;border-color:#fbd9cc}
+.dl-b.m{align-self:flex-end;border-top-right-radius:4px;background:var(--rr-bg);border-color:#cfdcf7}
+.dl-b .who{font-size:11px;font-weight:800;margin-bottom:2px;color:var(--sub)}
+.dl-b.f .who{color:var(--accent)} .dl-b.m .who{color:var(--rr-d)}
+.dl-b.mine{border-style:dashed}
+.dl-b.mine .who::after{content:" · 내 차례"}
+.dl-b.now{box-shadow:0 0 0 2px var(--ink);transform:scale(1.015)}
+.dl-jp{font-size:17px;font-weight:700;line-height:2;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.dl-jp ruby rt{font-size:.5em;color:var(--accent);font-weight:600}
+.dl-ro{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.5}
+.dl-ko{font-size:13px;opacity:.78;margin-top:5px;line-height:1.5}
 /* 읽기 목록 섹션 헤더 */
 /* ⚠ v5.3 — overflow-x:auto 인데 6개 버튼이 32px 넘쳐 목록 한가운데 가로 스크롤바가 보였다.
      6열 grid 한 줄로 정리한다. */
@@ -1710,6 +1733,22 @@
 </div>
 
 
+<!-- ═══ 남녀 대화 반복 읽기 ═══ -->
+<div class="screen" id="dlScreen">
+  <div class="top">
+    <button class="back" onclick="show('home')">‹</button>
+    <span class="title">남녀 대화 반복 읽기</span>
+    <span class="count" id="dlCount"></span>
+  </div>
+  <div class="cj-forms" id="dlPick"></div>
+  <div class="dl-ctrl" id="dlCtrl"></div>
+  <div class="dl-prog" id="dlProg"></div>
+  <div class="dl-list" id="dlList"></div>
+  <div class="rd-foot">
+    <button class="pri" id="dlGo" onclick="dlToggle()">▶ 재생</button>
+  </div>
+</div>
+
 <!-- ═══ 어린이: 카테고리 ═══ -->
 <div class="screen" id="kcScreen">
   <div class="top">
@@ -2277,6 +2316,7 @@ const CGRID = [
 
   {ic:"🗣", ko:"말하기", sub:"발음 채점 · 청해",
    tools:[["🎤","따라 말하기 (발음 채점)","openSpeak()"],
+          ["💬","남녀 대화 반복 읽기","openDlg()"],
           ["🎧","청해 연습","openListenPick()"],
           ["🔗","짝 연결","openMt()"]]},
 ];
@@ -3520,6 +3560,7 @@ function show(id){
   if(typeof ktTimer!=="undefined" && id!=="ktScreen") clearInterval(ktTimer);
   if(typeof svTimer!=="undefined" && id!=="svScreen") clearInterval(svTimer);
   if(id!=="spScreen" && typeof spRec!=="undefined" && spRec && spRecOn){ try{spRec.stop();}catch(e){} spRecOn=false; }
+  if(id!=="dlScreen"){ try{ dlStop(); }catch(e){} }      // 대화 반복 재생은 화면을 떠나면 멈춘다
   if(typeof rdStopPlay==="function" && id!=="rdRead") rdStopPlay();
   if(id!=="vcScreen" && typeof _vcTok!=="undefined"){ _vcTok++; _vcOn=false; }
   if(typeof closeWordPop==="function" && id!=="rdRead") closeWordPop();
@@ -5717,6 +5758,205 @@ async function openSpeak(){
   $("spLvB").innerHTML=lvBarHtml("spNext"); renderSpSrc(); spNext();
 }
 function renderSpTile(){ const t=$("tSp"); if(!t) return; const b=spBest(); t.textContent = b?`최고 ${b}연속`:"따라 말하기"; }
+
+// ══════════ 💬 남녀 대화 반복 읽기 — 여자·남자 목소리로 번갈아 읽어 주고, 전체/줄 단위로 반복 ══════════
+//  데이터: dialogues.json (후리가나 마크업 {표기|읽기})  ·  음성: dialogues_audio.json 의 "F|문장" / "M|문장" → audio/해시.mp3
+//  음성 파일은 저장소 작업(generate_audio)이 대화가 바뀔 때마다 만든다. 아직 없으면 브라우저 음성(남녀 높낮이만 다르게)으로 대신한다.
+let DLG=null, DLG_AUDIO=null, dlCur=null, dlTok=0, dlOn=false, dlActive=false, _dlAudio=null, _dlRes=null;
+const DL_DEF={role:"all", loop:3, rep:1, slow:0, ruby:1, ro:0, ko:1};
+let dlP=(()=>{ try{ return Object.assign({},DL_DEF,JSON.parse(localStorage.getItem("dl_pref")||"{}")); }catch(e){ return Object.assign({},DL_DEF); } })();
+function dlSave(){ try{ localStorage.setItem("dl_pref",JSON.stringify(dlP)); }catch(e){} }
+function dlEsc(t){ return String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function dlRuby(t){ return dlEsc(t).replace(/\{([^|{}]+)\|([^|{}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>"); }
+function dlWho(l){ return l && l.w==="M" ? "M" : "F"; }
+
+async function dlLoad(){
+  if(DLG) return DLG;
+  try{
+    const [a,b]=await Promise.all([
+      fetch("dialogues.json",{cache:"no-cache"}),
+      fetch("dialogues_audio.json",{cache:"no-cache"}).catch(()=>null)
+    ]);
+    if(a.ok) DLG=await a.json();
+    if(b && b.ok) DLG_AUDIO=await b.json();
+  }catch(e){}
+  if(!DLG_AUDIO) DLG_AUDIO={};
+  return DLG;
+}
+async function openDlg(id){
+  show("dlScreen"); dlStop();
+  $("dlPick").style.display="none"; $("dlCtrl").innerHTML=""; $("dlProg").textContent="";
+  $("dlList").innerHTML='<div style="text-align:center;color:var(--sub);padding:44px 0;font-size:13.5px">대화를 불러오는 중…</div>';
+  await dlLoad();
+  if(!DLG || !DLG.length){
+    $("dlList").innerHTML='<div style="text-align:center;color:var(--sub);padding:44px 0;font-size:13.5px">대화를 불러오지 못했어요. 잠시 뒤 다시 열어 주세요.</div>';
+    return;
+  }
+  dlCur = DLG.find(d=>d.id===id) || (dlCur && DLG.find(d=>d.id===dlCur.id)) || DLG[0];
+  dlRender();
+}
+function dlRender(){
+  $("dlCount").textContent=dlCur.lines.length+"줄";
+  const pk=$("dlPick");
+  if(DLG.length>1){
+    pk.style.display="";
+    pk.innerHTML=DLG.map(d=>`<button class="${d.id===dlCur.id?"on":""}" onclick='openDlg(${JSON.stringify(d.id)})'>${dlEsc(d.title_ko)}</button>`).join("");
+  } else pk.style.display="none";
+  dlRenderCtrl(); dlRenderList();
+}
+const DL_OPTS=[
+  ["role","역할",[["all","전체 듣기"],["F","여자 역 연습"],["M","남자 역 연습"]]],
+  ["loop","전체 반복",[[1,"1회"],[3,"3회"],[5,"5회"],[0,"무한"]]],
+  ["rep","줄 반복",[[1,"1회"],[2,"2회"],[3,"3회"]]],
+  ["slow","속도",[[0,"보통"],[1,"느리게"]]]
+];
+const DL_VIEW=[["ruby","ふりがな"],["ro","로마자"],["ko","한국어"]];
+function dlRenderCtrl(){
+  $("dlCtrl").innerHTML =
+    DL_OPTS.map(([k,label,opts])=>`<div class="dl-row"><span>${label}</span>${
+      opts.map(([v,t])=>`<button class="${dlP[k]===v?"on":""}" onclick='dlSet(${JSON.stringify(k)},${JSON.stringify(v)})'>${t}</button>`).join("")
+    }</div>`).join("") +
+    `<div class="dl-row"><span>보기</span>${
+      DL_VIEW.map(([k,t])=>`<button class="${dlP[k]?"on":""}" onclick='dlSet(${JSON.stringify(k)},${dlP[k]?0:1})'>${t}</button>`).join("")
+    }</div>`;
+}
+function dlSet(k,v){
+  dlP[k]=v; dlSave(); dlRenderCtrl();
+  if(k==="role"||k==="ruby"||k==="ro"||k==="ko"){ const on=dlNowIdx; dlRenderList(); if(on>=0) dlMark(on,true); }
+}
+let dlNowIdx=-1;
+function dlRenderList(){
+  const roles=dlCur.roles||{};
+  $("dlList").innerHTML=dlCur.lines.map((l,i)=>{
+    const w=dlWho(l), mine=dlP.role===w;
+    return `<div class="dl-b ${w==="F"?"f":"m"}${mine?" mine":""}" id="dlb${i}" onclick="dlTapLine(${i})">
+      <div class="who">${dlEsc(roles[w]||(w==="F"?"여자":"남자"))}</div>
+      <div class="dl-jp">${dlP.ruby?dlRuby(l.jp):dlEsc(rdPlain(l.jp))}</div>
+      ${dlP.ro && l.ro ? `<div class="dl-ro">${dlEsc(l.ro)}</div>` : ""}
+      ${dlP.ko && l.ko ? `<div class="dl-ko">${dlEsc(l.ko)}</div>` : ""}
+    </div>`;
+  }).join("");
+}
+function dlMark(i,keepScroll){
+  dlNowIdx=i;
+  document.querySelectorAll("#dlList .dl-b.now").forEach(e=>e.classList.remove("now"));
+  if(i<0) return;
+  const el=$("dlb"+i); if(!el) return;
+  el.classList.add("now");
+  if(!keepScroll){ try{ el.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){} }
+}
+function dlSay(txt,mine){ const p=$("dlProg"); if(!p) return; p.textContent=txt||""; p.classList.toggle("mine",!!mine); }
+
+// ── 소리 ──
+function dlAudioEl(){
+  if(!_dlAudio){
+    _dlAudio=new Audio(); _dlAudio.preload="auto";
+    try{ _dlAudio.setAttribute("playsinline",""); }catch(e){}
+    _dlAudio.addEventListener("ended",()=>{ const f=_dlRes; _dlRes=null; if(f) f(true); });
+    _dlAudio.addEventListener("error",()=>{ const f=_dlRes; _dlRes=null; if(f) f(false); });
+  }
+  return _dlAudio;
+}
+function dlAudioSrc(l){
+  const h = DLG_AUDIO && DLG_AUDIO[dlWho(l)+"|"+rdReading(l.jp).trim()];
+  return h ? "audio/"+h+".mp3" : null;
+}
+function dlSpeakWS(l,tok){
+  return new Promise(res=>{
+    if(tok!==dlTok) return res();
+    try{
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(rdReading(l.jp)); u.lang="ja-JP"; u.rate=dlP.slow?0.6:0.85;
+      u.pitch = dlWho(l)==="M" ? 0.6 : 1.2;
+      if(!_jaVoice) _jaVoice=pickJaVoice(); if(_jaVoice) u.voice=_jaVoice;
+      const t=setTimeout(res,20000);
+      u.onend=u.onerror=()=>{ clearTimeout(t); res(); };
+      speechSynthesis.speak(u);
+    }catch(e){ res(); }
+  });
+}
+function dlPlayLine(l,tok){
+  return new Promise(res=>{
+    if(tok!==dlTok) return res();
+    const src=dlAudioSrc(l);
+    const ws=()=>dlSpeakWS(l,tok).then(res);
+    if(!src) return ws();
+    const a=dlAudioEl(), rate=dlP.slow?0.75:1;
+    let fin=false;
+    const wd=setTimeout(()=>{ if(fin) return; fin=true; _dlRes=null; try{a.pause();}catch(e){} res(); },40000);
+    _dlRes=ok=>{ if(fin) return; fin=true; clearTimeout(wd); if(ok) res(); else ws(); };
+    try{
+      if(a.src.indexOf(src)===-1){ a.src=src; a.load(); }
+      a.defaultPlaybackRate=rate; a.playbackRate=rate; a.currentTime=0;
+      const p=a.play();
+      if(p && p.catch) p.catch(()=>{ if(fin) return; fin=true; clearTimeout(wd); _dlRes=null; ws(); });
+    }catch(e){ if(!fin){ fin=true; clearTimeout(wd); _dlRes=null; ws(); } }
+  });
+}
+function dlWait(ms,tok){
+  return new Promise(res=>{
+    const t0=performance.now();
+    const tick=()=>{ if(tok!==dlTok || performance.now()-t0>=ms) return res(); setTimeout(tick,80); };
+    tick();
+  });
+}
+
+// ── 재생 제어 ──
+function dlStop(){
+  const was=dlActive;
+  dlTok++; dlOn=false; dlActive=false;
+  if(was){
+    if(_dlRes){ const f=_dlRes; _dlRes=null; f(true); }
+    try{ if(_dlAudio) _dlAudio.pause(); }catch(e){}
+    try{ speechSynthesis.cancel(); }catch(e){}
+  }
+  dlMark(-1); dlSay("");
+  const g=$("dlGo"); if(g) g.textContent="▶ 재생";
+}
+function dlToggle(){ dlOn ? dlStop() : dlRun(); }
+async function dlRun(){
+  if(!dlCur || dlOn) return;
+  if(MUTED) toggleMute();                       // 소리가 꺼져 있으면 켠다(재생을 눌렀으니)
+  dlAudioEl();                                  // 첫 재생이 손가락 터치 안에서 시작되게 먼저 만든다(아이폰)
+  const tok=++dlTok; dlOn=true; dlActive=true;
+  $("dlGo").textContent="■ 정지";
+  const L=dlCur.lines;
+  for(let r=1; ; r++){
+    const loops=dlP.loop===0 ? Infinity : dlP.loop;
+    if(r>loops) break;
+    for(let i=0;i<L.length;i++){
+      if(tok!==dlTok) return;
+      const l=L[i], mine=(dlP.role===dlWho(l));
+      dlMark(i);
+      const label=(loops===Infinity?`${r}회차`:`${r} / ${loops}회`)+` · ${i+1} / ${L.length}줄`;
+      dlSay(mine ? `내 차례예요 — 소리 내어 읽어 보세요 (${label})` : label, mine);
+      for(let k=0;k<dlP.rep;k++){
+        if(tok!==dlTok) return;
+        if(mine){
+          // 내 차례: 상대 음성은 쉬고, 원어민이 읽는 길이만큼 말할 시간을 준다
+          await dlWait(rdMora(rdReading(l.jp))*190*(dlP.slow?1.4:1)+1400, tok);
+        } else {
+          await dlPlayLine(l,tok);
+          await dlWait(350,tok);
+        }
+      }
+      if(tok!==dlTok) return;
+      await dlWait(450,tok);
+    }
+    await dlWait(900,tok);
+  }
+  if(tok===dlTok){ dlStop(); toast("다 읽었어요"); }
+}
+async function dlTapLine(i){
+  if(!dlCur) return;
+  if(MUTED) toggleMute();
+  dlStop();                                     // 이어 읽기 중이면 멈추고 그 줄만 한 번 들려준다
+  dlAudioEl();
+  const tok=++dlTok; dlActive=true;
+  dlMark(i,true);
+  await dlPlayLine(dlCur.lines[i],tok);
+  if(tok===dlTok){ dlActive=false; dlMark(-1); }
+}
 
 // ══════════ 🧸 어린이 그림 낱말카드 — 카테고리 → 교시 → 카드 ══════════
 let KIDS=null, KCATS=null, kdCat=null, kdLes=1, kdList=[], kdI=0, kdMode="flip", kdFlipped=false, kdOkN=0, kdLock=false;

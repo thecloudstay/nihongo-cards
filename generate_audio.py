@@ -26,6 +26,9 @@ CSV_GLOB   = "*.csv"                 # 카드 CSV 위치
 AUDIO_DIR  = "audio"
 MANIFEST   = "audio_manifest.json"
 VOICE      = "ja-JP-Neural2-B"       # 여성 B / 남성 C·D
+VOICE_M    = "ja-JP-Neural2-C"       # 남녀 대화(dialogues.json)의 남성 목소리
+DLG_JSON   = "dialogues.json"        # 남녀 대화 원본
+DLG_MANIFEST = "dialogues_audio.json"   # {"F|읽기문장": 해시, "M|읽기문장": 해시}
 SPEAK_RATE = 0.9                     # 학습용 약간 느리게
 COLUMNS    = ("reading", "example_reading")
 API_KEY    = os.environ.get("GOOGLE_TTS_KEY", "")
@@ -40,13 +43,13 @@ def speak_text(text: str) -> str:
     """훈/음 슬래시 표기는 첫 읽기만 발음 (예: 'あら/せん' → 'あら')"""
     return text.split("/")[0].strip()
 
-def key_of(text: str) -> str:
-    return hashlib.md5((speak_text(text) + "|" + VOICE).encode("utf-8")).hexdigest()
+def key_of(text: str, voice: str = VOICE) -> str:
+    return hashlib.md5((speak_text(text) + "|" + voice).encode("utf-8")).hexdigest()
 
-def synthesize(text: str) -> bytes:
+def synthesize(text: str, voice: str = VOICE) -> bytes:
     body = json.dumps({
         "input": {"text": speak_text(text)},
-        "voice": {"languageCode": "ja-JP", "name": VOICE},
+        "voice": {"languageCode": "ja-JP", "name": voice},
         "audioConfig": {"audioEncoding": "MP3", "speakingRate": SPEAK_RATE},
     }).encode("utf-8")
     req = urllib.request.Request(
@@ -110,10 +113,60 @@ def collect_texts() -> list:
         sys.exit("수집된 텍스트가 없습니다 (cards_all.json/CSV 확인)")
     return sorted(texts)
 
+def dialogue_items() -> list:
+    """남녀 대화의 (역할, 읽기문장) 목록. 후리가나 마크업 {표기|읽기} → 읽기만 남긴다.
+    역할 F=여성 목소리(VOICE), M=남성 목소리(VOICE_M)."""
+    if not os.path.exists(DLG_JSON):
+        return []
+    rd = lambda t: re.sub(r"\{[^|{}]+\|([^|{}]+)\}", r"\1", str(t or ""))
+    items, seen = [], set()
+    with open(DLG_JSON, encoding="utf-8") as f:
+        for dlg in json.load(f):
+            for ln in dlg.get("lines", []):
+                role = "M" if ln.get("w") == "M" else "F"
+                t = rd(ln.get("jp")).strip()
+                if t and JP_RE.search(t) and (role, t) not in seen:
+                    seen.add((role, t))
+                    items.append((role, t))
+    return items
+
+def build_dialogue_audio():
+    """대화 문장별 mp3 생성(증분) → dialogues_audio.json 갱신. 앱은 'F|문장' / 'M|문장'으로 조회."""
+    items = dialogue_items()
+    if not items:
+        return
+    man = {}
+    if os.path.exists(DLG_MANIFEST):
+        with open(DLG_MANIFEST, encoding="utf-8") as f:
+            man = json.load(f)
+    made = fail = 0
+    for role, t in items:
+        voice = VOICE_M if role == "M" else VOICE
+        h = key_of(t, voice)
+        path = os.path.join(AUDIO_DIR, h + ".mp3")
+        if not os.path.exists(path):
+            try:
+                with open(path, "wb") as f:
+                    f.write(synthesize(t, voice))
+                made += 1
+                time.sleep(0.15)
+            except Exception as e:
+                if os.path.exists(path):
+                    os.remove(path)          # 깨진 빈 파일을 남기지 않는다
+                print(f"  대화 실패: {role} {t} — {e}")
+                fail += 1
+                time.sleep(2)
+                continue
+        man[role + "|" + t] = h
+    with open(DLG_MANIFEST, "w", encoding="utf-8") as f:
+        json.dump(man, f, ensure_ascii=False, indent=1)
+    print(f"대화 음성: 문장 {len(items)}개 / 신규 {made} / 실패 {fail}")
+
 def main():
     if not API_KEY:
         sys.exit("환경변수 GOOGLE_TTS_KEY가 없습니다.")
     os.makedirs(AUDIO_DIR, exist_ok=True)
+    build_dialogue_audio()      # 대화 음성을 먼저 — 짧아서 금방 끝나고, 본 작업이 길어도 영향 없음
 
     manifest = {}
     if os.path.exists(MANIFEST):
