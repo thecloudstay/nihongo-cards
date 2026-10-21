@@ -959,6 +959,9 @@
 .dl-row button{flex:1;min-width:0;padding:8px 2px;border:1px solid var(--line);background:var(--card);
   border-radius:11px;font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden}
 .dl-row button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.dl-row input[type=range]{flex:1;min-width:0;accent-color:var(--accent);height:28px}
+.dl-spv{flex:0 0 54px;text-align:right;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.dl-row button.dl-spr{flex:0 0 46px}
 .dl-prog{text-align:center;font-size:12.5px;font-weight:800;color:var(--sub);padding:10px 16px 0;min-height:28px}
 .dl-prog.mine{color:var(--accent)}
 .dl-list{padding:8px 16px 4px;display:flex;flex-direction:column;gap:10px}
@@ -5765,6 +5768,7 @@ function renderSpTile(){ const t=$("tSp"); if(!t) return; const b=spBest(); t.te
 let DLG=null, DLG_AUDIO=null, dlCur=null, dlTok=0, dlOn=false, dlActive=false, _dlAudio=null, _dlRes=null;
 const DL_DEF={role:"all", loop:3, rep:1, spd:1, ruby:1, ro:0, ko:1};
 let dlP=(()=>{ try{ return Object.assign({},DL_DEF,JSON.parse(localStorage.getItem("dl_pref")||"{}")); }catch(e){ return Object.assign({},DL_DEF); } })();
+dlP.spd=Math.min(2,Math.max(0.75,parseFloat(dlP.spd)||1));      // 예전에 저장된 값(3배 등)을 범위 안으로
 function dlSave(){ try{ localStorage.setItem("dl_pref",JSON.stringify(dlP)); }catch(e){} }
 function dlEsc(t){ return String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function dlRuby(t){ return dlEsc(t).replace(/\{([^|{}]+)\|([^|{}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>"); }
@@ -5807,8 +5811,7 @@ function dlRender(){
 const DL_OPTS=[
   ["role","역할",[["all","전체 듣기"],["F","여자 역 연습"],["M","남자 역 연습"]]],
   ["loop","전체 반복",[[1,"1회"],[3,"3회"],[5,"5회"],[0,"무한"]]],
-  ["rep","줄 반복",[[1,"1회"],[2,"2회"],[3,"3회"]]],
-  ["spd","속도",[[0.75,"0.75배"],[1,"1배"],[1.5,"1.5배"],[2,"2배"],[3,"3배"]]]
+  ["rep","줄 반복",[[1,"1회"],[2,"2회"],[3,"3회"]]]
 ];
 const DL_VIEW=[["ruby","ふりがな"],["ro","로마자"],["ko","한국어"]];
 function dlRenderCtrl(){
@@ -5816,9 +5819,21 @@ function dlRenderCtrl(){
     DL_OPTS.map(([k,label,opts])=>`<div class="dl-row"><span>${label}</span>${
       opts.map(([v,t])=>`<button class="${dlP[k]===v?"on":""}" onclick='dlSet(${JSON.stringify(k)},${JSON.stringify(v)})'>${t}</button>`).join("")
     }</div>`).join("") +
+    `<div class="dl-row"><span>속도</span>
+       <input type="range" id="dlSpd" min="0.75" max="2" step="0.05" value="${dlP.spd}" oninput="dlSpd(this.value)" onchange="dlSave()">
+       <b class="dl-spv" id="dlSpv">${dlP.spd.toFixed(2)}배</b>
+       <button class="dl-spr" onclick="dlSpd(1);dlSave();dlRenderCtrl()">1배</button></div>` +
     `<div class="dl-row"><span>보기</span>${
       DL_VIEW.map(([k,t])=>`<button class="${dlP[k]?"on":""}" onclick='dlSet(${JSON.stringify(k)},${dlP[k]?0:1})'>${t}</button>`).join("")
     }</div>`;
+}
+// 속도 슬라이드(0.75~2배, 0.05 단위) — 끌 때마다 바로 적용, 재생 중이어도 즉시 빨라지고 느려진다
+function dlSpd(v){
+  v=Math.round(Math.min(2,Math.max(0.75,parseFloat(v)||1))*20)/20;
+  dlP.spd=v;
+  const lb=$("dlSpv"); if(lb) lb.textContent=v.toFixed(2)+"배";
+  const sl=$("dlSpd"); if(sl && +sl.value!==v) sl.value=v;
+  try{ if(_dlAudio && dlActive){ _dlAudio.defaultPlaybackRate=v; _dlAudio.playbackRate=v; } }catch(e){}
 }
 function dlSet(k,v){
   dlP[k]=v; dlSave(); dlRenderCtrl();
