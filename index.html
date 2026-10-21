@@ -5763,7 +5763,7 @@ function renderSpTile(){ const t=$("tSp"); if(!t) return; const b=spBest(); t.te
 //  데이터: dialogues.json (후리가나 마크업 {표기|읽기})  ·  음성: dialogues_audio.json 의 "F|문장" / "M|문장" → audio/해시.mp3
 //  음성 파일은 저장소 작업(generate_audio)이 대화가 바뀔 때마다 만든다. 아직 없으면 브라우저 음성(남녀 높낮이만 다르게)으로 대신한다.
 let DLG=null, DLG_AUDIO=null, dlCur=null, dlTok=0, dlOn=false, dlActive=false, _dlAudio=null, _dlRes=null;
-const DL_DEF={role:"all", loop:3, rep:1, slow:0, ruby:1, ro:0, ko:1};
+const DL_DEF={role:"all", loop:3, rep:1, spd:1, ruby:1, ro:0, ko:1};
 let dlP=(()=>{ try{ return Object.assign({},DL_DEF,JSON.parse(localStorage.getItem("dl_pref")||"{}")); }catch(e){ return Object.assign({},DL_DEF); } })();
 function dlSave(){ try{ localStorage.setItem("dl_pref",JSON.stringify(dlP)); }catch(e){} }
 function dlEsc(t){ return String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
@@ -5808,7 +5808,7 @@ const DL_OPTS=[
   ["role","역할",[["all","전체 듣기"],["F","여자 역 연습"],["M","남자 역 연습"]]],
   ["loop","전체 반복",[[1,"1회"],[3,"3회"],[5,"5회"],[0,"무한"]]],
   ["rep","줄 반복",[[1,"1회"],[2,"2회"],[3,"3회"]]],
-  ["slow","속도",[[0,"보통"],[1,"느리게"]]]
+  ["spd","속도",[[0.75,"0.75배"],[1,"1배"],[1.5,"1.5배"],[2,"2배"],[3,"3배"]]]
 ];
 const DL_VIEW=[["ruby","ふりがな"],["ro","로마자"],["ko","한국어"]];
 function dlRenderCtrl(){
@@ -5866,7 +5866,7 @@ function dlSpeakWS(l,tok){
     if(tok!==dlTok) return res();
     try{
       speechSynthesis.cancel();
-      const u=new SpeechSynthesisUtterance(rdReading(l.jp)); u.lang="ja-JP"; u.rate=dlP.slow?0.6:0.85;
+      const u=new SpeechSynthesisUtterance(rdReading(l.jp)); u.lang="ja-JP"; u.rate=Math.min(10,0.85*dlP.spd);
       u.pitch = dlWho(l)==="M" ? 0.6 : 1.2;
       if(!_jaVoice) _jaVoice=pickJaVoice(); if(_jaVoice) u.voice=_jaVoice;
       const t=setTimeout(res,20000);
@@ -5881,12 +5881,13 @@ function dlPlayLine(l,tok){
     const src=dlAudioSrc(l);
     const ws=()=>dlSpeakWS(l,tok).then(res);
     if(!src) return ws();
-    const a=dlAudioEl(), rate=dlP.slow?0.75:1;
+    const a=dlAudioEl(), rate=dlP.spd||1;
     let fin=false;
     const wd=setTimeout(()=>{ if(fin) return; fin=true; _dlRes=null; try{a.pause();}catch(e){} res(); },40000);
     _dlRes=ok=>{ if(fin) return; fin=true; clearTimeout(wd); if(ok) res(); else ws(); };
     try{
       if(a.src.indexOf(src)===-1){ a.src=src; a.load(); }
+      try{ a.preservesPitch=true; a.webkitPreservesPitch=true; }catch(e){}     // 빨라져도 목소리 높낮이는 그대로
       a.defaultPlaybackRate=rate; a.playbackRate=rate; a.currentTime=0;
       const p=a.play();
       if(p && p.catch) p.catch(()=>{ if(fin) return; fin=true; clearTimeout(wd); _dlRes=null; ws(); });
@@ -5934,7 +5935,7 @@ async function dlRun(){
         if(tok!==dlTok) return;
         if(mine){
           // 내 차례: 상대 음성은 쉬고, 원어민이 읽는 길이만큼 말할 시간을 준다
-          await dlWait(rdMora(rdReading(l.jp))*190*(dlP.slow?1.4:1)+1400, tok);
+          await dlWait((rdMora(rdReading(l.jp))*190+1400)/(dlP.spd||1), tok);
         } else {
           await dlPlayLine(l,tok);
           await dlWait(350,tok);
