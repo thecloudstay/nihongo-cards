@@ -978,6 +978,29 @@
 .dl-jp ruby rt{font-size:.5em;color:var(--accent);font-weight:600}
 .dl-ro{font-size:12px;color:var(--sub);margin-top:3px;line-height:1.5}
 .dl-ko{font-size:13px;opacity:.78;margin-top:5px;line-height:1.5}
+/* 세로 화면: 예전과 똑같이 위→아래(제목·조작·진행·대화·재생 버튼) */
+.dl-side{display:contents}
+#dlList{order:1} .dl-side .rd-foot{order:2}
+/* 가로 화면(휴대폰을 눕힘): 왼쪽에 조작·재생 버튼, 오른쪽에 대화. 둘이 따로 스크롤된다.
+   ⚠ 폭 제한(520px)을 이 화면에서만 푼다. 다른 화면은 그대로. */
+@media (orientation:landscape) and (max-height:600px){
+  body:has(#dlScreen.on){max-width:none;box-shadow:none}
+  #dlScreen.on{display:grid;grid-template-columns:minmax(336px,38%) 1fr;height:100dvh;min-height:0;overflow:hidden}
+  .dl-side{display:flex;flex-direction:column;height:100dvh;overflow-y:auto;border-right:1px solid var(--line);
+    padding-left:env(safe-area-inset-left)}
+  .dl-side .top{padding:8px 16px 4px}
+  .dl-side .dl-ctrl{padding-top:4px;gap:5px}
+  .dl-side .dl-row button{padding:6px 2px;font-size:12px}
+  .dl-side .dl-row>span{flex-basis:54px;white-space:nowrap;font-size:11.5px}
+  .dl-side .dl-prog{min-height:20px;padding-top:6px}
+  .dl-side .rd-foot{order:0;position:sticky;bottom:0;margin-top:auto;background:var(--bg);padding:8px 16px;
+    border-top:1px solid var(--line)}
+  .dl-side .rd-foot button{padding:11px 0}
+  #dlList{order:0;height:100dvh;overflow-y:auto;padding:12px 20px 16px;padding-right:calc(20px + env(safe-area-inset-right));
+    -webkit-overflow-scrolling:touch}
+  .dl-b{max-width:82%}
+  .dl-jp{font-size:19px}
+}
 /* 읽기 목록 섹션 헤더 */
 /* ⚠ v5.3 — overflow-x:auto 인데 6개 버튼이 32px 넘쳐 목록 한가운데 가로 스크롤바가 보였다.
      6열 grid 한 줄로 정리한다. */
@@ -1738,18 +1761,20 @@
 
 <!-- ═══ 남녀 대화 반복 읽기 ═══ -->
 <div class="screen" id="dlScreen">
-  <div class="top">
-    <button class="back" onclick="show('home')">‹</button>
-    <span class="title">남녀 대화 반복 읽기</span>
-    <span class="count" id="dlCount"></span>
+  <div class="dl-side">
+    <div class="top">
+      <button class="back" onclick="show('home')">‹</button>
+      <span class="title">남녀 대화 반복 읽기</span>
+      <span class="count" id="dlCount"></span>
+    </div>
+    <div class="cj-forms" id="dlPick"></div>
+    <div class="dl-ctrl" id="dlCtrl"></div>
+    <div class="dl-prog" id="dlProg"></div>
+    <div class="rd-foot">
+      <button class="pri" id="dlGo" onclick="dlToggle()">▶ 재생</button>
+    </div>
   </div>
-  <div class="cj-forms" id="dlPick"></div>
-  <div class="dl-ctrl" id="dlCtrl"></div>
-  <div class="dl-prog" id="dlProg"></div>
   <div class="dl-list" id="dlList"></div>
-  <div class="rd-foot">
-    <button class="pri" id="dlGo" onclick="dlToggle()">▶ 재생</button>
-  </div>
 </div>
 
 <!-- ═══ 어린이: 카테고리 ═══ -->
