@@ -1001,6 +1001,16 @@
   .dl-b{max-width:82%}
   .dl-jp{font-size:19px}
 }
+.dl-b{position:relative}
+.dl-ck{display:none;position:absolute;top:7px;right:8px;width:28px;height:28px;border-radius:50%;
+  border:2px solid var(--line);background:#fff;color:transparent;font-size:15px;font-weight:900;
+  align-items:center;justify-content:center;padding:0;line-height:1}
+#dlList.selmode .dl-ck{display:flex}
+#dlList.selmode .dl-b{padding-right:42px}
+.dl-ck.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.dl-b.sel{border-color:var(--accent);border-width:2px}
+.dl-selrow button{flex:0 1 auto;padding:6px 10px}
+.dl-selcnt{flex:1;text-align:right;font-size:12.5px;color:var(--accent);font-weight:800}
 /* 읽기 목록 섹션 헤더 */
 /* ⚠ v5.3 — overflow-x:auto 인데 6개 버튼이 32px 넘쳐 목록 한가운데 가로 스크롤바가 보였다.
      6열 grid 한 줄로 정리한다. */
@@ -5791,9 +5801,13 @@ function renderSpTile(){ const t=$("tSp"); if(!t) return; const b=spBest(); t.te
 //  데이터: dialogues.json (후리가나 마크업 {표기|읽기})  ·  음성: dialogues_audio.json 의 "F|문장" / "M|문장" → audio/해시.mp3
 //  음성 파일은 저장소 작업(generate_audio)이 대화가 바뀔 때마다 만든다. 아직 없으면 브라우저 음성(남녀 높낮이만 다르게)으로 대신한다.
 let DLG=null, DLG_AUDIO=null, dlCur=null, dlTok=0, dlOn=false, dlActive=false, _dlAudio=null, _dlRes=null;
-const DL_DEF={role:"all", loop:3, rep:1, spd:1, ruby:1, ro:0, ko:1};
+const DL_DEF={role:"all", scope:"all", loop:3, rep:1, spd:1, ruby:1, ro:0, ko:1};
 let dlP=(()=>{ try{ return Object.assign({},DL_DEF,JSON.parse(localStorage.getItem("dl_pref")||"{}")); }catch(e){ return Object.assign({},DL_DEF); } })();
 dlP.spd=Math.min(2,Math.max(0.75,parseFloat(dlP.spd)||1));      // 예전에 저장된 값(3배 등)을 범위 안으로
+let dlSel=new Set();                       // 반복할 줄(번호) — 대화마다 따로 기억한다
+function dlSelLoad(){ try{ dlSel=new Set(JSON.parse(localStorage.getItem("dl_sel_"+dlCur.id)||"[]").filter(n=>Number.isInteger(n)&&n>=0&&n<dlCur.lines.length)); }catch(e){ dlSel=new Set(); } }
+function dlSelSave(){ try{ localStorage.setItem("dl_sel_"+dlCur.id, JSON.stringify([...dlSel])); }catch(e){} }
+function dlSelList(){ return [...dlSel].sort((a,b)=>a-b); }
 function dlSave(){ try{ localStorage.setItem("dl_pref",JSON.stringify(dlP)); }catch(e){} }
 function dlEsc(t){ return String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function dlRuby(t){ return dlEsc(t).replace(/\{([^|{}]+)\|([^|{}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>"); }
@@ -5822,7 +5836,7 @@ async function openDlg(id){
     return;
   }
   dlCur = DLG.find(d=>d.id===id) || (dlCur && DLG.find(d=>d.id===dlCur.id)) || DLG[0];
-  dlRender();
+  dlSelLoad(); dlRender();
 }
 function dlRender(){
   $("dlCount").textContent=dlCur.lines.length+"줄";
@@ -5835,6 +5849,7 @@ function dlRender(){
 }
 const DL_OPTS=[
   ["role","역할",[["all","전체 듣기"],["F","여자 역 연습"],["M","남자 역 연습"]]],
+  ["scope","범위",[["all","전체 줄"],["sel","고른 줄만"]]],
   ["loop","전체 반복",[[1,"1회"],[3,"3회"],[5,"5회"],[0,"무한"]]],
   ["rep","줄 반복",[[1,"1회"],[2,"2회"],[3,"3회"]]]
 ];
@@ -5848,6 +5863,9 @@ function dlRenderCtrl(){
        <input type="range" id="dlSpd" min="0.75" max="2" step="0.05" value="${dlP.spd}" oninput="dlSpd(this.value)" onchange="dlSave()">
        <b class="dl-spv" id="dlSpv">${dlP.spd.toFixed(2)}배</b>
        <button class="dl-spr" onclick="dlSpd(1);dlSave();dlRenderCtrl()">1배</button></div>` +
+    (dlP.scope==="sel" ? `<div class="dl-row dl-selrow"><span>고르기</span>
+       <button onclick="dlSelAll(1)">모두 고르기</button><button onclick="dlSelAll(0)">모두 빼기</button>
+       <b class="dl-selcnt" id="dlSelCnt">${dlSel.size}줄 고름</b></div>` : "") +
     `<div class="dl-row"><span>보기</span>${
       DL_VIEW.map(([k,t])=>`<button class="${dlP[k]?"on":""}" onclick='dlSet(${JSON.stringify(k)},${dlP[k]?0:1})'>${t}</button>`).join("")
     }</div>`;
@@ -5862,14 +5880,26 @@ function dlSpd(v){
 }
 function dlSet(k,v){
   dlP[k]=v; dlSave(); dlRenderCtrl();
-  if(k==="role"||k==="ruby"||k==="ro"||k==="ko"){ const on=dlNowIdx; dlRenderList(); if(on>=0) dlMark(on,true); }
+  if(k==="scope" && v==="sel" && !dlSel.size) toast("반복할 줄의 ✓ 를 눌러 고르세요");
+  if(k==="role"||k==="scope"||k==="ruby"||k==="ro"||k==="ko"){ const on=dlNowIdx; dlRenderList(); if(on>=0) dlMark(on,true); }
 }
 let dlNowIdx=-1;
+function dlSelUI(){
+  const c=$("dlSelCnt"); if(c) c.textContent=dlSel.size+"줄 고름";
+  document.querySelectorAll("#dlList .dl-b").forEach((e,i)=>{
+    e.classList.toggle("sel",dlSel.has(i));
+    const k=e.querySelector(".dl-ck"); if(k) k.classList.toggle("on",dlSel.has(i));
+  });
+}
+function dlTog(i){ dlSel.has(i)?dlSel.delete(i):dlSel.add(i); dlSelSave(); dlSelUI(); }
+function dlSelAll(on){ dlSel=new Set(on?dlCur.lines.map((_,i)=>i):[]); dlSelSave(); dlSelUI(); }
 function dlRenderList(){
   const roles=dlCur.roles||{};
+  $("dlList").classList.toggle("selmode", dlP.scope==="sel");
   $("dlList").innerHTML=dlCur.lines.map((l,i)=>{
     const w=dlWho(l), mine=dlP.role===w;
-    return `<div class="dl-b ${w==="F"?"f":"m"}${mine?" mine":""}" id="dlb${i}" onclick="dlTapLine(${i})">
+    return `<div class="dl-b ${w==="F"?"f":"m"}${mine?" mine":""}${dlSel.has(i)?" sel":""}" id="dlb${i}" onclick="dlTapLine(${i})">
+      <button class="dl-ck${dlSel.has(i)?" on":""}" aria-label="이 줄 고르기" onclick="event.stopPropagation();dlTog(${i})">✓</button>
       <div class="who">${dlEsc(roles[w]||(w==="F"?"여자":"남자"))}</div>
       <div class="dl-jp">${dlP.ruby?dlRuby(l.jp):dlEsc(rdPlain(l.jp))}</div>
       ${dlP.ro && l.ro ? `<div class="dl-ro">${dlEsc(l.ro)}</div>` : ""}
@@ -5957,6 +5987,7 @@ function dlStop(){
 function dlToggle(){ dlOn ? dlStop() : dlRun(); }
 async function dlRun(){
   if(!dlCur || dlOn) return;
+  if(dlP.scope==="sel" && !dlSel.size){ toast("반복할 줄의 ✓ 를 먼저 눌러 고르세요"); return; }
   if(MUTED) toggleMute();                       // 소리가 꺼져 있으면 켠다(재생을 눌렀으니)
   dlAudioEl();                                  // 첫 재생이 손가락 터치 안에서 시작되게 먼저 만든다(아이폰)
   const tok=++dlTok; dlOn=true; dlActive=true;
@@ -5965,11 +5996,13 @@ async function dlRun(){
   for(let r=1; ; r++){
     const loops=dlP.loop===0 ? Infinity : dlP.loop;
     if(r>loops) break;
-    for(let i=0;i<L.length;i++){
+    const idxs = dlP.scope==="sel" ? dlSelList() : L.map((_,k)=>k);     // 회차마다 다시 읽는다 — 재생 중에 바꿔도 반영
+    if(!idxs.length) break;
+    for(let n=0;n<idxs.length;n++){
       if(tok!==dlTok) return;
-      const l=L[i], mine=(dlP.role===dlWho(l));
+      const i=idxs[n], l=L[i], mine=(dlP.role===dlWho(l));
       dlMark(i);
-      const label=(loops===Infinity?`${r}회차`:`${r} / ${loops}회`)+` · ${i+1} / ${L.length}줄`;
+      const label=(loops===Infinity?`${r}회차`:`${r} / ${loops}회`)+` · ${n+1} / ${idxs.length}줄`;
       dlSay(mine ? `내 차례예요 — 소리 내어 읽어 보세요 (${label})` : label, mine);
       for(let k=0;k<dlP.rep;k++){
         if(tok!==dlTok) return;
