@@ -1002,6 +1002,10 @@
   .dl-jp{font-size:19px}
 }
 .dl-b{position:relative}
+.dl-bt{display:flex;justify-content:flex-end;margin-top:7px}
+.dl-lp{padding:5px 11px;border:1px solid var(--line);background:rgba(255,255,255,.75);border-radius:999px;
+  font-size:11.5px;font-weight:800;color:var(--sub)}
+.dl-lp.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .dl-ck{display:none;position:absolute;top:7px;right:8px;width:28px;height:28px;border-radius:50%;
   border:2px solid var(--line);background:#fff;color:transparent;font-size:15px;font-weight:900;
   align-items:center;justify-content:center;padding:0;line-height:1}
@@ -5836,7 +5840,7 @@ async function openDlg(id){
     return;
   }
   dlCur = DLG.find(d=>d.id===id) || (dlCur && DLG.find(d=>d.id===dlCur.id)) || DLG[0];
-  dlSelLoad(); dlRender();
+  dlSelLoad(); dlRender(); dlPreload();
 }
 function dlRender(){
   $("dlCount").textContent=dlCur.lines.length+"줄";
@@ -5904,6 +5908,7 @@ function dlRenderList(){
       <div class="dl-jp">${dlP.ruby?dlRuby(l.jp):dlEsc(rdPlain(l.jp))}</div>
       ${dlP.ro && l.ro ? `<div class="dl-ro">${dlEsc(l.ro)}</div>` : ""}
       ${dlP.ko && l.ko ? `<div class="dl-ko">${dlEsc(l.ko)}</div>` : ""}
+      <div class="dl-bt"><button class="dl-lp${dlLoopIdx===i?" on":""}" onclick="event.stopPropagation();dlLoopLine(${i})">${dlLoopIdx===i?"무한 반복 중 · 멈추기":"이 줄 무한 반복"}</button></div>
     </div>`;
   }).join("");
 }
@@ -5924,9 +5929,31 @@ function dlAudioEl(){
     try{ _dlAudio.setAttribute("playsinline",""); }catch(e){}
     _dlAudio.addEventListener("ended",()=>{ const f=_dlRes; _dlRes=null; if(f) f(true); });
     _dlAudio.addEventListener("error",()=>{ const f=_dlRes; _dlRes=null; if(f) f(false); });
+    // ⚠ 알림·전화·다른 앱 소리 때문에 시스템이 소리를 잠깐 멈추면 'ended'가 오지 않아 예전엔 한참 말없이 기다렸다.
+    //    우리가 멈춘 게 아니면(재생 중인데 멈춤) 잠시 뒤 이어서 재생한다.
+    _dlAudio.addEventListener("pause",()=>{
+      if(!dlActive || !_dlRes || _dlAudio.ended) return;
+      setTimeout(()=>{ if(dlActive && _dlRes && _dlAudio.paused && !_dlAudio.ended){ const p=_dlAudio.play(); if(p&&p.catch) p.catch(()=>{}); } },300);
+    });
+    // 받아오다 끊겨 멈춘 경우에도 이어서 재생을 시도
+    _dlAudio.addEventListener("stalled",()=>{ if(dlActive && _dlRes){ try{ _dlAudio.load(); }catch(e){} } });
   }
   return _dlAudio;
 }
+// 소리 파일을 대화를 열 때 미리 통째로 받아 둔다 — 재생 중 인터넷이 흔들려도 끊기지 않게(기기 안 메모리에서 재생)
+let DLG_BLOB={};
+function dlPreload(){
+  if(!dlCur) return;
+  dlCur.lines.forEach(l=>{
+    const src=dlAudioSrc(l);
+    if(!src || DLG_BLOB[src]) return;
+    DLG_BLOB[src]="pending";
+    fetch(src).then(r=>{ if(!r.ok) throw 0; return r.blob(); })
+      .then(b=>{ DLG_BLOB[src]=URL.createObjectURL(b); })
+      .catch(()=>{ delete DLG_BLOB[src]; });
+  });
+}
+function dlUrl(src){ const u=DLG_BLOB[src]; return (u && u!=="pending") ? u : src; }
 function dlAudioSrc(l){
   const h = DLG_AUDIO && DLG_AUDIO[dlWho(l)+"|"+rdReading(l.jp).trim()];
   return h ? "audio/"+h+".mp3" : null;
@@ -5953,10 +5980,20 @@ function dlPlayLine(l,tok){
     if(!src) return ws();
     const a=dlAudioEl(), rate=dlP.spd||1;
     let fin=false;
-    const wd=setTimeout(()=>{ if(fin) return; fin=true; _dlRes=null; try{a.pause();}catch(e){} res(); },40000);
-    _dlRes=ok=>{ if(fin) return; fin=true; clearTimeout(wd); if(ok) res(); else ws(); };
+    const wd=setTimeout(()=>{ if(fin) return; fin=true; _dlRes=null; try{a.pause();}catch(e){} res(); },25000);
+    let tries=0;
+    _dlRes=ok=>{
+      if(fin) return;
+      if(!ok && tries++<1){                      // 오류 → 곧바로 브라우저 음성으로 바꾸지 말고 한 번 더 받아 본다
+        _dlRes=_dlRes2; try{ a._u=""; a.src=src; a.load(); a.currentTime=0; const q=a.play(); if(q&&q.catch) q.catch(()=>{}); }catch(e){}
+        return;
+      }
+      fin=true; clearTimeout(wd); if(ok) res(); else ws();
+    };
+    const _dlRes2=_dlRes;
     try{
-      if(a.src.indexOf(src)===-1){ a.src=src; a.load(); }
+      const url=dlUrl(src);
+      if(a._u!==url){ a._u=url; a.src=url; a.load(); }
       try{ a.preservesPitch=true; a.webkitPreservesPitch=true; }catch(e){}     // 빨라져도 목소리 높낮이는 그대로
       a.defaultPlaybackRate=rate; a.playbackRate=rate; a.currentTime=0;
       const p=a.play();
@@ -5973,9 +6010,48 @@ function dlWait(ms,tok){
 }
 
 // ── 재생 제어 ──
+// 재생 중에는 화면이 저절로 꺼지지 않게 하고(꺼지면 소리가 멈추는 기기가 있다), 알림창에 재생 정보를 보여 준다
+let _dlWL=null;
+async function dlWake(on){
+  try{
+    if(on){ if(!_dlWL && navigator.wakeLock){ _dlWL=await navigator.wakeLock.request("screen"); _dlWL.addEventListener("release",()=>{ _dlWL=null; }); } }
+    else if(_dlWL){ const w=_dlWL; _dlWL=null; await w.release(); }
+  }catch(e){ _dlWL=null; }
+}
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible" && dlOn) dlWake(true); });
+function dlMedia(){
+  try{
+    if(!("mediaSession" in navigator)) return;
+    navigator.mediaSession.metadata=new MediaMetadata({title:(dlCur&&dlCur.title_ko)||"남녀 대화", artist:"일본어 카드모음"});
+    navigator.mediaSession.setActionHandler("pause",()=>dlStop());
+    navigator.mediaSession.setActionHandler("stop",()=>dlStop());
+  }catch(e){}
+}
+let dlLoopIdx=-1;
+function dlLoopUI(){
+  document.querySelectorAll("#dlList .dl-lp").forEach((e,i)=>{ e.classList.toggle("on",i===dlLoopIdx); e.textContent = (i===dlLoopIdx) ? "무한 반복 중 · 멈추기" : "이 줄 무한 반복"; });
+}
+// 한 줄만 끝없이 반복 — 같은 단추를 다시 누르거나 '정지'를 누를 때까지
+async function dlLoopLine(i){
+  if(!dlCur) return;
+  if(dlOn && dlLoopIdx===i){ dlStop(); return; }
+  dlStop();
+  if(MUTED) toggleMute();
+  dlAudioEl();
+  const tok=++dlTok; dlOn=true; dlActive=true; dlLoopIdx=i;
+  $("dlGo").textContent="■ 정지"; dlLoopUI(); dlWake(true); dlMedia();
+  const l=dlCur.lines[i], mine=(dlP.role===dlWho(l));
+  dlMark(i);
+  for(let n=1; tok===dlTok; n++){
+    dlSay(`${i+1}번째 줄 무한 반복 · ${n}회`+(mine?" — 내 차례, 소리 내어 읽어 보세요":""), mine);
+    if(mine) await dlWait((rdMora(rdReading(l.jp))*190+1400)/(dlP.spd||1), tok);
+    else { await dlPlayLine(l,tok); await dlWait(500/(dlP.spd||1), tok); }
+    await dlWait(250,tok);
+  }
+}
 function dlStop(){
   const was=dlActive;
-  dlTok++; dlOn=false; dlActive=false;
+  dlTok++; dlOn=false; dlActive=false; dlLoopIdx=-1; dlWake(false); dlLoopUI();
   if(was){
     if(_dlRes){ const f=_dlRes; _dlRes=null; f(true); }
     try{ if(_dlAudio) _dlAudio.pause(); }catch(e){}
@@ -5990,7 +6066,7 @@ async function dlRun(){
   if(dlP.scope==="sel" && !dlSel.size){ toast("반복할 줄의 ✓ 를 먼저 눌러 고르세요"); return; }
   if(MUTED) toggleMute();                       // 소리가 꺼져 있으면 켠다(재생을 눌렀으니)
   dlAudioEl();                                  // 첫 재생이 손가락 터치 안에서 시작되게 먼저 만든다(아이폰)
-  const tok=++dlTok; dlOn=true; dlActive=true;
+  const tok=++dlTok; dlOn=true; dlActive=true; dlWake(true); dlMedia();
   $("dlGo").textContent="■ 정지";
   const L=dlCur.lines;
   for(let r=1; ; r++){
