@@ -1778,7 +1778,7 @@
   <div class="dl-side">
     <div class="top">
       <button class="back" onclick="show('home')">‹</button>
-      <span class="title">남녀 대화 반복 읽기</span>
+      <span class="title">대화·이야기 반복 읽기</span>
       <span class="count" id="dlCount"></span>
     </div>
     <div class="cj-forms" id="dlPick"></div>
@@ -2358,7 +2358,7 @@ const CGRID = [
 
   {ic:"🗣", ko:"말하기", sub:"발음 채점 · 청해",
    tools:[["🎤","따라 말하기 (발음 채점)","openSpeak()"],
-          ["💬","남녀 대화 반복 읽기","openDlg()"],
+          ["💬","대화·이야기 반복 읽기","openDlg()"],
           ["🎧","청해 연습","openListenPick()"],
           ["🔗","짝 연결","openMt()"]]},
 ];
@@ -5816,6 +5816,7 @@ function dlSave(){ try{ localStorage.setItem("dl_pref",JSON.stringify(dlP)); }ca
 function dlEsc(t){ return String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function dlRuby(t){ return dlEsc(t).replace(/\{([^|{}]+)\|([^|{}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>"); }
 function dlWho(l){ return l && l.w==="M" ? "M" : "F"; }
+function dlRole(){ return (dlCur && dlCur.kind==="story") ? "all" : dlP.role; }    // 이야기 챕터는 역할 연습 없음
 
 async function dlLoad(){
   if(DLG) return DLG;
@@ -5860,7 +5861,7 @@ const DL_OPTS=[
 const DL_VIEW=[["ruby","ふりがな"],["ro","로마자"],["ko","한국어"]];
 function dlRenderCtrl(){
   $("dlCtrl").innerHTML =
-    DL_OPTS.map(([k,label,opts])=>`<div class="dl-row"><span>${label}</span>${
+    DL_OPTS.filter(o=>!(o[0]==="role" && dlCur.kind==="story")).map(([k,label,opts])=>`<div class="dl-row"><span>${label}</span>${
       opts.map(([v,t])=>`<button class="${dlP[k]===v?"on":""}" onclick='dlSet(${JSON.stringify(k)},${JSON.stringify(v)})'>${t}</button>`).join("")
     }</div>`).join("") +
     `<div class="dl-row"><span>속도</span>
@@ -5901,7 +5902,7 @@ function dlRenderList(){
   const roles=dlCur.roles||{};
   $("dlList").classList.toggle("selmode", dlP.scope==="sel");
   $("dlList").innerHTML=dlCur.lines.map((l,i)=>{
-    const w=dlWho(l), mine=dlP.role===w;
+    const w=dlWho(l), mine=dlRole()===w;
     return `<div class="dl-b ${w==="F"?"f":"m"}${mine?" mine":""}${dlSel.has(i)?" sel":""}" id="dlb${i}" onclick="dlTapLine(${i})">
       <button class="dl-ck${dlSel.has(i)?" on":""}" aria-label="이 줄 고르기" onclick="event.stopPropagation();dlTog(${i})">✓</button>
       <div class="who">${dlEsc(roles[w]||(w==="F"?"여자":"남자"))}</div>
@@ -6040,7 +6041,7 @@ async function dlLoopLine(i){
   dlAudioEl();
   const tok=++dlTok; dlOn=true; dlActive=true; dlLoopIdx=i;
   $("dlGo").textContent="■ 정지"; dlLoopUI(); dlWake(true); dlMedia();
-  const l=dlCur.lines[i], mine=(dlP.role===dlWho(l));
+  const l=dlCur.lines[i], mine=(dlRole()===dlWho(l));
   dlMark(i);
   for(let n=1; tok===dlTok; n++){
     dlSay(`${i+1}번째 줄 무한 반복 · ${n}회`+(mine?" — 내 차례, 소리 내어 읽어 보세요":""), mine);
@@ -6076,7 +6077,7 @@ async function dlRun(){
     if(!idxs.length) break;
     for(let n=0;n<idxs.length;n++){
       if(tok!==dlTok) return;
-      const i=idxs[n], l=L[i], mine=(dlP.role===dlWho(l));
+      const i=idxs[n], l=L[i], mine=(dlRole()===dlWho(l));
       dlMark(i);
       const label=(loops===Infinity?`${r}회차`:`${r} / ${loops}회`)+` · ${n+1} / ${idxs.length}줄`;
       dlSay(mine ? `내 차례예요 — 소리 내어 읽어 보세요 (${label})` : label, mine);
