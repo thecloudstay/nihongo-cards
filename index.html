@@ -684,6 +684,11 @@
   background:var(--soft);padding:11px 13px;border-radius:12px}
 /* ⚠ v5.3 — 가운데 정렬 flex-wrap 이라 2번째 줄이 들쭉날쭉하고
      짝이어야 할 「가﹣ / 가﹢」가 서로 다른 줄로 찢어졌다. 좌정렬 + 스테퍼 묶음. */
+.rd-spd{display:flex;align-items:center;gap:10px;padding:2px 16px 6px}
+.rd-spd span{font-size:12px;font-weight:800;color:var(--sub);flex:none}
+.rd-spd input{flex:1;min-width:0;accent-color:var(--accent)}
+.rd-spd b{font-size:13px;font-weight:800;min-width:48px;text-align:right}
+.rd-spd button{padding:5px 11px;border:1px solid var(--line);background:var(--card);border-radius:14px;font-size:12px;font-weight:700}
 .rd-tools{display:flex;gap:6px;justify-content:flex-start;align-items:center;flex-wrap:wrap;padding:10px 16px 4px}
 .rd-fs{display:inline-flex;gap:0;margin-left:auto;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--card)}
 .rd-fs button{border:none!important;border-radius:0!important;padding:7px 12px}
@@ -1526,6 +1531,9 @@
       <button onclick="rdFont(1)" id="rrFs" title="글자 크게">가﹢</button>
     </span>
   </div>
+  <div class="rd-spd"><span>속도</span>
+    <input type="range" id="rrSpd" min="0.5" max="2" step="0.05" value="1" oninput="rdSpdSet(this.value)">
+    <b id="rrSpdV">1.00배</b><button onclick="rdSpdSet(1)">1배</button></div>
   <div class="rd-body" id="rrBody"></div>
   <div class="rd-foot">
     <button onclick="rdWordCards()">📇 단어 카드</button>
@@ -2655,22 +2663,24 @@ function showExample(q){
 function skip(){ if(taMode&&!answered){ combo=0; updateComboBadge(); taCount++; results.push(false); misses.push(deck[qi]); answered=true; nextQ(); return; } if(!answered)timeUp(); else nextQ(); }
 
 // ── 반복 학습용: 재생 완료를 기다리는 발음 ──
-function speakWSP(t){
+function speakWSP(t,rate){
+  rate = (rate>=0.5 && rate<=2) ? +rate : 1;
   return new Promise(res=>{
     try{
       speechSynthesis.cancel();
       const u=new SpeechSynthesisUtterance(String(t).split("/")[0]);
-      u.lang="ja-JP"; u.rate=0.9;
+      u.lang="ja-JP"; u.rate=0.9*rate;
       if(!_jaVoice)_jaVoice=pickJaVoice(); if(_jaVoice)u.voice=_jaVoice;
       u.onend=res; u.onerror=res;
       speechSynthesis.speak(u);
       // ⚠ 9초 고정이면 긴 문장은 아직 읽는 중인데 다음 문장이 시작돼 소리가 겹친다.
       //    안전장치도 문장 길이에 비례시킨다.
-      setTimeout(res, Math.max(9000, String(t).length*280 + 4000));
+      setTimeout(res, Math.max(9000, (String(t).length*280 + 4000)/rate));
     }catch(e){ res(); }
   });
 }
-function speakP(t){
+function speakP(t,rate){
+  rate = (rate>=0.5 && rate<=2) ? +rate : 1;
   return new Promise(res=>{
     t=String(t||""); if(!t||MUTED) return res();
     let fired=false, guard=0;
@@ -2680,7 +2690,7 @@ function speakP(t){
       res(); } };
     // ⚠ 안전장치는 "문장 길이에 비례"해야 한다. 예전엔 9초 고정이라
     //    책의 긴 문장에서 재생 도중에 다음 문장으로 넘어가 "이어 듣기가 끊기는" 증상이 났음.
-    const fallbackMs = Math.max(9000, t.length*260 + 4000);
+    const fallbackMs = Math.max(9000, (t.length*260 + 4000)/rate);
     if(AUDIO_MANIFEST){
       const h=AUDIO_MANIFEST[t]||AUDIO_MANIFEST[t.split("/")[0]];
       if(h){
@@ -2692,11 +2702,13 @@ function speakP(t){
           const srcChanged = (!a.src || a.src.indexOf(src)===-1);
           if(srcChanged){ a.src=src; a.load(); }
           a.onended=fin;
-          a.onerror=()=>{ if(!fired) speakWSP(t).then(fin); };
+          a.onerror=()=>{ if(!fired) speakWSP(t,rate).then(fin); };
+          a.defaultPlaybackRate=rate; a.playbackRate=rate;
+          try{ a.preservesPitch=true; a.mozPreservesPitch=true; a.webkitPreservesPitch=true; }catch(e){}
           a.currentTime=0;
           // 실제 길이를 알면 그걸 기준으로(＋여유 1.2초) 안전장치를 다시 건다
           const arm=()=>{ if(fired) return; clearTimeout(guard);
-            const ms = (isFinite(a.duration)&&a.duration>0) ? a.duration*1000+1200 : fallbackMs;
+            const ms = (isFinite(a.duration)&&a.duration>0) ? a.duration*1000/rate+1200 : fallbackMs;
             guard=setTimeout(fin,ms); };
           a.onloadedmetadata=arm; a.ondurationchange=arm;
           // 초기 guard 는 무조건 넉넉한 fallbackMs 로. 메타데이터 로드되면 onloadedmetadata→arm 이 정확히 재설정한다.
@@ -2706,14 +2718,14 @@ function speakP(t){
           //   src 가 그대로면(같은 오디오 반복) duration 이 정확하므로 그때만 arm() 을 즉시 부른다.
           guard=setTimeout(fin,fallbackMs);
           if(!srcChanged) arm();
-          const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>{ if(!fired) speakWSP(t).then(fin); });
+          const pr=a.play(); if(pr&&pr.catch) pr.catch(()=>{ if(!fired) speakWSP(t,rate).then(fin); });
           return;
         }catch(e){}
       }
     }
     // 합성음으로 읽기 전에, 앞 문장 mp3 가 아직 울리고 있으면 끊는다
     try{ if(_sharedAudio && !_sharedAudio.paused) _sharedAudio.pause(); }catch(e){}
-    speakWSP(t).then(fin); guard=setTimeout(fin,fallbackMs);
+    speakWSP(t,rate).then(fin); guard=setTimeout(fin,fallbackMs);
   });
 }
 // ── 오답 반복 학습 ──
@@ -2802,6 +2814,7 @@ function speak(t){
         const a=_getAudioEl();
         const src="audio/"+h+".mp3";
         if(!a.src || a.src.indexOf(src)===-1){ a.src=src; a.load(); }
+        a.defaultPlaybackRate=1; a.playbackRate=1;
         a.currentTime=0;
         const p=a.play();
         if(p&&p.catch) p.catch(()=>speakWS(t));
@@ -4681,7 +4694,7 @@ function openChapter(k){
   $("rrRo").style.display = hasRo ? "" : "none";
   $("rrRo").classList.toggle("on",rdRo);
   if(hasRo && rdRo) body.querySelectorAll(".rd-s").forEach(e=>e.classList.add("ropen"));
-  rdStopPlay(); rdSyncNextBtn(); rdSyncContBtn(); mkSyncBtn(); rdApplyFont(); rdTouch(b.id,k);
+  rdStopPlay(); rdSyncNextBtn(); rdSyncContBtn(); mkSyncBtn(); rdApplyFont(); rdSpdSync(); rdTouch(b.id,k);
   show("rdRead");
 }
 /* ═══ v6.1 책갈피 ═══
@@ -4763,7 +4776,7 @@ function rdTapSentence(e,i){
   rdKaraClear();
   $("rrBody").querySelectorAll(".rd-s.cur").forEach(x=>x.classList.remove("cur"));
   el.classList.add("cur");
-  speakP(rdReading(c.s[i].jp)).then(()=>{ el.classList.remove("cur"); rdKaraClear(); });
+  speakP(rdReading(c.s[i].jp), rdSpd).then(()=>{ el.classList.remove("cur"); rdKaraClear(); });
   setTimeout(()=>rdKaraRun(el), 80);
 }
 function rdToggleRo(){ rdRo=!rdRo; $("rrRo").classList.toggle("on",rdRo);
@@ -4830,6 +4843,15 @@ function rdSyncNextBtn(){
 //   · 연속(🔁) — 장이 끝나면 다음 장을 자동으로 열고 계속 읽음
 //  둘 다 「⏸ 멈춤」으로 언제든 즉시 중단. 멈춘 자리(장)는 이어보기에 기록된다.
 let _rdPlayTok=0, _rdPlaying=false, _rdAuto=false;
+let rdSpd = (()=>{ try{ const v=parseFloat(localStorage.getItem("rd_spd")); return (v>=0.5&&v<=2)?v:1; }catch(e){ return 1; } })();
+function rdSpdSync(){ const sl=$("rrSpd"); if(sl) sl.value=rdSpd; const v=$("rrSpdV"); if(v) v.textContent=rdSpd.toFixed(2)+"배"; }
+function rdSpdSet(v){
+  rdSpd=Math.min(2,Math.max(0.5,Math.round(parseFloat(v)*20)/20||1));
+  try{ localStorage.setItem("rd_spd", String(rdSpd)); }catch(e){}
+  rdSpdSync();
+  // 듣는 도중에 바꾸면 지금 문장부터 바로 적용
+  try{ if(_rdPlaying && _sharedAudio){ _sharedAudio.defaultPlaybackRate=rdSpd; _sharedAudio.playbackRate=rdSpd; } }catch(e){}
+}
 //   · 반복(🔂1) — 이 장을 끝까지 읽고 처음으로 돌아가 계속 되풀이 (듣고 또 듣기용)
 // 0 장별 · 1 연속 · 2 이 장 반복
 const RD_MODES=[
@@ -4875,7 +4897,7 @@ async function rdPlayAll(){
       els[i].classList.add("cur");
       if(rdKoMode==="auto") els[i].classList.add("open");     // 따라 읽으며 뜻이 같이 뜬다
       els[i].scrollIntoView({block:"center",behavior:"smooth"});
-      const pr = speakP(rdReading(c.s[i].jp));
+      const pr = speakP(rdReading(c.s[i].jp), rdSpd);
       setTimeout(()=>rdKaraRun(els[i]), 80);        // 오디오가 재생을 시작한 뒤 진행률을 읽는다
       await pr;
       if(my!==_rdPlayTok) return;
