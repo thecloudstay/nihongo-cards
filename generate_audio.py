@@ -101,6 +101,15 @@ def collect_texts() -> list:
                 if t and JP_RE.search(t):
                     texts.add(t)
 
+    # 1-d) 남녀 대화·이야기 챕터의 단어(dialogues.json > words) — 읽기(r)가 발음 대상. 앱 speak() 규칙과 동일하게 기본 목소리
+    if os.path.exists(DLG_JSON):
+        with open(DLG_JSON, encoding="utf-8") as f:
+            for dlg in json.load(f):
+                for w in dlg.get("words", []):
+                    t = str(w.get("r") or "").strip()
+                    if t and KANA_RE.search(t):
+                        texts.add(t)
+
     # 2) CSV도 병행 수집 (있을 때만)
     for path in sorted(glob.glob(CSV_GLOB)):
         with open(path, encoding="utf-8-sig", newline="") as f:

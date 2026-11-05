@@ -575,6 +575,28 @@
 .tile .dot{position:absolute;top:7px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);display:none}
 .tile.new .dot{display:block}
 /* ══ 획순 ══ */
+/* 단어 쓰기: 가로로 넓은 칸 + 한자별 획순 칩 */
+.wr-kj{display:none;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:8px;padding:0 16px}
+#wrScreen.wmode .wr-kj.has{display:flex}
+.wr-kj span{font-size:11.5px;font-weight:800;color:var(--sub)}
+.wr-kj button{padding:4px 11px;border:1px solid var(--line);background:var(--card);border-radius:10px;
+  font-size:16px;font-weight:700;font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+.wr-kj button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+#wrScreen.wmode .wr-box{width:min(92vw,440px);aspect-ratio:2/1}
+#wrScreen.wmode .wr-grid{background-image:linear-gradient(to bottom,var(--line) 1px,transparent 1px);background-size:100% 50%}
+#wrScreen.wmode .wr-grid:after{inset:12% 3%}
+#wrScreen.wmode #wrOrderBtn,#wrScreen.wmode #wrPlayBtn{display:none}
+/* 이야기 단어장 */
+.dl-wd{margin-top:8px;padding:12px 0 18px;border-top:1px solid var(--line)}
+.dl-wdh{font-size:13px;font-weight:800;margin-bottom:8px}
+.dl-wdh small{font-weight:600;color:var(--sub);margin-left:6px}
+.dl-wdg{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.dl-wdg button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 11px;text-align:left;
+  border:1px solid var(--line);background:var(--card);border-radius:12px}
+.dl-wdg button:active{background:var(--soft)}
+.dl-wdg b{font-size:16px;font-weight:800}
+.dl-wdg span{font-size:11.5px;color:var(--accent);font-weight:700}
+.dl-wdg em{font-size:12px;font-style:normal;color:var(--sub)}
 .wr-svg{position:absolute;inset:0;pointer-events:none}
 .wr-svg svg{width:100%;height:100%}
 .wr-svg path{fill:none;stroke:var(--accent);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;opacity:.34}
@@ -1400,6 +1422,7 @@
       <div class="rd" id="wrRd">a <span class="sp" onclick="wrSpeak()">🔊</span></div>
       <div class="ko" id="wrKo">아</div>
     </div>
+    <div class="wr-kj" id="wrKj"></div>
   </div>
   <div class="wr-tools">
     <button onclick="wrUndo()">↩ 되돌리기</button>
@@ -2354,6 +2377,7 @@ const CGRID = [
   {ic:"✍️", ko:"쓰기", sub:"손글씨 · 획순",
    tools:[["🔤","글자 쓰기 (히라·가타)","openWriting('hiragana')"],
           ["🈶","한자 쓰기 (N5~N1)","openWriting('N5')"],
+          ["📝","단어 쓰기","openWordWrite()"],
           ["🧩","문장 만들기","openSb()"],["🔁","동사 활용","openConj()"]]},
 
   {ic:"🗣", ko:"말하기", sub:"발음 채점 · 청해",
@@ -3774,7 +3798,44 @@ function renderWrBar(){ const el=$("tWr"); if(!el) return; const t=wrTotal(); el
 
 // 책을 읽다 만난 한자를 그 자리에서 연습할 수 있게, 팩과 무관한 임시 목록을 하나 둔다.
 let wrAdhoc=null, wrAdhocLabel="", wrBack="home";
+// ── 단어 쓰기: 이야기 챕터(dialogues.json > words)의 단어를 통째로 써 보는 모드 (wrCat = "w:챕터id") ──
+const WR_WORDS={};
+let wrOrderChar="";
+function wrIsWord(){ return String(wrCat).startsWith("w:"); }
+function wrBuildWords(){
+  if(typeof DLG==="undefined" || !DLG) return;
+  DLG.forEach(d=>{ if(d.words && d.words.length) WR_WORDS[d.id]={title:d.title_ko, words:d.words}; });
+}
+function wrTplSize(){
+  const t=$("wrTpl"), box=$("wrBox"); if(!t||!box) return;
+  if(!wrIsWord()||!wrCur){ t.style.fontSize=""; return; }
+  const r=box.getBoundingClientRect(); if(!r.width||!r.height) return;
+  const n=Math.max(2,[...String(wrCur.front)].length);
+  t.style.fontSize=Math.floor(Math.min(r.height*0.62, r.width*0.86/n))+"px";
+}
+function wrKanjiRow(){
+  const row=$("wrKj"); if(!row) return;
+  const ks=(wrIsWord()&&wrCur)? [...new Set([...String(wrCur.front)].filter(c=>/[一-鿿]/.test(c)))] : [];
+  row.classList.toggle("has",ks.length>0);
+  row.innerHTML = ks.length ? '<span>한자 획순</span>'+ks.map(c=>`<button onclick="wrKanji('${c}')">${c}</button>`).join("") : "";
+}
+function wrKanji(ch){
+  wrOrderChar=ch; wrOrderMode=1;
+  document.querySelectorAll("#wrKj button").forEach(b=>b.classList.toggle("on",b.textContent===ch));
+  wrPlayStrokes();
+}
+async function openWordWrite(id,from){
+  show("wrScreen"); wrBack=from||"home";
+  await dlLoad(); wrBuildWords();
+  const ids=Object.keys(WR_WORDS);
+  if(!ids.length){ toast("단어 목록을 불러오지 못했어요"); return; }
+  const cur=wrIsWord()?wrCat.slice(2):"";
+  wrCat="w:"+((id&&WR_WORDS[id])?id:(WR_WORDS[cur]?cur:ids[0]));
+  wrIdx=0;
+  openWriting();
+}
 function wrChars(){
+  if(wrIsWord()){ const s=WR_WORDS[wrCat.slice(2)]; return s ? s.words.map(x=>({front:x.w, romaji:x.r, ko:x.ko, speak:x.r})) : []; }
   if(wrCat==="_adhoc") return wrAdhoc||[];
   const rows=(DATA[wrCat]||[]);
   const seen=new Set(); const out=[];
@@ -3789,10 +3850,12 @@ function renderWrSrc(){
   const box=$("wrSrc"); if(!box) return;
   const ad = wrAdhoc&&wrAdhoc.length
     ? `<button class="${wrCat==='_adhoc'?'on':''}" onclick="wrPick('_adhoc')">📖 ${wrAdhocLabel}</button>` : "";
-  box.innerHTML = ad + WR_SRC.filter(s=>(DATA[s.code]||[]).length)
+  const ws = Object.keys(WR_WORDS).map(id=>
+    `<button class="${wrCat==='w:'+id?'on':''}" onclick="wrPick('w:${id}')">단어 · ${String(WR_WORDS[id].title).split("·").pop().trim()}</button>`).join("");
+  box.innerHTML = ad + ws + WR_SRC.filter(s=>(DATA[s.code]||[]).length)
     .map(s=>`<button class="${s.code===wrCat?'on':''}" onclick="wrPick('${s.code}')">${s.ko}</button>`).join("");
 }
-function wrPick(code){ wrCat=code; wrIdx=0; renderWrSrc(); wrLoad(); }
+function wrPick(code){ wrCat=code; wrIdx=0; renderWrSrc(); wrLoad(); wrFitSoon(); }
 
 function wrFit(){
   const cv=$("wrCv"), box=$("wrBox"); if(!cv||!box) return false;
@@ -3802,6 +3865,7 @@ function wrFit(){
   cv.width=Math.round(r.width*wrDPR); cv.height=Math.round(r.height*wrDPR);
   wrCtx=cv.getContext("2d"); wrCtx.scale(wrDPR,wrDPR);
   wrCtx.lineCap="round"; wrCtx.lineJoin="round";
+  wrTplSize();
   wrRedraw();
   return true;
 }
@@ -3862,7 +3926,7 @@ function wrApplyReveal(){
 async function wrReveal(){
   wrRevealed=!wrRevealed;
   wrApplyTpl(); 
-  if(wrRevealed && wrOrderMode===0){ wrOrderMode=1; $("wrOrderBtn").textContent="획순: 번호"; await wrRenderOrder(); }
+  if(wrRevealed && wrOrderMode===0 && !wrIsWord()){ wrOrderMode=1; $("wrOrderBtn").textContent="획순: 번호"; await wrRenderOrder(); }
   wrApplyReveal();
 }
 
@@ -3889,7 +3953,9 @@ async function wrRenderOrder(){
   const box=$("wrSvg"); if(!box) return;
   box.innerHTML=""; box.classList.add("off");
   if(!wrCur || wrOrderMode===0) return;
-  const svg=await kvgFetch(wrCur.front);
+  const oc = wrIsWord() ? wrOrderChar : wrCur.front;          // 단어 모드: 고른 한자 하나의 획순
+  if(!oc){ return; }
+  const svg=await kvgFetch(oc);
   if(!svg){ $("wrDone").textContent="이 글자는 획순 데이터가 없어요"; return; }
   box.appendChild(document.importNode(svg,true));
   box.classList.remove("off");
@@ -3932,15 +3998,17 @@ function wrLoad(){
   if(!list.length){ $("wrTpl").textContent="?"; $("wrRd").textContent="데이터 없음"; $("wrKo").textContent=""; wrCur=null; return; }
   if(wrIdx<0) wrIdx=list.length-1; if(wrIdx>=list.length) wrIdx=0;
   wrCur=list[wrIdx];
-  wrRevealed=false;
+  wrRevealed=false; wrOrderChar="";
+  $("wrScreen").classList.toggle("wmode", wrIsWord());
   $("wrTpl").textContent=wrCur.front;
+  wrTplSize(); wrKanjiRow();
   wrApplyTpl(); wrApplyReveal();
   $("wrRd").innerHTML=(wrCur.romaji||wrCur.front)+' <span class="sp" onclick="wrSpeak()">🔊</span>';
   $("wrKo").textContent=wrCur.ko||"";
   $("wrPos").textContent=`${wrIdx+1} / ${list.length}`;
   if(wrOrderMode!==0) wrRenderOrder(); else { const b=$("wrSvg"); if(b){b.innerHTML="";b.classList.add("off");} }
   const n=(wrLog()[wrKey(wrCur)]|0);
-  $("wrDone").innerHTML = n? `이 글자 <b>${n}번</b> 썼어요` : "읽기·뜻을 보고 먼저 써본 뒤 <b>정답 확인</b>을 누르세요";
+  $("wrDone").innerHTML = n? `이 ${wrIsWord()?"단어":"글자"} <b>${n}번</b> 썼어요` : "읽기·뜻을 보고 먼저 써본 뒤 <b>정답 확인</b>을 누르세요";
   wrClear();
 }
 function wrGo(d){ wrIdx+=d; wrLoad(); }
@@ -4074,14 +4142,14 @@ function wkMount(word){
   wkLoad(); wkFitSoon();
 }
 // 연습 기록은 팩이 달라도 같은 글자면 함께 세도록 — 임시목록은 "book" 으로 묶는다
-function wrKey(c){ return (wrCat==="_adhoc"?"book":wrCat)+"|"+c.front; }
+function wrKey(c){ return (wrCat==="_adhoc"?"book":(wrIsWord()?"word":wrCat))+"|"+c.front; }
 function wrBackGo(){ const b=wrBack; wrBack="home"; wrAdhoc=null; show(b); }
 // (책에서 온 한자는 화면을 갈아타지 않고 단어 창 안의 wkMount 쓰기 칸에서 바로 연습한다.
 //  wrAdhoc 통로는 남겨 둠 — 나중에 단어장·오답노트에서 여러 글자를 몰아 연습시킬 때 쓴다.)
 function openWriting(preset){
   if(preset && (DATA[preset]||[]).length) wrCat=preset;      // 카테고리에서 바로 들어올 때 소스 지정
   show("wrScreen"); renderWrSrc();
-  if(wrCat!=="_adhoc" && !(DATA[wrCat]||[]).length){ const f=WR_SRC.find(s=>(DATA[s.code]||[]).length); if(f) wrCat=f.code; renderWrSrc(); }
+  if(wrCat!=="_adhoc" && !wrIsWord() && !(DATA[wrCat]||[]).length){ const f=WR_SRC.find(s=>(DATA[s.code]||[]).length); if(f) wrCat=f.code; renderWrSrc(); }
   wrLoad();
   wrFitSoon();
   const cv=$("wrCv");
@@ -4098,6 +4166,7 @@ function openWriting(preset){
   try{ const sp=parseInt(localStorage.getItem("wr_pen")||"",10); if(sp) $("wrPen").value=sp;
        const sw=parseInt(localStorage.getItem("wr_weight")||"",10); if(!isNaN(sw)) wrWeight=sw; }catch(e){}
   wrPenChg(); wrApplyWeight(); wrApplyTpl(); wrApplyReveal();
+  if(!Object.keys(WR_WORDS).length) dlLoad().then(()=>{ wrBuildWords(); renderWrSrc(); });     // 단어 칸(이야기 단어)이 목록에 뜨게
 }
 
 // ══════════ 동사 활용 엔진 + 연습 모드 (전부 클라이언트) ══════════
@@ -5873,7 +5942,8 @@ function dlRenderCtrl(){
        <b class="dl-selcnt" id="dlSelCnt">${dlSel.size}줄 고름</b></div>` : "") +
     `<div class="dl-row"><span>보기</span>${
       DL_VIEW.map(([k,t])=>`<button class="${dlP[k]?"on":""}" onclick='dlSet(${JSON.stringify(k)},${dlP[k]?0:1})'>${t}</button>`).join("")
-    }</div>`;
+    }</div>` +
+    ((dlCur.words&&dlCur.words.length) ? `<div class="dl-row"><button onclick='openWordWrite(${JSON.stringify(dlCur.id)},"dlScreen")'>단어 쓰기 연습 (${dlCur.words.length}단어)</button></div>` : "");
 }
 // 속도 슬라이드(0.75~2배, 0.05 단위) — 끌 때마다 바로 적용, 재생 중이어도 즉시 빨라지고 느려진다
 function dlSpd(v){
@@ -5911,8 +5981,15 @@ function dlRenderList(){
       ${dlP.ko && l.ko ? `<div class="dl-ko">${dlEsc(l.ko)}</div>` : ""}
       <div class="dl-bt"><button class="dl-lp${dlLoopIdx===i?" on":""}" onclick="event.stopPropagation();dlLoopLine(${i})">${dlLoopIdx===i?"무한 반복 중 · 멈추기":"이 줄 무한 반복"}</button></div>
     </div>`;
-  }).join("");
+  }).join("") + dlWordsHtml();
 }
+function dlWordsHtml(){
+  const W=(dlCur&&dlCur.words)||[]; if(!W.length) return "";
+  return `<div class="dl-wd"><div class="dl-wdh">이 이야기의 단어 ${W.length}개<small>누르면 발음이 나와요</small></div><div class="dl-wdg">${
+    W.map((x,i)=>`<button onclick="dlWordSay(${i})"><b class="jp">${dlEsc(x.w)}</b><span class="jp">${dlEsc(x.r)}</span><em>${dlEsc(x.ko)}</em></button>`).join("")
+  }</div></div>`;
+}
+function dlWordSay(i){ const x=dlCur&&dlCur.words&&dlCur.words[i]; if(x) speak(x.r); }
 function dlMark(i,keepScroll){
   dlNowIdx=i;
   document.querySelectorAll("#dlList .dl-b.now").forEach(e=>e.classList.remove("now"));
